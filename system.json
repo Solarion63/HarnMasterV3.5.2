@@ -1,6 +1,6 @@
 {
   "id": "hm3",
-  "title": "HarnMaster 3",
+  "title": "HarnMaster 3 V13",
   "description": "The HarnMaster system for FoundryVTT!",
   "version": "1.6.3",
   "authors": [
@@ -18,8 +18,8 @@
     "allowBugReporter": true
   },
   "compatibility": {
-    "minimum": "12",
-    "verified": "12.331"
+    "minimum": "13",
+    "verified": "13.351"
   },
   "esmodules": [
     "module/hm3.js"
