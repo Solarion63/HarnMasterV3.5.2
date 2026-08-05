@@ -6,8 +6,8 @@
  * historical global names. Expose only the names required while the sheets
  * are migrated to ApplicationV2.
  *
- * Remove this file when the Actor, Item, Active Effect, and dialog layers have
- * completed their ApplicationV2 migration.
+ * Remove this file when the Actor, Active Effect, dialog, and chat layers have
+ * completed their ApplicationV2/native DOM migration.
  */
 
 const legacyGlobals = {
@@ -35,4 +35,32 @@ for (const [name, implementation] of Object.entries(legacyGlobals)) {
       writable: false
     });
   }
+}
+
+/**
+ * A deliberately small jQuery-style collection used only by legacy HM3 chat
+ * rendering code. Foundry v14 passes a native HTMLElement to
+ * renderChatMessageHTML, while the pre-v14 combat helper expects find/each.
+ */
+class HM3LegacyElementCollection extends Array {
+  find(selector) {
+    return new HM3LegacyElementCollection(
+      ...this.flatMap(element => Array.from(element.querySelectorAll(selector)))
+    );
+  }
+
+  each(callback) {
+    this.forEach((element, index) => callback(index, element));
+    return this;
+  }
+}
+
+if (typeof HTMLElement !== "undefined" && !HTMLElement.prototype.find) {
+  Object.defineProperty(HTMLElement.prototype, "find", {
+    configurable: true,
+    value(selector) {
+      return new HM3LegacyElementCollection(...this.querySelectorAll(selector));
+    },
+    writable: true
+  });
 }
