@@ -25,6 +25,7 @@
     "verified": "14.365"
   },
   "esmodules": [
+    "module/v14-compat.js",
     "module/hm3.js"
   ],
   "styles": [
