@@ -1,25 +1,28 @@
 {
   "id": "hm3",
-  "title": "HarnMaster 3 V13",
-  "description": "The HarnMaster system for FoundryVTT!",
-  "version": "1.6.3",
+  "title": "HarnMaster 3",
+  "description": "The HarnMaster 3 game system for Foundry Virtual Tabletop.",
+  "version": "2.0.0-alpha.1",
   "authors": [
     {
       "name": "Toasty",
-      "discord": "toasty#8538",
+      "flags": {}
+    },
+    {
+      "name": "Valcorin",
       "flags": {}
     }
   ],
-  "url": "https://github.com/toastygm/HarnMaster-3-FoundryVTT/",
+  "url": "https://github.com/Solarion63/HarnMasterV3.5.2",
   "license": "LICENSE",
   "readme": "README.md",
-  "bugs": "https://github.com/toastygm/HarnMaster-3-FoundryVTT/issues",
+  "bugs": "https://github.com/Solarion63/HarnMasterV3.5.2/issues",
   "flags": {
     "allowBugReporter": true
   },
   "compatibility": {
-    "minimum": "13",
-    "verified": "13.351"
+    "minimum": "14",
+    "verified": "14.365"
   },
   "esmodules": [
     "module/hm3.js"
@@ -44,7 +47,8 @@
         "possessions",
         "esoteric",
         "system-help"
-      ]
+      ],
+      "folders": []
     }
   ],
   "packs": [
@@ -57,8 +61,7 @@
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
-      },
-      "flags": {}
+      }
     },
     {
       "label": "Possessions",
@@ -69,8 +72,7 @@
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
-      },
-      "flags": {}
+      }
     },
     {
       "label": "Esoteric",
@@ -81,25 +83,21 @@
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
-      },
-      "flags": {}
+      }
     },
     {
       "label": "System Help",
-      "name": "system-help",
-      "path": "packs/system-help",
-      "system": "hm3",
       "type": "JournalEntry",
+      "name": "system-help",
+      "system": "hm3",
+      "path": "packs/system-help",
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
-      },
-      "flags": {}
+      }
     }
   ],
   "socket": true,
-  "manifest": "https://github.com/toastygm/HarnMaster-3-FoundryVTT/releases/latest/download/system.json",
-  "download": "https://github.com/toastygm/HarnMaster-3-FoundryVTT/releases/download/v1.6.3/system.zip",
   "grid": {
     "distance": 5,
     "units": "ft"
