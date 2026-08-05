@@ -1,0 +1,49 @@
+name: Validate System
+
+on:
+  push:
+    branches:
+      - master
+      - "feature/**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate JSON files
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$file"
+          done < <(find . -type f -name '*.json' -not -path './node_modules/*' -print0)
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find module -type f -name '*.js' -print0)
+
+      - name: Verify required system files
+        shell: bash
+        run: |
+          test -f system.json
+          test -f template.json
+          test -f module/hm3.js
+          test -d templates
+          test -d packs
