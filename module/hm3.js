@@ -5,7 +5,7 @@ import { HarnMasterCreatureSheet } from "./actor/creature-sheet.js";
 import { HarnMasterContainerSheet } from "./actor/container-sheet.js";
 import { HarnMasterCombat } from "./hm3-combat.js";
 import { HarnMasterItem } from "./item/item.js";
-import { HarnMasterItemSheet } from "./item/item-sheet.js";
+import { HM3_ITEM_SHEETS_V2 } from "./item/item-sheet-v2.js";
 import { HM3ActiveEffectConfig } from "./hm3-active-effect-config.js";
 import { HM3 } from "./config.js";
 import { registerSystemSettings } from "./settings.js";
@@ -17,10 +17,11 @@ import { DiceHM3 } from "./dice-hm3.js";
 
 const { renderTemplate } = foundry.applications.handlebars;
 const { DocumentSheetConfig } = foundry.applications.apps;
-const { ActiveEffectConfig } = foundry.applications.sheets;
-const { ActorSheet, ItemSheet } = foundry.appv1.sheets;
+const { ActiveEffectConfig, ItemSheetV2 } = foundry.applications.sheets;
+const { ActorSheet } = foundry.appv1.sheets;
 const { FormDataExtended } = foundry.applications.ux;
-const { Actors, Items } = foundry.documents.collections;
+const { Actors } = foundry.documents.collections;
+const { ActiveEffect, Item } = foundry.documents;
 
 Hooks.once("init", async function () {
     console.log(`HM3 | Initializing the HM3 Game System\n${HM3.ASCII}`);
@@ -72,8 +73,8 @@ Hooks.once("init", async function () {
 
     CONFIG.Combat.documentClass = HarnMasterCombat;
 
-    // ApplicationV1 sheets remain registered temporarily while they are
-    // converted to ApplicationV2 in the next migration phase.
+    // Actor sheets remain on ApplicationV1 temporarily while their larger
+    // interaction surface is migrated and regression-tested.
     Actors.unregisterSheet("core", ActorSheet);
     Actors.registerSheet("hm3", HarnMasterCharacterSheet, {
         types: ["character"],
@@ -97,11 +98,16 @@ Hooks.once("init", async function () {
         label: "Default HarnMaster Active Effect Sheet"
     });
 
-    Items.unregisterSheet("core", ItemSheet);
-    Items.registerSheet("hm3", HarnMasterItemSheet, {
-        makeDefault: true,
-        label: "Default HarnMaster Item Sheet"
-    });
+    // Register one ApplicationV2 sheet class per Item subtype. Each class uses
+    // the existing subtype-specific Handlebars template.
+    DocumentSheetConfig.unregisterSheet(Item, "core", ItemSheetV2);
+    for (const [type, SheetClass] of Object.entries(HM3_ITEM_SHEETS_V2)) {
+        DocumentSheetConfig.registerSheet(Item, "hm3", SheetClass, {
+            types: [type],
+            makeDefault: true,
+            label: `HarnMaster ${CONFIG.Item.typeLabels[type] ?? type} Item Sheet`
+        });
+    }
 
     Handlebars.registerHelper("concat", function () {
         let output = "";
@@ -111,7 +117,7 @@ Hooks.once("init", async function () {
         return output;
     });
 
-    Handlebars.registerHelper("toLowerCase", (value) => value.toLowerCase());
+    Handlebars.registerHelper("toLowerCase", value => value.toLowerCase());
 
     // Foundry v14 uses fontDefinitions for both canvas and editor fonts.
     Object.assign(CONFIG.fontDefinitions, {
@@ -137,7 +143,7 @@ function bindHm3ChatButtons(message, html, context) {
     for (const button of buttons) {
         if (button.dataset.hm3Bound === "1") continue;
 
-        button.addEventListener("click", (event) => {
+        button.addEventListener("click", event => {
             HarnMasterActor._onChatCardAction({
                 preventDefault: () => event.preventDefault(),
                 currentTarget: event.currentTarget,
@@ -192,7 +198,7 @@ Hooks.once("ready", async function () {
 });
 
 // HM3 does not roll initiative. Seed the combatant from the Actor value.
-Hooks.on("preCreateCombatant", (combatant) => {
+Hooks.on("preCreateCombatant", combatant => {
     if (combatant.initiative != null) return;
 
     const token = canvas.tokens.get(combatant.tokenId);
@@ -246,7 +252,7 @@ async function welcomeDialog() {
         title: "Welcome!",
         content,
         label: "OK",
-        callback: (html) => {
+        callback: html => {
             const root = html instanceof HTMLElement ? html : html?.[0];
             const form = root.querySelector("#welcome");
             return new FormDataExtended(form).object.showOnStartup;
