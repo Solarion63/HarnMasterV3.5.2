@@ -64,3 +64,29 @@ if (typeof HTMLElement !== "undefined" && !HTMLElement.prototype.find) {
     writable: true
   });
 }
+
+/**
+ * Restore the pre-v14 canvas.grid.measureDistances contract used by the HM3
+ * combat workflow. Foundry v14 replaces it with BaseGrid#measurePath.
+ */
+function installLegacyGridMeasurement() {
+  const grid = canvas?.grid;
+  if (!grid || typeof grid.measurePath !== "function" || typeof grid.measureDistances === "function") return;
+
+  Object.defineProperty(grid, "measureDistances", {
+    configurable: true,
+    value(segments = []) {
+      return segments.map(segment => {
+        const ray = segment?.ray;
+        if (!ray) return 0;
+        return grid.measurePath([
+          { x: ray.A.x, y: ray.A.y },
+          { x: ray.B.x, y: ray.B.y }
+        ]).distance;
+      });
+    },
+    writable: true
+  });
+}
+
+Hooks.on("canvasReady", installLegacyGridMeasurement);
