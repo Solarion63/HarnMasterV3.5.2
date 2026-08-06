@@ -27,6 +27,30 @@ async function playInjuryAudio() {
   }
 }
 
+DiceHM3._calcLocation = function calcLocation(location, aim, items) {
+  const normalizedAim = String(aim ?? "mid").toLowerCase();
+  const armorLocations = items.filter(item => item.type === "armorlocation");
+  if (!armorLocations.length) return null;
+
+  if (String(location).toLowerCase() !== "random") {
+    return armorLocations.find(item => item.name === location) ?? null;
+  }
+
+  const totalWeight = armorLocations.reduce(
+    (total, item) => total + (Number(item.system.probWeight?.[normalizedAim]) || 0),
+    0
+  );
+  if (totalWeight <= 0) return armorLocations[0];
+
+  let rollWeight = Math.floor(foundry.dice.MersenneTwister.random() * totalWeight) + 1;
+  for (const item of armorLocations) {
+    rollWeight -= Number(item.system.probWeight?.[normalizedAim]) || 0;
+    if (rollWeight <= 0) return item;
+  }
+
+  return armorLocations.at(-1) ?? null;
+};
+
 DiceHM3.injuryRoll = async function injuryRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker({ actor: rollData.actor });
 
