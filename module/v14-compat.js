@@ -19,7 +19,8 @@ const legacyGlobals = {
   renderTemplate: foundry.applications.handlebars.renderTemplate,
   Actors: foundry.documents.collections.Actors,
   Items: foundry.documents.collections.Items,
-  DocumentSheetConfig: foundry.applications.apps.DocumentSheetConfig
+  DocumentSheetConfig: foundry.applications.apps.DocumentSheetConfig,
+  MersenneTwister: foundry.dice.MersenneTwister
 };
 
 for (const [name, implementation] of Object.entries(legacyGlobals)) {
