@@ -1,0 +1,233 @@
+import * as utility from "../utility.js";
+
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+const { ActorSheetV2 } = foundry.applications.sheets;
+const { FormDataExtended } = foundry.applications.ux;
+
+/**
+ * Shared Foundry VTT v14 Actor sheet foundation.
+ *
+ * This first stage migrates rendering, context preparation, tabs, limited-sheet
+ * selection, and persistence. Action handlers, rolls, drag-and-drop, inventory
+ * transfers, and filtering are intentionally migrated in later commits.
+ */
+export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorSheetV2) {
+  static DEFAULT_OPTIONS = {
+    classes: ["hm3", "sheet", "actor"],
+    position: {
+      width: 780,
+      height: 640
+    }
+  };
+
+  /** The initial legacy tab for this Actor sheet. */
+  static INITIAL_TAB = "facade";
+
+  /** @override */
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+    const actor = this.actor;
+    const actorObject = actor.toObject(false);
+
+    Object.assign(context, {
+      owner: actor.isOwner,
+      limited: actor.limited,
+      editable: this.isEditable,
+      cssClass: actor.isOwner ? "editable" : "locked",
+      isCharacter: actor.type === "character",
+      isCreature: actor.type === "creature",
+      isContainer: actor.type === "container",
+      config: CONFIG.HM3,
+      customSunSign: game.settings.get("hm3", "customSunSign"),
+      actor,
+      items: Array.from(actor.items).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)),
+      adata: actor.system,
+      labels: actor.labels ?? {},
+      filters: this._filters ?? {},
+      macroTypes: foundry.utils.deepClone(game.system.documentTypes.Macro ?? []),
+      dtypes: ["String", "Number", "Boolean"],
+      containers: {},
+      gearTypes: {
+        armorgear: "Armor",
+        weapongear: "Melee Wpn",
+        missilegear: "Missile Wpn",
+        miscgear: "Misc. Gear",
+        containergear: "Container"
+      },
+      effects: {}
+    });
+
+    // Preserve legacy templates which access additional top-level Actor data.
+    Object.assign(context.actor, actorObject);
+
+    this.#prepareContainers(context);
+    await this.#prepareEffects(context);
+
+    return context;
+  }
+
+  /** @override */
+  _onRender(context, options) {
+    super._onRender(context, options);
+
+    const root = this.element;
+    if (!root) return;
+
+    this.#activateTabs(root);
+
+    const form = root.querySelector("form");
+    if (form && this.isEditable) {
+      form.addEventListener("change", () => this.#persistForm(form));
+    }
+
+    root.querySelectorAll("input[type='text']").forEach(input => {
+      input.addEventListener("click", event => event.currentTarget.select());
+    });
+  }
+
+  /** @override */
+  async _preClose(options) {
+    const form = this.element?.querySelector("form");
+    if (form && this.isEditable) await this.#persistForm(form);
+    return super._preClose(options);
+  }
+
+  async #persistForm(form) {
+    const formData = new FormDataExtended(form);
+    const updateData = foundry.utils.expandObject(formData.object);
+    await this.actor.update(updateData);
+  }
+
+  #prepareContainers(context) {
+    let capacityMax = 0;
+    let capacityValue = 0;
+
+    if (this.actor.type === "character") {
+      capacityMax = (context.adata.endurance ?? 0) * 10;
+      capacityValue = context.adata.eph?.totalGearWeight ?? 0;
+    } else if (this.actor.type === "creature") {
+      capacityMax = (context.adata.loadRating ?? 0) + ((context.adata.endurance ?? 0) * 10);
+      capacityValue = context.adata.eph?.totalGearWeight ?? 0;
+    } else if (this.actor.type === "container") {
+      capacityMax = context.adata.capacity?.max ?? 0;
+      capacityValue = context.adata.capacity?.value ?? 0;
+    }
+
+    context.containers["on-person"] = {
+      name: "On Person",
+      type: "containergear",
+      system: {
+        container: "on-person",
+        capacity: {
+          max: capacityMax,
+          value: capacityValue
+        }
+      }
+    };
+
+    for (const item of this.actor.items) {
+      if (item.type === "containergear") context.containers[item.id] = item;
+    }
+  }
+
+  async #prepareEffects(context) {
+    for (const effect of this.actor.effects) {
+      await effect._getSourceName?.();
+      context.effects[effect.id] = {
+        id: effect.id,
+        label: effect.name,
+        sourceName: effect.sourceName,
+        duration: utility.aeDuration(effect),
+        source: effect,
+        changes: utility.aeChanges(effect),
+        disabled: effect.disabled
+      };
+    }
+  }
+
+  #activateTabs(root) {
+    const tabs = Array.from(root.querySelectorAll(".sheet-tabs [data-tab]"));
+    const panels = Array.from(root.querySelectorAll(".sheet-body [data-tab]"));
+    if (!tabs.length || !panels.length) return;
+
+    const activate = tabId => {
+      for (const tab of tabs) tab.classList.toggle("active", tab.dataset.tab === tabId);
+      for (const panel of panels) panel.classList.toggle("active", panel.dataset.tab === tabId);
+    };
+
+    for (const tab of tabs) {
+      tab.addEventListener("click", event => {
+        event.preventDefault();
+        activate(tab.dataset.tab);
+      });
+    }
+
+    const activeTab = tabs.find(tab => tab.classList.contains("active"))?.dataset.tab
+      ?? this.constructor.INITIAL_TAB
+      ?? tabs[0].dataset.tab;
+    activate(activeTab);
+  }
+}
+
+export class HarnMasterCharacterSheetV2 extends HarnMasterActorSheetV2 {
+  static DEFAULT_OPTIONS = {
+    classes: ["hm3", "sheet", "actor", "character"],
+    position: { width: 780, height: 640 }
+  };
+
+  static PARTS = {
+    main: {
+      template: "systems/hm3/templates/actor/character-sheet.html"
+    }
+  };
+
+  /** @override */
+  async _renderHTML(context, options) {
+    this.constructor.PARTS.main.template = (!game.user.isGM && this.actor.limited)
+      ? "systems/hm3/templates/actor/character-limited.html"
+      : "systems/hm3/templates/actor/character-sheet.html";
+    return super._renderHTML(context, options);
+  }
+}
+
+export class HarnMasterCreatureSheetV2 extends HarnMasterActorSheetV2 {
+  static DEFAULT_OPTIONS = {
+    classes: ["hm3", "sheet", "actor", "creature"],
+    position: { width: 780, height: 640 }
+  };
+
+  static PARTS = {
+    main: {
+      template: "systems/hm3/templates/actor/creature-sheet.html"
+    }
+  };
+
+  /** @override */
+  async _renderHTML(context, options) {
+    this.constructor.PARTS.main.template = (!game.user.isGM && this.actor.limited)
+      ? "systems/hm3/templates/actor/creature-limited.html"
+      : "systems/hm3/templates/actor/creature-sheet.html";
+    return super._renderHTML(context, options);
+  }
+}
+
+export class HarnMasterContainerSheetV2 extends HarnMasterActorSheetV2 {
+  static DEFAULT_OPTIONS = {
+    classes: ["hm3", "sheet", "actor", "container"],
+    position: { width: 700, height: 640 }
+  };
+
+  static PARTS = {
+    main: {
+      template: "systems/hm3/templates/actor/container-sheet.html"
+    }
+  };
+
+  /** @override */
+  async _renderHTML(context, options) {
+    this.constructor.PARTS.main.template = (!game.user.isGM && this.actor.limited)
+      ? "systems/hm3/templates/actor/container-limited.html"
+      : "systems/hm3/templates/actor/container-sheet.html";
+    return super._renderHTML(context, options);
+  }
+}
