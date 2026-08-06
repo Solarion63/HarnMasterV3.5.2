@@ -26,23 +26,24 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
   /** @override */
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-    const actor = this.actor;
-    const actorObject = actor.toObject(false);
+    const actorDocument = this.actor;
+    const actor = actorDocument.toObject(false);
 
     Object.assign(context, {
-      owner: actor.isOwner,
-      limited: actor.limited,
+      owner: actorDocument.isOwner,
+      limited: actorDocument.limited,
       editable: this.isEditable,
-      cssClass: actor.isOwner ? "editable" : "locked",
-      isCharacter: actor.type === "character",
-      isCreature: actor.type === "creature",
-      isContainer: actor.type === "container",
+      cssClass: actorDocument.isOwner ? "editable" : "locked",
+      isCharacter: actorDocument.type === "character",
+      isCreature: actorDocument.type === "creature",
+      isContainer: actorDocument.type === "container",
       config: CONFIG.HM3,
       customSunSign: game.settings.get("hm3", "customSunSign"),
       actor,
-      items: Array.from(actor.items).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)),
-      adata: actor.system,
-      labels: actor.labels ?? {},
+      actorDocument,
+      items: Array.from(actorDocument.items).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)),
+      adata: actorDocument.system,
+      labels: actorDocument.labels ?? {},
       filters: this._filters ?? {},
       macroTypes: foundry.utils.deepClone(game.system.documentTypes.Macro ?? []),
       dtypes: ["String", "Number", "Boolean"],
@@ -56,9 +57,6 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
       },
       effects: {}
     });
-
-    // Preserve legacy templates which access additional top-level Actor data.
-    Object.assign(context.actor, actorObject);
 
     this.#prepareContainers(context);
     await this.#prepareEffects(context);
