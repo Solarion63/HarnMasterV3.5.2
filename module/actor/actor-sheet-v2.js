@@ -3,13 +3,13 @@ import * as utility from "../utility.js";
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
+const { renderTemplate } = foundry.applications.handlebars;
 
 /**
  * Shared Foundry VTT v14 Actor sheet foundation.
  *
- * This first stage migrates rendering, context preparation, tabs, limited-sheet
- * selection, and persistence. Action handlers, rolls, drag-and-drop, inventory
- * transfers, and filtering are intentionally migrated in later commits.
+ * This stage migrates rendering, persistence, tabs, and basic owned Item
+ * controls. Rolls, filters, effects, and drag-and-drop are migrated separately.
  */
 export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorSheetV2) {
   static DEFAULT_OPTIONS = {
@@ -23,7 +23,6 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     }
   };
 
-  /** The initial legacy tab for this Actor sheet. */
   static INITIAL_TAB = "facade";
 
   /** @override */
@@ -84,6 +83,20 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     root.querySelectorAll("input[type='text']").forEach(input => {
       input.addEventListener("click", event => event.currentTarget.select());
     });
+
+    if (!this.isEditable) return;
+
+    root.querySelectorAll(".item-create").forEach(control => {
+      control.addEventListener("click", event => this.#onItemCreate(event));
+    });
+
+    root.querySelectorAll(".item-edit").forEach(control => {
+      control.addEventListener("click", event => this.#onItemEdit(event));
+    });
+
+    root.querySelectorAll(".item-delete").forEach(control => {
+      control.addEventListener("click", event => this.#onItemDelete(event));
+    });
   }
 
   /** @override */
@@ -97,6 +110,123 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     const formData = new FormDataExtended(form);
     const updateData = foundry.utils.expandObject(formData.object);
     await this.actor.update(updateData);
+  }
+
+  #getItemFromControl(control) {
+    const row = control.closest(".item");
+    const itemId = row?.dataset.itemId;
+    return itemId ? this.actor.items.get(itemId) : null;
+  }
+
+  async #onItemEdit(event) {
+    event.preventDefault();
+    const item = this.#getItemFromControl(event.currentTarget);
+    if (!item) {
+      ui.notifications.warn("The selected Item could not be found on this Actor.");
+      return null;
+    }
+
+    return item.sheet.render(true);
+  }
+
+  async #onItemDelete(event) {
+    event.preventDefault();
+    const item = this.#getItemFromControl(event.currentTarget);
+    if (!item) {
+      ui.notifications.warn("The selected Item could not be found on this Actor.");
+      return null;
+    }
+
+    return item.delete();
+  }
+
+  async #onItemCreate(event) {
+    event.preventDefault();
+    const dataset = foundry.utils.deepClone(event.currentTarget.dataset);
+
+    let extraList = [];
+    let extraLabel = null;
+    let name;
+
+    if (dataset.type === "skill" && dataset.skilltype) {
+      name = utility.createUniqueName(`New ${dataset.skilltype} Skill`, this.actor.itemTypes.skill);
+    } else if (dataset.type === "trait" && dataset.traittype) {
+      name = utility.createUniqueName(`New ${dataset.traittype} Trait`, this.actor.itemTypes.trait);
+    } else if (dataset.type?.endsWith("gear")) {
+      name = "New Gear";
+      extraList = ["Misc. Gear", "Armor", "Melee Weapon", "Missile Weapon", "Container"];
+      extraLabel = "Gear Type";
+    } else {
+      const names = {
+        armorlocation: ["New Location", "armorlocation"],
+        injury: ["New Injury", "injury"],
+        spell: ["New Spell", "spell"],
+        invocation: ["New Invocation", "invocation"],
+        psionic: ["New Psionic", "psionic"]
+      };
+      const definition = names[dataset.type];
+      if (!definition) {
+        console.error(`HM3 | Can't create item: unknown item type '${dataset.type}'`);
+        return null;
+      }
+      name = utility.createUniqueName(definition[0], this.actor.itemTypes[definition[1]]);
+    }
+
+    const content = await renderTemplate("systems/hm3/templates/dialog/create-item.html", {
+      type: dataset.type,
+      title: name,
+      placeholder: name,
+      extraList,
+      extraLabel
+    });
+
+    return foundry.appv1.api.Dialog.prompt({
+      title: name,
+      content,
+      label: "Create",
+      callback: async html => {
+        const root = html instanceof HTMLElement ? html : html?.[0];
+        const form = root?.querySelector("#create-item");
+        if (!form) throw new Error("HM3 | Create Item dialog form was not found.");
+
+        const formData = new FormDataExtended(form).object;
+        const updateData = {
+          name: formData.name || name,
+          type: dataset.type
+        };
+        const extraValue = formData.extra_value;
+
+        if (dataset.type === "gear") {
+          const gearTypes = {
+            Container: "containergear",
+            Armor: "armorgear",
+            "Melee Weapon": "weapongear",
+            "Missile Weapon": "missilegear",
+            "Misc. Gear": "miscgear"
+          };
+          updateData.type = gearTypes[extraValue] ?? "miscgear";
+        }
+
+        if (dataset.type === "skill") updateData["system.type"] = dataset.skilltype;
+        else if (dataset.type === "trait") updateData["system.type"] = dataset.traittype;
+        else if (dataset.type?.endsWith("gear")) {
+          updateData["system.container"] = dataset.containerId ?? "on-person";
+        } else if (dataset.type === "spell") updateData["system.convocation"] = extraValue;
+        else if (dataset.type === "invocation") updateData["system.diety"] = extraValue;
+
+        const item = await this.actor.createEmbeddedDocuments("Item", [updateData]);
+        const created = item[0];
+        if (!created) {
+          throw new Error(
+            `Error creating Item '${updateData.name}' of type '${updateData.type}' on Actor '${this.actor.name}'.`
+          );
+        }
+
+        created.sheet.render(true);
+        return created;
+      },
+      options: { jQuery: false }
+    });
   }
 
   #prepareContainers(context) {
@@ -182,7 +312,6 @@ export class HarnMasterCharacterSheetV2 extends HarnMasterActorSheetV2 {
     }
   };
 
-  /** @override */
   async _renderHTML(context, options) {
     this.constructor.PARTS.main.template = (!game.user.isGM && this.actor.limited)
       ? "systems/hm3/templates/actor/character-limited.html"
@@ -203,7 +332,6 @@ export class HarnMasterCreatureSheetV2 extends HarnMasterActorSheetV2 {
     }
   };
 
-  /** @override */
   async _renderHTML(context, options) {
     this.constructor.PARTS.main.template = (!game.user.isGM && this.actor.limited)
       ? "systems/hm3/templates/actor/creature-limited.html"
@@ -224,7 +352,6 @@ export class HarnMasterContainerSheetV2 extends HarnMasterActorSheetV2 {
     }
   };
 
-  /** @override */
   async _renderHTML(context, options) {
     this.constructor.PARTS.main.template = (!game.user.isGM && this.actor.limited)
       ? "systems/hm3/templates/actor/container-limited.html"
