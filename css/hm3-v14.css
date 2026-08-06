@@ -2,7 +2,7 @@
  *
  * The original HM3 stylesheet targets the legacy ApplicationV1 window
  * hierarchy. These rules adapt that visual language to ApplicationV2 Item
- * sheets without changing the existing subtype templates.
+ * and Actor sheets without changing the existing templates.
  */
 
 .application.hm3.sheet.item {
@@ -262,4 +262,129 @@
   display: block;
   min-height: 240px;
   height: 100%;
+}
+
+/* ActorSheetV2 wrapper compatibility */
+.application.hm3.sheet.actor {
+  min-width: 620px;
+  min-height: 480px;
+}
+
+.application.hm3.sheet.actor .window-content {
+  overflow: hidden;
+  padding: 0;
+  background: url("../ui/parchment.jpg") repeat;
+  color: #191813;
+  font-family: "Roboto", sans-serif;
+  font-size: 13px;
+}
+
+.application.hm3.sheet.actor .window-content > [data-application-part="main"] {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.application.hm3.sheet.actor [data-application-part="main"] > form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.application.hm3.sheet.actor .sheet-header {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.application.hm3.sheet.actor .sheet-header > .flexrow {
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.application.hm3.sheet.actor .sheet-header .profile-img {
+  flex: 0 0 100px;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.application.hm3.sheet.actor .sheet-header .header-fields {
+  min-width: 0;
+}
+
+.application.hm3.sheet.actor .sheet-tabs {
+  display: flex;
+  flex: 0 0 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 4px 0;
+  border-top: 1px solid #7a7971;
+  border-bottom: 1px solid #7a7971;
+}
+
+.application.hm3.sheet.actor .sheet-tabs [data-tab] {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  color: #191813;
+  cursor: pointer;
+  font-family: "Modesto Condensed", "Palatino Linotype", serif;
+  font-size: 17px;
+  font-weight: 700;
+  text-shadow: none;
+}
+
+.application.hm3.sheet.actor .sheet-tabs [data-tab].active {
+  border-bottom: 3px solid #000;
+  font-size: 20px;
+}
+
+.application.hm3.sheet.actor .sheet-body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.application.hm3.sheet.actor .sheet-body > .tab {
+  display: none;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding-right: 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.application.hm3.sheet.actor .sheet-body > .tab.active {
+  display: block;
+}
+
+.application.hm3.sheet.actor input,
+.application.hm3.sheet.actor select,
+.application.hm3.sheet.actor textarea {
+  color: #191813;
+}
+
+.application.hm3.sheet.actor .editor,
+.application.hm3.sheet.actor prose-mirror {
+  display: block;
+  min-height: 200px;
 }
