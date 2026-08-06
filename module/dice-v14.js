@@ -20,15 +20,8 @@ function dieValues(roll) {
 }
 
 function currentMessageMode() {
-  const legacyMode = game.settings.get("core", "rollMode");
-  const modeMap = {
-    publicroll: "public",
-    gmroll: "gm",
-    blindroll: "blind",
-    selfroll: "self"
-  };
-  const candidate = modeMap[legacyMode] ?? legacyMode ?? "public";
-  return candidate in CONFIG.ChatMessage.modes ? candidate : "public";
+  const mode = game.settings.get("core", "messageMode") ?? "public";
+  return mode in CONFIG.ChatMessage.modes ? mode : "public";
 }
 
 function actorForRoll(rollData, speaker) {
