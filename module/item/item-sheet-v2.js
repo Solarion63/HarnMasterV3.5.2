@@ -3,6 +3,7 @@ import * as utility from "../utility.js";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ItemSheetV2 } = foundry.applications.sheets;
+const { FormDataExtended } = foundry.applications.ux;
 
 /**
  * Shared Foundry VTT v14 Item sheet implementation.
@@ -17,11 +18,6 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     position: {
       width: 560,
       height: 550
-    },
-    form: {
-      closeOnSubmit: false,
-      submitOnChange: true,
-      handler: HarnMasterItemSheetV2.#onSubmitForm
     }
   };
 
@@ -69,6 +65,11 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     this.#activateTabs(root);
 
+    const form = root.querySelector("form");
+    if (form && this.isEditable) {
+      form.addEventListener("change", () => this.#persistForm(form));
+    }
+
     if (!this.isEditable) return;
 
     root.querySelectorAll("input[type='text']").forEach(input => {
@@ -102,6 +103,19 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     root.querySelectorAll(".armorgear-location-delete").forEach(control => {
       control.addEventListener("click", event => this.#deleteArmorLocation(event));
     });
+  }
+
+  /** @override */
+  async _preClose(options) {
+    const form = this.element?.querySelector("form");
+    if (form && this.isEditable) await this.#persistForm(form);
+    return super._preClose(options);
+  }
+
+  async #persistForm(form) {
+    const formData = new FormDataExtended(form);
+    const updateData = foundry.utils.expandObject(formData.object);
+    await this.item.update(updateData);
   }
 
   #prepareAssociatedSkills(context, actor) {
@@ -184,7 +198,8 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
   async #addArmorLocation(event) {
     event.preventDefault();
-    await this.submit();
+    const form = this.element?.querySelector("form");
+    if (form) await this.#persistForm(form);
 
     const location = event.currentTarget.dataset.location;
     const locations = Array.from(this.item.system.locations ?? []);
@@ -195,7 +210,8 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
   async #deleteArmorLocation(event) {
     event.preventDefault();
-    await this.submit();
+    const form = this.element?.querySelector("form");
+    if (form) await this.#persistForm(form);
 
     const location = event.currentTarget.dataset.location;
     const locations = Array.from(this.item.system.locations ?? []);
@@ -203,17 +219,6 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     if (index >= 0) locations.splice(index, 1);
 
     return this.item.update({ "system.locations": locations });
-  }
-
-  static async #onSubmitForm(event, form, formData) {
-    event?.preventDefault?.();
-    const updateData = foundry.utils.expandObject(formData.object);
-    await this.item.update(updateData);
-
-    // Checkbox changes can reveal or hide conditional template sections.
-    if (event?.target?.type === "checkbox") {
-      return this.render({ force: true });
-    }
   }
 }
 
