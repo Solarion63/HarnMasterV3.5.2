@@ -14,6 +14,7 @@
 .application.hm3.sheet.actor .window-content,
 .application.hm3.sheet.actor .window-content * {
   color: #191813;
+  text-shadow: none;
 }
 
 .application.hm3.sheet.actor [data-application-part="main"] > form {
@@ -47,6 +48,7 @@
   font-size: 30px;
   font-weight: 700;
   text-transform: uppercase;
+  text-shadow: none;
 }
 
 .application.hm3.sheet.actor .sheet-header label,
@@ -55,6 +57,7 @@
 .application.hm3.sheet.actor .sheet-header .statend {
   color: #191813;
   font-weight: 700;
+  text-shadow: none;
 }
 
 .application.hm3.sheet.actor .sheet-tabs {
@@ -73,11 +76,17 @@
   color: #191813;
   font-size: 18px;
   text-transform: uppercase;
+  text-shadow: none;
+}
+
+.application.hm3.sheet.actor .sheet-tabs [data-tab]:hover,
+.application.hm3.sheet.actor .sheet-tabs [data-tab].active {
+  color: #191813;
+  text-shadow: none;
 }
 
 .application.hm3.sheet.actor .sheet-tabs [data-tab].active {
   border-bottom-color: #000;
-  color: #191813;
   font-size: 22px;
 }
 
@@ -91,6 +100,7 @@
   border: 1px solid #7a7971;
   background: rgba(0, 0, 0, 0.05);
   color: #191813;
+  text-shadow: none;
 }
 
 .application.hm3.sheet.actor input::placeholder,
@@ -110,15 +120,19 @@
 }
 
 .application.hm3.sheet.actor .ability-name,
+.application.hm3.sheet.actor .box-title,
+.application.hm3.sheet.actor .ability-value,
+.application.hm3.sheet.actor .trait-header,
+.application.hm3.sheet.actor .biography-header {
+  color: #191813;
+  text-shadow: none;
+}
+
+.application.hm3.sheet.actor .ability-name,
 .application.hm3.sheet.actor .box-title {
-  color: #f2ead2;
   font-family: "Modesto Condensed", "Palatino Linotype", serif;
   font-weight: 700;
   text-transform: uppercase;
-}
-
-.application.hm3.sheet.actor .ability-value {
-  color: #f2ead2;
 }
 
 .application.hm3.sheet.actor .tab.profile h1,
@@ -127,9 +141,10 @@
 .application.hm3.sheet.actor .tab.profile .section-title,
 .application.hm3.sheet.actor .tab.profile .biography-title,
 .application.hm3.sheet.actor .tab.profile .life-story-title {
-  color: #f2ead2;
+  color: #191813;
   font-family: "Modesto Condensed", "Palatino Linotype", serif;
   text-transform: uppercase;
+  text-shadow: none;
 }
 
 .application.hm3.sheet.actor .tab.profile h1,
@@ -147,6 +162,7 @@
 .application.hm3.sheet.actor .tab.profile table th {
   color: #191813;
   border-color: #191813;
+  text-shadow: none;
 }
 
 .application.hm3.sheet.actor .trait-list,
