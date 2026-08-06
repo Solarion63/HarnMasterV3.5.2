@@ -44,7 +44,7 @@ function bindCombatControls(sheet, root) {
   bind(sheet, root, ".damage-roll", "Generic damage roll", () =>
     macros.genericDamageRoll(sheet.actor));
 
-  bind(sheet, root, ".weapon-attack-roll", "Weapon attack roll", (event, control) => {
+  bind(sheet, root, ".melee-weapon-attack, .weapon-attack-roll", "Weapon attack roll", (event, control) => {
     const item = itemFromControl(sheet, control);
     return macros.weaponAttackRoll(item?.uuid, fastForward(event), sheet.actor);
   });
@@ -59,7 +59,7 @@ function bindCombatControls(sheet, root) {
     return macros.weaponDamageRoll(item?.uuid, control.dataset.aspect, sheet.actor);
   });
 
-  bind(sheet, root, ".missile-attack-roll", "Missile attack roll", (_event, control) => {
+  bind(sheet, root, ".missile-weapon-attack, .missile-attack-roll", "Missile attack roll", (_event, control) => {
     const item = itemFromControl(sheet, control);
     return macros.missileAttackRoll(item?.uuid, sheet.actor);
   });
