@@ -119,6 +119,21 @@ Hooks.once("init", async function () {
 
     Handlebars.registerHelper("toLowerCase", value => value.toLowerCase());
 
+    // Foundry v14 no longer supplies the legacy block-style select helper.
+    // Retain it while the existing HM3 templates are migrated incrementally.
+    Handlebars.registerHelper("select", function (selectedValue, options) {
+        const rendered = options.fn(this);
+        const escapedValue = String(selectedValue ?? "")
+            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const optionPattern = new RegExp(
+            `(<option\\b[^>]*\\bvalue=(?:"${escapedValue}"|'${escapedValue}')[^>]*)(>)`,
+            "i"
+        );
+        return new Handlebars.SafeString(
+            rendered.replace(optionPattern, "$1 selected$2")
+        );
+    });
+
     // Foundry v14 uses fontDefinitions for both canvas and editor fonts.
     Object.assign(CONFIG.fontDefinitions, {
         Lakise: {
