@@ -130,14 +130,99 @@
 }
 
 .application.hm3.sheet.actor .ability-scores {
+  flex: 0 0 80px;
   justify-content: center;
   gap: 0;
-  margin: 8px 0 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .application.hm3.sheet.actor .ability-scores .ability {
+  display: block;
   flex: 0 0 80px;
   min-width: 80px;
+  padding: 3px 0 0;
+  border: 2px groove #eeede0;
+  text-align: center;
+}
+
+.application.hm3.sheet.actor .ability-scores .ability-name {
+  margin: 0 0 2px;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.application.hm3.sheet.actor .ability-scores .ability-value {
+  margin: 0 0 2px;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.application.hm3.sheet.actor .ability-scores .ability-modifiers {
+  align-items: stretch;
+  min-height: 25px;
+  border-top: 1px solid #191813;
+}
+
+.application.hm3.sheet.actor .ability-scores .item-dice {
+  display: flex;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+}
+
+.application.hm3.sheet.actor .ability-scores .item-dice a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  min-width: 22px;
+  height: 24px;
+  line-height: 24px;
+}
+
+.application.hm3.sheet.actor .ability-scores .ability-box {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+}
+
+.application.hm3.sheet.actor .ability-scores input.ability-base {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  border-right: 1px solid rgba(25, 24, 19, 0.35);
+  border-left: 1px solid rgba(25, 24, 19, 0.35);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+  text-align: center;
+  appearance: textfield;
+}
+
+.application.hm3.sheet.actor .ability-scores input.ability-base::-webkit-inner-spin-button,
+.application.hm3.sheet.actor .ability-scores input.ability-base::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.application.hm3.sheet.actor .ability-scores input.ability-base:hover,
+.application.hm3.sheet.actor .ability-scores input.ability-base:focus {
+  border-top: 0;
+  border-right-color: #191813;
+  border-bottom: 0;
+  border-left-color: #191813;
+  outline: none;
+  box-shadow: inset 0 0 5px rgba(139, 26, 18, 0.65);
 }
 
 .application.hm3.sheet.actor .ability-name,
