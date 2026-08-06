@@ -14,6 +14,9 @@ const { FormDataExtended } = foundry.applications.ux;
 export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorSheetV2) {
   static DEFAULT_OPTIONS = {
     classes: ["hm3", "sheet", "actor"],
+    window: {
+      resizable: true
+    },
     position: {
       width: 780,
       height: 640
