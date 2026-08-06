@@ -170,3 +170,27 @@
 .application.hm3.sheet.actor .item-list {
   color: #191813;
 }
+
+/* Foundry v14 globally disables pointer events on elements using the generic
+ * .disabled class. HM3 uses that class to describe an inactive Active Effect,
+ * but its row controls must remain available so the effect can be re-enabled,
+ * edited, or deleted.
+ */
+.application.hm3.sheet.actor .effect.disabled {
+  pointer-events: auto;
+  opacity: 0.55;
+}
+
+.application.hm3.sheet.actor .effect.disabled .effect-controls,
+.application.hm3.sheet.actor .effect.disabled .effect-control {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.application.hm3.sheet.actor .effect .effect-control[data-action="toggle"] i {
+  color: #7a7971;
+}
+
+.application.hm3.sheet.actor .effect:not(.disabled) .effect-control[data-action="toggle"] i {
+  color: #44191a;
+}
