@@ -149,8 +149,6 @@
   text-shadow: none;
 }
 
-.application.hm3.sheet.actor .ability-name,
-.application.hm3.sheet.actor .box-title,
 .application.hm3.sheet.actor .trait-header,
 .application.hm3.sheet.actor .biography-header,
 .application.hm3.sheet.actor .items-header h3,
@@ -161,6 +159,8 @@
   text-transform: uppercase;
 }
 
+.application.hm3.sheet.actor .ability-name,
+.application.hm3.sheet.actor .box-title,
 .application.hm3.sheet.actor .ability-value,
 .application.hm3.sheet.actor .ability-mod,
 .application.hm3.sheet.actor .ability-score,
@@ -169,6 +169,12 @@
 .application.hm3.sheet.actor .traits-list,
 .application.hm3.sheet.actor .item-list {
   font-family: "Roboto", sans-serif;
+}
+
+.application.hm3.sheet.actor .ability-name,
+.application.hm3.sheet.actor .box-title {
+  font-weight: 500;
+  text-transform: none;
 }
 
 .application.hm3.sheet.actor .tab.profile h1,
