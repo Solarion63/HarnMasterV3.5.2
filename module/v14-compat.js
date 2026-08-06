@@ -19,8 +19,7 @@ const legacyGlobals = {
   renderTemplate: foundry.applications.handlebars.renderTemplate,
   Actors: foundry.documents.collections.Actors,
   Items: foundry.documents.collections.Items,
-  DocumentSheetConfig: foundry.applications.apps.DocumentSheetConfig,
-  MersenneTwister: foundry.dice.MersenneTwister
+  DocumentSheetConfig: foundry.applications.apps.DocumentSheetConfig
 };
 
 for (const [name, implementation] of Object.entries(legacyGlobals)) {
@@ -90,8 +89,9 @@ Hooks.once("ready", installLegacyGridMeasurement);
 
 /**
  * Translate the small subset of legacy ChatMessage creation fields still used
- * by automated HM3 combat cards. This avoids modifying Foundry's frozen CONST
- * object and can be removed when combat.js is fully migrated.
+ * by unmigrated HM3 roll workflows. This avoids modifying Foundry's frozen
+ * CONST object and can be removed after those remaining workflows use native
+ * v14 message fields.
  */
 const originalChatMessageCreate = ChatMessage.create.bind(ChatMessage);
 ChatMessage.create = function hm3CreateChatMessage(data, options = {}) {
