@@ -227,3 +227,33 @@ DiceHM3.d6Roll = async function d6Roll(rollData) {
   await createRollMessage({ speaker, content, roll: roll.rollObj });
   return templateData;
 };
+
+DiceHM3.sdrRoll = async function sdrRoll(item) {
+  const speaker = ChatMessage.getSpeaker({ actor: item.actor });
+  const skillBase = Number(item.system.skillBase?.value) || 0;
+  const roll = await new Roll("1d100 + @sb", { sb: skillBase }).evaluate();
+  const isSuccess = roll.total > Number(item.system.masteryLevel);
+  const specialization = item.name.match(/\(([^)]+)\)/);
+
+  const templateData = {
+    title: `${item.name} Skill Development Roll`,
+    origTarget: item.system.masteryLevel,
+    modifier: 0,
+    modifiedTarget: item.system.masteryLevel,
+    isSuccess,
+    rollValue: roll.total,
+    rollResult: roll.result,
+    showResult: true,
+    description: isSuccess ? "Success" : "Failure",
+    notes: "",
+    sdrIncr: isSuccess ? (specialization ? 2 : 1) : 0
+  };
+
+  if (specialization && isSuccess) {
+    templateData.notes = `Since this is a specialized skill of ${specialization[1]}, ML will be increased by 2`;
+  }
+
+  const content = await renderTemplate("systems/hm3/templates/chat/standard-test-card.html", templateData);
+  await createRollMessage({ speaker, content, roll });
+  return templateData;
+};
