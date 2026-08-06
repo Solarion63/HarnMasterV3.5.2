@@ -9,9 +9,11 @@ export async function onManageActiveEffect(event, owner) {
     event.preventDefault();
     const a = event.currentTarget;
     const li = a.closest("li");
-    const effect = li.dataset.effectId ? owner.effects.get(li.dataset.effectId) : null;
+    const effectId = li?.dataset.effectId;
+    const effect = effectId ? owner.effects.get(effectId) : null;
+
     switch (a.dataset.action) {
-        case "create":
+        case "create": {
             const dlgTemplate = "systems/hm3/templates/dialog/active-effect-start.html";
             const dialogData = {
                 gameTime: game.time.worldTime
@@ -22,21 +24,23 @@ export async function onManageActiveEffect(event, owner) {
                 dialogData.combatTurn = game.combat.turn;
             }
             const html = await renderTemplate(dlgTemplate, dialogData);
-    
-            // Create the dialog window
+
             return Dialog.prompt({
                 title: "Select Start Time",
                 content: html,
                 label: "OK",
                 callback: async (html) => {
-                    const form = html.querySelector('#active-effect-start');
+                    const root = html instanceof HTMLElement ? html : html?.[0];
+                    const form = root?.querySelector('#active-effect-start');
+                    if (!form) throw new Error("HM3 | Active Effect start form was not found.");
+
                     const fd = new FormDataExtended(form);
                     const formdata = fd.object;
                     const startType = formdata.startType;
 
                     const aeData = {
-                        label: "New Effect",
-                        icon: "icons/svg/aura.svg",
+                        name: "New Effect",
+                        img: "icons/svg/aura.svg",
                         origin: owner.uuid
                     };
                     if (startType === 'nowGameTime') {
@@ -53,27 +57,30 @@ export async function onManageActiveEffect(event, owner) {
                 },
                 options: { jQuery: false }
             });
+        }
+
         case "edit":
-            return effect.sheet.render(true);
+            return effect?.sheet.render(true);
+
         case "delete":
-            return effect.delete();
-        case "toggle":
+            return effect?.delete();
+
+        case "toggle": {
+            if (!effect) return null;
+
             const updateData = {};
             if (effect.disabled) {
-                // Enable the Active Effect
-                updateData['disabled'] = false;
-
-                // Also set the timer to start now
+                updateData.disabled = false;
                 updateData['duration.startTime'] = game.time.worldTime;
                 if (game.combat) {
                     updateData['duration.startRound'] = game.combat.round;
                     updateData['duration.startTurn'] = game.combat.turn;
                 }
             } else {
-                // Disable the Active Effect
-                updateData['disabled'] = true;
+                updateData.disabled = true;
             }
             return effect.update(updateData);
+        }
     }
 }
 
@@ -100,8 +107,8 @@ export async function checkExpiredActiveEffects() {
 /**
  * Checks all of the active effects for a single actor and disables
  * them if their duration has expired.
- * 
- * @param {Actor} actor 
+ *
+ * @param {Actor} actor
  */
 async function disableExpiredAE(actor) {
     for (let effect of actor.effects.values()) {
