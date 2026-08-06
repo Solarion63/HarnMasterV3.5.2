@@ -1,0 +1,156 @@
+/* Foundry VTT v14 ActorSheetV2 refinements.
+ *
+ * These rules override Foundry's modern application theme where it conflicts
+ * with the original HM3 actor-sheet presentation.
+ */
+
+.application.hm3.sheet.actor {
+  --color-text-primary: #191813;
+  --color-text-secondary: #191813;
+  --color-text-light-highlight: #191813;
+  --color-border-light-primary: #7a7971;
+}
+
+.application.hm3.sheet.actor .window-content,
+.application.hm3.sheet.actor .window-content * {
+  color: #191813;
+}
+
+.application.hm3.sheet.actor [data-application-part="main"] > form {
+  padding: 0;
+}
+
+.application.hm3.sheet.actor .sheet-header {
+  padding: 8px 8px 0;
+}
+
+.application.hm3.sheet.actor .sheet-header .profile-img {
+  flex-basis: 120px;
+  width: 120px;
+  height: 120px;
+  border: 1px solid #191813;
+  object-fit: contain;
+}
+
+.application.hm3.sheet.actor .sheet-header h1.charname {
+  margin: 0;
+  border: 0;
+}
+
+.application.hm3.sheet.actor .sheet-header h1.charname input {
+  height: 54px;
+  border: 0;
+  border-bottom: 1px solid #7a7971;
+  background: transparent;
+  color: #191813;
+  font-family: "Modesto Condensed", "Palatino Linotype", serif;
+  font-size: 30px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .sheet-header label,
+.application.hm3.sheet.actor .sheet-header .label,
+.application.hm3.sheet.actor .sheet-header .stat,
+.application.hm3.sheet.actor .sheet-header .statend {
+  color: #191813;
+  font-weight: 700;
+}
+
+.application.hm3.sheet.actor .sheet-tabs {
+  flex-basis: 48px;
+  min-height: 48px;
+  margin: 8px 0 0;
+  padding: 0 24px;
+  border-top: 1px solid #7a7971;
+  border-bottom: 1px solid #7a7971;
+}
+
+.application.hm3.sheet.actor .sheet-tabs [data-tab] {
+  height: 46px;
+  margin: 0 10px;
+  border-bottom: 4px solid #b5b3a4;
+  color: #191813;
+  font-size: 18px;
+  text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .sheet-tabs [data-tab].active {
+  border-bottom-color: #000;
+  color: #191813;
+  font-size: 22px;
+}
+
+.application.hm3.sheet.actor .sheet-body > .tab {
+  padding: 8px;
+}
+
+.application.hm3.sheet.actor input,
+.application.hm3.sheet.actor select,
+.application.hm3.sheet.actor textarea {
+  border: 1px solid #7a7971;
+  background: rgba(0, 0, 0, 0.05);
+  color: #191813;
+}
+
+.application.hm3.sheet.actor input::placeholder,
+.application.hm3.sheet.actor textarea::placeholder {
+  color: rgba(25, 24, 19, 0.65);
+}
+
+.application.hm3.sheet.actor .ability-scores {
+  justify-content: center;
+  gap: 0;
+  margin: 8px 0 14px;
+}
+
+.application.hm3.sheet.actor .ability-scores .ability {
+  flex: 0 0 80px;
+  min-width: 80px;
+}
+
+.application.hm3.sheet.actor .ability-name,
+.application.hm3.sheet.actor .box-title {
+  color: #f2ead2;
+  font-family: "Modesto Condensed", "Palatino Linotype", serif;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .ability-value {
+  color: #f2ead2;
+}
+
+.application.hm3.sheet.actor .tab.profile h1,
+.application.hm3.sheet.actor .tab.profile h2,
+.application.hm3.sheet.actor .tab.profile h3,
+.application.hm3.sheet.actor .tab.profile .section-title,
+.application.hm3.sheet.actor .tab.profile .biography-title,
+.application.hm3.sheet.actor .tab.profile .life-story-title {
+  color: #f2ead2;
+  font-family: "Modesto Condensed", "Palatino Linotype", serif;
+  text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .tab.profile h1,
+.application.hm3.sheet.actor .tab.profile h2 {
+  border-bottom: 2px solid #8b1a12;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.application.hm3.sheet.actor .tab.profile table {
+  color: #191813;
+}
+
+.application.hm3.sheet.actor .tab.profile table td,
+.application.hm3.sheet.actor .tab.profile table th {
+  color: #191813;
+  border-color: #191813;
+}
+
+.application.hm3.sheet.actor .trait-list,
+.application.hm3.sheet.actor .traits-list,
+.application.hm3.sheet.actor .item-list {
+  color: #191813;
+}
