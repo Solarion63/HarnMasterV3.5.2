@@ -9,6 +9,7 @@
   --color-text-secondary: #191813;
   --color-text-light-highlight: #191813;
   --color-border-light-primary: #7a7971;
+  font-family: "Roboto", sans-serif;
 }
 
 .application.hm3.sheet.actor .window-content,
@@ -56,6 +57,7 @@
 .application.hm3.sheet.actor .sheet-header .stat,
 .application.hm3.sheet.actor .sheet-header .statend {
   color: #191813;
+  font-family: "Roboto", sans-serif;
   font-weight: 700;
   text-shadow: none;
 }
@@ -74,24 +76,43 @@
   margin: 0 10px;
   border-bottom: 4px solid #b5b3a4;
   color: #191813;
+  font-family: "Modesto Condensed", "Palatino Linotype", serif;
   font-size: 18px;
+  font-weight: 700;
   text-transform: uppercase;
   text-shadow: none;
+  transition: color 120ms ease, text-shadow 120ms ease;
 }
 
-.application.hm3.sheet.actor .sheet-tabs [data-tab]:hover,
-.application.hm3.sheet.actor .sheet-tabs [data-tab].active {
-  color: #191813;
-  text-shadow: none;
+.application.hm3.sheet.actor .sheet-tabs [data-tab]:hover {
+  color: #000;
+  text-shadow: 0 0 10px red;
 }
 
 .application.hm3.sheet.actor .sheet-tabs [data-tab].active {
   border-bottom-color: #000;
+  color: #191813;
   font-size: 22px;
+  text-shadow: none;
+}
+
+.application.hm3.sheet.actor .sheet-tabs [data-tab].active:hover {
+  color: #000;
+  text-shadow: 0 0 10px red;
 }
 
 .application.hm3.sheet.actor .sheet-body > .tab {
   padding: 8px;
+  font-family: "Roboto", sans-serif;
+}
+
+.application.hm3.sheet.actor input,
+.application.hm3.sheet.actor select,
+.application.hm3.sheet.actor textarea,
+.application.hm3.sheet.actor table,
+.application.hm3.sheet.actor .item-detail,
+.application.hm3.sheet.actor .effect-ele {
+  font-family: "Roboto", sans-serif;
 }
 
 .application.hm3.sheet.actor input,
@@ -129,10 +150,25 @@
 }
 
 .application.hm3.sheet.actor .ability-name,
-.application.hm3.sheet.actor .box-title {
+.application.hm3.sheet.actor .box-title,
+.application.hm3.sheet.actor .trait-header,
+.application.hm3.sheet.actor .biography-header,
+.application.hm3.sheet.actor .items-header h3,
+.application.hm3.sheet.actor .effect-name h3,
+.application.hm3.sheet.actor .effect-name h4 {
   font-family: "Modesto Condensed", "Palatino Linotype", serif;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .ability-value,
+.application.hm3.sheet.actor .ability-mod,
+.application.hm3.sheet.actor .ability-score,
+.application.hm3.sheet.actor .item-name h4,
+.application.hm3.sheet.actor .trait-list,
+.application.hm3.sheet.actor .traits-list,
+.application.hm3.sheet.actor .item-list {
+  font-family: "Roboto", sans-serif;
 }
 
 .application.hm3.sheet.actor .tab.profile h1,
@@ -156,6 +192,7 @@
 
 .application.hm3.sheet.actor .tab.profile table {
   color: #191813;
+  font-family: "Roboto", sans-serif;
 }
 
 .application.hm3.sheet.actor .tab.profile table td,
@@ -163,12 +200,6 @@
   color: #191813;
   border-color: #191813;
   text-shadow: none;
-}
-
-.application.hm3.sheet.actor .trait-list,
-.application.hm3.sheet.actor .traits-list,
-.application.hm3.sheet.actor .item-list {
-  color: #191813;
 }
 
 /* Foundry v14 globally disables pointer events on elements using the generic
