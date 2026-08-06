@@ -144,22 +144,43 @@ Hooks.once("init", async function () {
     });
 });
 
-function bindHm3ChatButtons(message, html, context) {
-    combat.displayChatActionButtons(message, html, context);
+function chatRenderRoots(html) {
+    if (!html) return [];
+    if (html instanceof HTMLElement || html instanceof DocumentFragment) return [html];
+    if (Array.isArray(html)) return html.filter(root => root?.querySelectorAll);
+    if (typeof html.length === "number") {
+        return Array.from(html).filter(root => root?.querySelectorAll);
+    }
+    return html.querySelectorAll ? [html] : [];
+}
 
-    const buttons = html.querySelectorAll(".hm3.chat-card .card-buttons button");
-    for (const button of buttons) {
-        if (button.dataset.hm3Bound === "1") continue;
+function bindHm3ChatButtons(message, html) {
+    const roots = chatRenderRoots(html);
+    if (!roots.length) return;
 
-        button.addEventListener("click", event => {
-            HarnMasterActor._onChatCardAction({
-                preventDefault: () => event.preventDefault(),
-                currentTarget: event.currentTarget,
-                target: event.target
+    for (const root of roots) {
+        if (!game.user.isGM) {
+            for (const button of root.querySelectorAll(".hm3.chat-card button[data-action]")) {
+                const actor = button.dataset.visibleActorId
+                    ? game.actors.get(button.dataset.visibleActorId)
+                    : null;
+                if (!actor?.isOwner) button.style.display = "none";
+            }
+        }
+
+        for (const button of root.querySelectorAll(".hm3.chat-card .card-buttons button")) {
+            if (button.dataset.hm3Bound === "1") continue;
+
+            button.addEventListener("click", event => {
+                HarnMasterActor._onChatCardAction({
+                    preventDefault: () => event.preventDefault(),
+                    currentTarget: event.currentTarget,
+                    target: event.target
+                });
             });
-        });
 
-        button.dataset.hm3Bound = "1";
+            button.dataset.hm3Bound = "1";
+        }
     }
 }
 
