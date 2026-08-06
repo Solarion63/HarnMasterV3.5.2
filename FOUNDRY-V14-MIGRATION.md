@@ -26,7 +26,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Remove obsolete global API references from system initialization.
 - [x] Remove TinyMCE-specific configuration.
 - [x] Add automated JSON and JavaScript syntax validation.
-- [ ] Confirm the system reaches the `ready` hook without errors in Foundry v14.
+- [x] Confirm the system reaches the canvas and `ready` hook in Foundry v14.365.
 
 ### Phase 2 — ApplicationV2 sheets
 
@@ -41,7 +41,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [ ] Convert Actor sheet listeners to ApplicationV2 actions and native DOM handlers.
 - [ ] Validate Item drag, drop, sorting, and container movement.
 - [ ] Convert legacy dialogs to `DialogV2` or focused ApplicationV2 dialogs.
-- [ ] Validate chat-card actions after rerender and reload.
+- [x] Validate chat-card rendering after rerender and reload.
 
 ### Phase 4 — documents and migrations
 
@@ -61,16 +61,29 @@ Always test with a copied world. Do not open the only copy of an established cam
 
 The Item sheet now uses `ItemSheetV2` and `HandlebarsApplicationMixin`. One lightweight subclass is registered for each HM3 Item subtype so the existing subtype-specific Handlebars templates remain available without combining them into a new monolithic template.
 
-The migrated Item sheet currently includes:
+Implemented behavior includes:
 
-- ApplicationV2 form submission and close-on-submit behavior.
-- Existing tab markup and subtype templates.
+- Existing HM3 subtype templates and visual styling adapted to ApplicationV2.
+- Native tab handling.
+- Explicit persistence for nested legacy forms on field change and sheet close.
 - Container, combat-skill, ritual-skill, and magic-skill context preparation.
-- Active Effect create, toggle, edit, and delete controls.
+- Active Effect controls.
 - Armor-location add and delete controls.
-- Native DOM event handling for text selection and Enter-to-submit behavior.
+- Native DOM event handling.
 
-It still requires live Foundry v14 regression testing for editor fields, tabs, owned Items, Active Effects, and every Item subtype.
+### Live validation completed
+
+Testing in Foundry VTT 14.365 confirmed:
+
+- The system loads without a manifest error.
+- A test world reaches the canvas.
+- World Items can be created.
+- Item sheets open and render.
+- Item names and system fields persist after closing and reopening.
+- The migrated sheet styling and tabs render successfully.
+- The v14 native chat-message hook no longer throws the legacy `html.find` error.
+
+Further subtype-specific testing remains part of final regression testing, especially rich-text editors, Active Effects, owned Items, and permission-restricted users.
 
 ## Required Regression Scenarios
 
