@@ -31,3 +31,16 @@ export function retainActorSheetTab(sheet, root) {
     ?? tabs[0].dataset.tab;
   activate(selected);
 }
+
+function restoreRenderedTab(sheet, html) {
+  const root = html instanceof HTMLElement ? html : html?.[0] ?? sheet.element;
+  if (root) retainActorSheetTab(sheet, root);
+}
+
+for (const sheetName of [
+  "HarnMasterCharacterSheetV2",
+  "HarnMasterCreatureSheetV2",
+  "HarnMasterContainerSheetV2"
+]) {
+  Hooks.on(`render${sheetName}`, restoreRenderedTab);
+}
