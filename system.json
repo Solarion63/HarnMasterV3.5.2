@@ -31,6 +31,7 @@
     "module/actor/actor-abilities-v2.js",
     "module/actor/actor-skills-v2.js",
     "module/actor/actor-combat-v2.js",
+    "module/actor/actor-injury-v2.js",
     "module/hm3.js"
   ],
   "styles": [
