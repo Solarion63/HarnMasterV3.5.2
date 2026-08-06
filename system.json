@@ -18,6 +18,7 @@
     "module/actor/actor-tab-state-v2.js",
     "module/actor/actor-filters-v2.js",
     "module/actor/actor-effects-v2.js",
+    "module/actor/actor-abilities-v2.js",
     "module/hm3.js"
   ],
   "styles": [
@@ -54,7 +55,7 @@
       "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
-      "label": "Esoteric",
+      "label": "Esoterics",
       "type": "Item",
       "name": "esoteric",
       "system": "hm3",
