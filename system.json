@@ -15,6 +15,7 @@
   "compatibility": { "minimum": "14", "verified": "14.365" },
   "esmodules": [
     "module/v14-compat.js",
+    "module/dice-v14.js",
     "module/actor/actor-tab-state-v2.js",
     "module/actor/actor-filters-v2.js",
     "module/actor/actor-effects-v2.js",
