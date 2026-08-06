@@ -4,51 +4,31 @@
   "description": "The HarnMaster 3 game system for Foundry Virtual Tabletop.",
   "version": "2.0.0-alpha.1",
   "authors": [
-    {
-      "name": "Toasty",
-      "flags": {}
-    },
-    {
-      "name": "Valcorin",
-      "flags": {}
-    }
+    { "name": "Toasty", "flags": {} },
+    { "name": "Valcorin", "flags": {} }
   ],
   "url": "https://github.com/Solarion63/HarnMasterV3.5.2",
   "license": "LICENSE",
   "readme": "README.md",
   "bugs": "https://github.com/Solarion63/HarnMasterV3.5.2/issues",
-  "flags": {
-    "allowBugReporter": true
-  },
-  "compatibility": {
-    "minimum": "14",
-    "verified": "14.365"
-  },
+  "flags": { "allowBugReporter": true },
+  "compatibility": { "minimum": "14", "verified": "14.365" },
   "esmodules": [
     "module/v14-compat.js",
     "module/hm3.js"
   ],
   "styles": [
-    "css/hm3.css"
+    "css/hm3.css",
+    "css/hm3-v14.css"
   ],
   "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json",
-      "flags": {}
-    }
+    { "lang": "en", "name": "English", "path": "lang/en.json", "flags": {} }
   ],
   "packFolders": [
     {
       "name": "HârnMaster 3 System",
       "sorting": "m",
-      "packs": [
-        "character",
-        "possessions",
-        "esoteric",
-        "system-help"
-      ],
+      "packs": ["character", "possessions", "esoteric", "system-help"],
       "folders": []
     }
   ],
@@ -59,10 +39,7 @@
       "name": "character",
       "system": "hm3",
       "path": "packs/character",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      }
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
       "label": "Possessions",
@@ -70,10 +47,7 @@
       "name": "possessions",
       "system": "hm3",
       "path": "packs/possessions",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      }
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
       "label": "Esoteric",
@@ -81,10 +55,7 @@
       "name": "esoteric",
       "system": "hm3",
       "path": "packs/esoteric",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      }
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
       "label": "System Help",
@@ -92,16 +63,10 @@
       "name": "system-help",
       "system": "hm3",
       "path": "packs/system-help",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      }
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     }
   ],
   "socket": true,
-  "grid": {
-    "distance": 5,
-    "units": "ft"
-  },
+  "grid": { "distance": 5, "units": "ft" },
   "primaryTokenAttribute": "shockIndex"
 }
