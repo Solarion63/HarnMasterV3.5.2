@@ -197,6 +197,19 @@ async function createAttackCard(attacker, defender, item, result, distance = nul
   return templateData;
 }
 
+async function consumeMissile(item) {
+  if (!game.settings.get("hm3", "missileTracking")) return true;
+
+  const quantity = Number(item.system.quantity) || 0;
+  if (quantity <= 0) {
+    ui.notifications.warn(`No more ${item.name} left, attack denied.`);
+    return false;
+  }
+
+  await item.update({ "system.quantity": quantity - 1 });
+  return true;
+}
+
 async function automatedAttack(sheet, control, expectedType) {
   const attacker = getSheetToken(sheet);
   const defender = getSingleTarget();
@@ -217,6 +230,7 @@ async function automatedAttack(sheet, control, expectedType) {
 
   const result = await attackDialog(attacker, defender, item, distance);
   if (!result) return null;
+  if (item.type === "missilegear" && !(await consumeMissile(item))) return null;
   return createAttackCard(attacker, defender, item, result, distance);
 }
 
