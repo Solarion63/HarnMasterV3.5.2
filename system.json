@@ -20,6 +20,7 @@
     "module/actor/actor-filters-v2.js",
     "module/actor/actor-effects-v2.js",
     "module/actor/actor-abilities-v2.js",
+    "module/actor/actor-skills-v2.js",
     "module/hm3.js"
   ],
   "styles": [
@@ -67,8 +68,8 @@
       "label": "System Help",
       "type": "JournalEntry",
       "name": "system-help",
-      "system": "hm3",
       "path": "packs/system-help",
+      "system": "hm3",
       "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     }
   ],
