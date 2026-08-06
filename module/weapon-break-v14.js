@@ -17,13 +17,23 @@ function findWeapon(actor, name) {
   ) ?? null;
 }
 
-async function createBreakCard({ token, weapon, roll, broke, title }) {
+async function unequipBrokenWeapon(weapon) {
+  await weapon.update({ "system.isEquipped": false });
+  const unequipped = weapon.system.isEquipped === false;
+  if (!unequipped) {
+    console.warn(`HM3 | ${weapon.name} broke but still reports isEquipped=${weapon.system.isEquipped}.`);
+  }
+  return unequipped;
+}
+
+async function createBreakCard({ token, weapon, roll, broke, unequipped, title }) {
   const data = {
     title,
     tokenName: token.name,
     weaponName: weapon.name,
     weaponQuality: Number(weapon.system.weaponQuality) || 0,
     weaponBroke: broke,
+    weaponUnequipped: unequipped,
     rollValue: roll.total,
     actorId: token.actor.id
   };
@@ -66,16 +76,15 @@ async function resolveWeaponBreak(message, card) {
     attackBroke = !defendBroke && attackRoll.total > attackQuality;
   }
 
-  const updates = [];
-  if (attackBroke) updates.push(attackWeapon.update({ "system.isEquipped": false }));
-  if (defendBroke) updates.push(defendWeapon.update({ "system.isEquipped": false }));
-  await Promise.all(updates);
+  const attackUnequipped = attackBroke ? await unequipBrokenWeapon(attackWeapon) : false;
+  const defendUnequipped = defendBroke ? await unequipBrokenWeapon(defendWeapon) : false;
 
   await createBreakCard({
     token: attacker,
     weapon: attackWeapon,
     roll: attackRoll,
     broke: attackBroke,
+    unequipped: attackUnequipped,
     title: "Attack Weapon Break Check"
   });
   await createBreakCard({
@@ -83,6 +92,7 @@ async function resolveWeaponBreak(message, card) {
     weapon: defendWeapon,
     roll: defendRoll,
     broke: defendBroke,
+    unequipped: defendUnequipped,
     title: "Defend Weapon Break Check"
   });
 
@@ -90,7 +100,9 @@ async function resolveWeaponBreak(message, card) {
     attackWeaponId: attackWeapon.id,
     defendWeaponId: defendWeapon.id,
     attackBroke,
-    defendBroke
+    defendBroke,
+    attackUnequipped,
+    defendUnequipped
   });
 }
 
