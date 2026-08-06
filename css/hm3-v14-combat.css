@@ -164,7 +164,6 @@
 
 .application.hm3.sheet.actor .tab.combat .weapon-qty,
 .application.hm3.sheet.actor .tab.combat .weapon-quality,
-.application.hm3.sheet.actor .tab.combat .weapon-atkdef,
 .application.hm3.sheet.actor .tab.combat .weapon-atkmod,
 .application.hm3.sheet.actor .tab.combat .weapon-blunt,
 .application.hm3.sheet.actor .tab.combat .weapon-edged,
@@ -172,6 +171,12 @@
 .application.hm3.sheet.actor .tab.combat .weapon-attack,
 .application.hm3.sheet.actor .tab.combat .weapon-defense {
   flex: 0 0 34px;
+}
+
+.application.hm3.sheet.actor .tab.combat .weapon-atkdef {
+  flex: 0 0 46px;
+  min-width: 46px;
+  white-space: nowrap;
 }
 
 .application.hm3.sheet.actor .tab.combat .weapon-notes {
