@@ -20,7 +20,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     },
     form: {
       closeOnSubmit: false,
-      submitOnChange: false,
+      submitOnChange: true,
       handler: HarnMasterItemSheetV2.#onSubmitForm
     }
   };
@@ -206,10 +206,14 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
   }
 
   static async #onSubmitForm(event, form, formData) {
-    event.preventDefault();
+    event?.preventDefault?.();
     const updateData = foundry.utils.expandObject(formData.object);
     await this.item.update(updateData);
-    return this.render({ force: true });
+
+    // Checkbox changes can reveal or hide conditional template sections.
+    if (event?.target?.type === "checkbox") {
+      return this.render({ force: true });
+    }
   }
 }
 
