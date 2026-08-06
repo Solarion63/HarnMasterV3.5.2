@@ -38,6 +38,27 @@ for (const [name, implementation] of Object.entries(legacyGlobals)) {
 }
 
 /**
+ * Restore the legacy chat-message type names still referenced by automated
+ * combat declarations. Their numeric values are identical to v14 message
+ * styles, allowing the old code to reach ChatMessage creation where Foundry's
+ * compatibility normalization can handle the deprecated `type` field.
+ */
+if (!CONST.CHAT_MESSAGE_TYPES) {
+  Object.defineProperty(CONST, "CHAT_MESSAGE_TYPES", {
+    configurable: true,
+    value: {
+      OTHER: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      OOC: CONST.CHAT_MESSAGE_STYLES.OOC,
+      IC: CONST.CHAT_MESSAGE_STYLES.IC,
+      EMOTE: CONST.CHAT_MESSAGE_STYLES.EMOTE,
+      WHISPER: CONST.CHAT_MESSAGE_STYLES.WHISPER,
+      ROLL: CONST.CHAT_MESSAGE_STYLES.ROLL
+    },
+    writable: false
+  });
+}
+
+/**
  * A deliberately small jQuery-style collection used only by legacy HM3 chat
  * rendering code. Foundry v14 passes a native HTMLElement to
  * renderChatMessageHTML, while the pre-v14 combat helper expects find/each.
@@ -66,20 +87,25 @@ if (typeof HTMLElement !== "undefined" && !HTMLElement.prototype.find) {
 }
 
 /**
- * Restore the pre-v14 canvas.grid.measureDistances contract used by the HM3
- * combat workflow. Foundry v14 replaces it with BaseGrid#measurePath.
+ * Restore the pre-v14 canvas.grid.measureDistances contract used by HM3.
+ * Installing it on the grid prototype is more reliable than decorating one
+ * canvas grid instance because Foundry may replace that instance while loading
+ * or switching scenes.
  */
 function installLegacyGridMeasurement() {
   const grid = canvas?.grid;
-  if (!grid || typeof grid.measurePath !== "function" || typeof grid.measureDistances === "function") return;
+  if (!grid || typeof grid.measurePath !== "function") return;
 
-  Object.defineProperty(grid, "measureDistances", {
+  const prototype = Object.getPrototypeOf(grid);
+  if (!prototype || typeof prototype.measureDistances === "function") return;
+
+  Object.defineProperty(prototype, "measureDistances", {
     configurable: true,
     value(segments = []) {
       return segments.map(segment => {
         const ray = segment?.ray;
         if (!ray) return 0;
-        return grid.measurePath([
+        return this.measurePath([
           { x: ray.A.x, y: ray.A.y },
           { x: ray.B.x, y: ray.B.y }
         ]).distance;
@@ -89,4 +115,6 @@ function installLegacyGridMeasurement() {
   });
 }
 
+Hooks.on("canvasInit", installLegacyGridMeasurement);
 Hooks.on("canvasReady", installLegacyGridMeasurement);
+Hooks.once("ready", installLegacyGridMeasurement);
