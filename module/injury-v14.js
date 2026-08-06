@@ -1,5 +1,6 @@
 import { DiceHM3 } from "./dice-hm3.js";
 
+const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
 
 function currentMessageMode() {
@@ -51,6 +52,45 @@ DiceHM3._calcLocation = function calcLocation(location, aim, items) {
   return armorLocations.at(-1) ?? null;
 };
 
+DiceHM3.injuryDialog = async function injuryDialog(dialogOptions) {
+  const recordInjury = game.settings.get("hm3", "addInjuryToActorSheet");
+  const askRecordInjury = recordInjury === "ask";
+  const content = await renderTemplate("systems/hm3/templates/dialog/injury-dialog.html", {
+    aim: "mid",
+    location: "Random",
+    impact: 0,
+    aspect: "Blunt",
+    askRecordInjury,
+    hitLocations: dialogOptions.hitLocations
+  });
+
+  return DialogV2.prompt({
+    window: { title: dialogOptions.label ?? `${dialogOptions.name} Injury` },
+    content: content.trim(),
+    ok: {
+      label: "Determine Injury",
+      callback: (_event, _button, dialog) => {
+        const form = dialog.element?.querySelector("form");
+        if (!form) throw new Error("HM3 | Injury dialog form was not found.");
+
+        const addToCharSheet = askRecordInjury
+          ? Boolean(form.elements.addToCharSheet?.checked)
+          : recordInjury === "enable";
+
+        return DiceHM3._calcInjury(
+          form.elements.location?.value ?? "Random",
+          Number(form.elements.impact?.value) || 0,
+          form.elements.aspect?.value ?? "Blunt",
+          addToCharSheet,
+          form.elements.aim?.value ?? "mid",
+          dialogOptions
+        );
+      }
+    },
+    rejectClose: false
+  });
+};
+
 DiceHM3.injuryRoll = async function injuryRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker({ actor: rollData.actor });
 
@@ -75,7 +115,10 @@ DiceHM3.injuryRoll = async function injuryRoll(rollData) {
   }
 
   if (!result) return null;
-  if (rollData.tokenId) result.tokenId = rollData.tokenId;
+
+  const actorId = rollData.actor.id;
+  const tokenId = rollData.tokenId ?? rollData.actor.token?.id ?? null;
+  if (tokenId) result.tokenId = tokenId;
 
   if (result.addToCharSheet) {
     await DiceHM3.createInjury(rollData.actor, result);
@@ -83,7 +126,9 @@ DiceHM3.injuryRoll = async function injuryRoll(rollData) {
 
   const templateData = foundry.utils.mergeObject({
     title: `${rollData.actor.token ? rollData.actor.token.name : rollData.actor.name} Injury`,
-    visibleActorId: rollData.actor.id
+    actorId,
+    tokenId,
+    visibleActorId: actorId
   }, result);
 
   const content = await renderTemplate("systems/hm3/templates/chat/injury-card.html", templateData);
