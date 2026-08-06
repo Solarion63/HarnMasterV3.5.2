@@ -19,6 +19,18 @@ function dieValues(roll) {
     .map(result => result.result);
 }
 
+function currentMessageMode() {
+  const legacyMode = game.settings.get("core", "rollMode");
+  const modeMap = {
+    publicroll: "public",
+    gmroll: "gm",
+    blindroll: "blind",
+    selfroll: "self"
+  };
+  const candidate = modeMap[legacyMode] ?? legacyMode ?? "public";
+  return candidate in CONFIG.ChatMessage.modes ? candidate : "public";
+}
+
 async function createRollMessage({ speaker, content, roll }) {
   return ChatMessage.create({
     user: game.user.id,
@@ -28,7 +40,7 @@ async function createRollMessage({ speaker, content, roll }) {
     sound: CONFIG.sounds.dice,
     rolls: [roll]
   }, {
-    rollMode: game.settings.get("core", "rollMode")
+    messageMode: currentMessageMode()
   });
 }
 
