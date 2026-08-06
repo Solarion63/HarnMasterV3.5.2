@@ -18,6 +18,7 @@
     "module/dice-v14.js",
     "module/dice-combat-v14.js",
     "module/combat-defense-v14.js",
+    "module/combat-counterstrike-v14.js",
     "module/actor/actor-tab-state-v2.js",
     "module/actor/actor-filters-v2.js",
     "module/actor/actor-effects-v2.js",
