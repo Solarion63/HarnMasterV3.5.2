@@ -161,6 +161,8 @@
 }
 
 .application.hm3.sheet.actor .ability-scores .ability-modifiers {
+  display: flex;
+  flex-wrap: nowrap;
   align-items: stretch;
   min-height: 25px;
   border-top: 1px solid #191813;
@@ -171,6 +173,9 @@
   flex: 0 0 22px;
   align-items: center;
   justify-content: center;
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
 }
 
 .application.hm3.sheet.actor .ability-scores .item-dice a {
@@ -185,14 +190,18 @@
 
 .application.hm3.sheet.actor .ability-scores .ability-box {
   display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 32px;
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
   border: 0;
 }
 
 .application.hm3.sheet.actor .ability-scores input.ability-base {
-  width: 100%;
-  min-width: 0;
+  flex: 0 0 32px;
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
   height: 24px;
   margin: 0;
   padding: 0 2px;
