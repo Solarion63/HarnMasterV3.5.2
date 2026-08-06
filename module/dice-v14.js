@@ -31,6 +31,14 @@ function currentMessageMode() {
   return candidate in CONFIG.ChatMessage.modes ? candidate : "public";
 }
 
+function actorForRoll(rollData, speaker) {
+  if (rollData.token) return canvas.tokens.get(rollData.token)?.actor ?? null;
+  if (rollData.actor) return game.actors.get(rollData.actor) ?? null;
+  if (speaker?.token) return canvas.tokens.get(speaker.token)?.actor ?? null;
+  if (speaker?.actor) return game.actors.get(speaker.actor) ?? null;
+  return null;
+}
+
 async function createRollMessage({ speaker, content, roll }) {
   return ChatMessage.create({
     user: game.user.id,
@@ -205,6 +213,7 @@ DiceHM3.d6Roll = async function d6Roll(rollData) {
     isSuccess: roll.isSuccess
   });
   const notes = rollData.notes ? utility.stringReplacer(rollData.notes, notesData) : "";
+  const actor = actorForRoll(rollData, speaker);
   const templateData = {
     type: rollData.type,
     title: rollData.label,
@@ -217,7 +226,8 @@ DiceHM3.d6Roll = async function d6Roll(rollData) {
     showResult: values.length > 1,
     description: roll.description,
     notes,
-    roll
+    roll,
+    runCustomMacro: result => actor?.runCustomMacro(result)
   };
 
   const content = await renderTemplate("systems/hm3/templates/chat/standard-test-card.html", templateData);
