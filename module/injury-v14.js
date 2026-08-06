@@ -7,6 +7,26 @@ function currentMessageMode() {
   return mode in CONFIG.ChatMessage.modes ? mode : "public";
 }
 
+async function playInjuryAudio() {
+  if (!game.settings.get("hm3", "combatAudio")) return;
+
+  const audioHelper = foundry.audio?.AudioHelper;
+  if (typeof audioHelper?.play !== "function") {
+    console.warn("HM3 | Foundry audio helper is unavailable; injury audio was skipped.");
+    return;
+  }
+
+  try {
+    await audioHelper.play({
+      src: "systems/hm3/audio/grunt1.ogg",
+      autoplay: true,
+      loop: false
+    }, true);
+  } catch (error) {
+    console.warn("HM3 | Injury audio playback failed; injury processing completed normally.", error);
+  }
+}
+
 DiceHM3.injuryRoll = async function injuryRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker({ actor: rollData.actor });
 
@@ -53,13 +73,6 @@ DiceHM3.injuryRoll = async function injuryRoll(rollData) {
     messageMode: currentMessageMode()
   });
 
-  if (game.settings.get("hm3", "combatAudio")) {
-    AudioHelper.play({
-      src: "systems/hm3/audio/grunt1.ogg",
-      autoplay: true,
-      loop: false
-    }, true);
-  }
-
+  await playInjuryAudio();
   return templateData;
 };
