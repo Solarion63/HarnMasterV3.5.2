@@ -1,8 +1,10 @@
 // Import Modules
 import { HarnMasterActor } from "./actor/actor.js";
-import { HarnMasterCharacterSheet } from "./actor/character-sheet.js";
-import { HarnMasterCreatureSheet } from "./actor/creature-sheet.js";
-import { HarnMasterContainerSheet } from "./actor/container-sheet.js";
+import {
+    HarnMasterCharacterSheetV2,
+    HarnMasterCreatureSheetV2,
+    HarnMasterContainerSheetV2
+} from "./actor/actor-sheet-v2.js";
 import { HarnMasterCombat } from "./hm3-combat.js";
 import { HarnMasterItem } from "./item/item.js";
 import { HM3_ITEM_SHEETS_V2 } from "./item/item-sheet-v2.js";
@@ -17,11 +19,9 @@ import { DiceHM3 } from "./dice-hm3.js";
 
 const { renderTemplate } = foundry.applications.handlebars;
 const { DocumentSheetConfig } = foundry.applications.apps;
-const { ActiveEffectConfig, ItemSheetV2 } = foundry.applications.sheets;
-const { ActorSheet } = foundry.appv1.sheets;
+const { ActiveEffectConfig, ActorSheetV2, ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
-const { Actors } = foundry.documents.collections;
-const { ActiveEffect, Item } = foundry.documents;
+const { ActiveEffect, Actor, Item } = foundry.documents;
 
 Hooks.once("init", async function () {
     console.log(`HM3 | Initializing the HM3 Game System\n${HM3.ASCII}`);
@@ -73,20 +73,18 @@ Hooks.once("init", async function () {
 
     CONFIG.Combat.documentClass = HarnMasterCombat;
 
-    // Actor sheets remain on ApplicationV1 temporarily while their larger
-    // interaction surface is migrated and regression-tested.
-    Actors.unregisterSheet("core", ActorSheet);
-    Actors.registerSheet("hm3", HarnMasterCharacterSheet, {
+    DocumentSheetConfig.unregisterSheet(Actor, "core", ActorSheetV2);
+    DocumentSheetConfig.registerSheet(Actor, "hm3", HarnMasterCharacterSheetV2, {
         types: ["character"],
         makeDefault: true,
         label: "Default HarnMaster Character Sheet"
     });
-    Actors.registerSheet("hm3", HarnMasterCreatureSheet, {
+    DocumentSheetConfig.registerSheet(Actor, "hm3", HarnMasterCreatureSheetV2, {
         types: ["creature"],
         makeDefault: true,
         label: "Default HarnMaster Creature Sheet"
     });
-    Actors.registerSheet("hm3", HarnMasterContainerSheet, {
+    DocumentSheetConfig.registerSheet(Actor, "hm3", HarnMasterContainerSheetV2, {
         types: ["container"],
         makeDefault: true,
         label: "Default HarnMaster Container Sheet"
@@ -98,8 +96,6 @@ Hooks.once("init", async function () {
         label: "Default HarnMaster Active Effect Sheet"
     });
 
-    // Register one ApplicationV2 sheet class per Item subtype. Each class uses
-    // the existing subtype-specific Handlebars template.
     DocumentSheetConfig.unregisterSheet(Item, "core", ItemSheetV2);
     for (const [type, SheetClass] of Object.entries(HM3_ITEM_SHEETS_V2)) {
         DocumentSheetConfig.registerSheet(Item, "hm3", SheetClass, {
@@ -119,8 +115,6 @@ Hooks.once("init", async function () {
 
     Handlebars.registerHelper("toLowerCase", value => value.toLowerCase());
 
-    // Foundry v14 no longer supplies the legacy block-style select helper.
-    // Retain it while the existing HM3 templates are migrated incrementally.
     Handlebars.registerHelper("select", function (selectedValue, options) {
         const rendered = options.fn(this);
         const escapedValue = String(selectedValue ?? "")
@@ -134,7 +128,6 @@ Hooks.once("init", async function () {
         );
     });
 
-    // Foundry v14 uses fontDefinitions for both canvas and editor fonts.
     Object.assign(CONFIG.fontDefinitions, {
         Lakise: {
             editor: true,
@@ -212,7 +205,6 @@ Hooks.once("ready", async function () {
     }
 });
 
-// HM3 does not roll initiative. Seed the combatant from the Actor value.
 Hooks.on("preCreateCombatant", combatant => {
     if (combatant.initiative != null) return;
 
