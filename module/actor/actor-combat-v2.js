@@ -11,15 +11,13 @@ function fastForward(event) {
 }
 
 function runAction(label, action) {
-  Promise.resolve()
-    .then(action)
-    .catch(error => {
-      console.error(`HM3 | ${label} failed`, error);
-      ui.notifications.error(`${label} failed. See the console for details.`);
-    });
+  Promise.resolve().then(action).catch(error => {
+    console.error(`HM3 | ${label} failed`, error);
+    ui.notifications.error(`${label} failed. See the console for details.`);
+  });
 }
 
-function bind(sheet, root, selector, label, callback) {
+function bind(root, selector, label, callback) {
   for (const control of root.querySelectorAll(selector)) {
     control.addEventListener("click", event => {
       event.preventDefault();
@@ -28,52 +26,62 @@ function bind(sheet, root, selector, label, callback) {
   }
 }
 
+function getSheetToken(sheet) {
+  if (sheet.actor.token) return sheet.actor.token;
+  const tokens = sheet.actor.getActiveTokens(true);
+  if (tokens.length === 0) {
+    ui.notifications.warn("There are no tokens linked to this actor on the canvas, double-click on a specific token on the canvas.");
+    return null;
+  }
+  if (tokens.length > 1) {
+    ui.notifications.warn(`There are ${tokens.length} tokens linked to this actor on the canvas, so the acting token can't be identified.`);
+    return null;
+  }
+  return tokens[0];
+}
+
 function bindCombatControls(sheet, root) {
-  bind(sheet, root, ".dodge-roll", "Dodge roll", event =>
-    macros.dodgeRoll(fastForward(event), sheet.actor));
+  bind(root, ".dodge-roll", "Dodge roll", event => macros.dodgeRoll(fastForward(event), sheet.actor));
+  bind(root, ".shock-roll", "Shock roll", event => macros.shockRoll(fastForward(event), sheet.actor));
+  bind(root, ".stumble-roll", "Stumble roll", event => macros.stumbleRoll(fastForward(event), sheet.actor));
+  bind(root, ".fumble-roll", "Fumble roll", event => macros.fumbleRoll(fastForward(event), sheet.actor));
+  bind(root, ".damage-roll", "Generic damage roll", () => macros.genericDamageRoll(sheet.actor));
 
-  bind(sheet, root, ".shock-roll", "Shock roll", event =>
-    macros.shockRoll(fastForward(event), sheet.actor));
+  bind(root, ".melee-weapon-attack", "Melee combat", (_event, control) => {
+    const token = getSheetToken(sheet);
+    const item = itemFromControl(sheet, control);
+    return token && item ? macros.weaponAttack(item.uuid, false, token) : null;
+  });
 
-  bind(sheet, root, ".stumble-roll", "Stumble roll", event =>
-    macros.stumbleRoll(fastForward(event), sheet.actor));
+  bind(root, ".missile-weapon-attack", "Missile combat", (_event, control) => {
+    const token = getSheetToken(sheet);
+    const item = itemFromControl(sheet, control);
+    return token && item ? macros.missileAttack(item.uuid, false, token) : null;
+  });
 
-  bind(sheet, root, ".fumble-roll", "Fumble roll", event =>
-    macros.fumbleRoll(fastForward(event), sheet.actor));
-
-  bind(sheet, root, ".damage-roll", "Generic damage roll", () =>
-    macros.genericDamageRoll(sheet.actor));
-
-  bind(sheet, root, ".melee-weapon-attack, .weapon-attack-roll", "Weapon attack roll", (event, control) => {
+  bind(root, ".weapon-attack-roll", "Weapon attack roll", (event, control) => {
     const item = itemFromControl(sheet, control);
     return macros.weaponAttackRoll(item?.uuid, fastForward(event), sheet.actor);
   });
-
-  bind(sheet, root, ".weapon-defend-roll", "Weapon defense roll", (event, control) => {
+  bind(root, ".weapon-defend-roll", "Weapon defense roll", (event, control) => {
     const item = itemFromControl(sheet, control);
     return macros.weaponDefendRoll(item?.uuid, fastForward(event), sheet.actor);
   });
-
-  bind(sheet, root, ".weapon-damage-roll", "Weapon damage roll", (_event, control) => {
+  bind(root, ".weapon-damage-roll", "Weapon damage roll", (_event, control) => {
     const item = itemFromControl(sheet, control);
     return macros.weaponDamageRoll(item?.uuid, control.dataset.aspect, sheet.actor);
   });
-
-  bind(sheet, root, ".missile-weapon-attack, .missile-attack-roll", "Missile attack roll", (_event, control) => {
+  bind(root, ".missile-attack-roll", "Missile attack roll", (_event, control) => {
     const item = itemFromControl(sheet, control);
     return macros.missileAttackRoll(item?.uuid, sheet.actor);
   });
-
-  bind(sheet, root, ".missile-damage-roll", "Missile damage roll", (_event, control) => {
+  bind(root, ".missile-damage-roll", "Missile damage roll", (_event, control) => {
     const item = itemFromControl(sheet, control);
     return macros.missileDamageRoll(item?.uuid, control.dataset.range, sheet.actor);
   });
 }
 
-for (const hook of [
-  "renderHarnMasterCharacterSheetV2",
-  "renderHarnMasterCreatureSheetV2"
-]) {
+for (const hook of ["renderHarnMasterCharacterSheetV2", "renderHarnMasterCreatureSheetV2"]) {
   Hooks.on(hook, (sheet, html) => {
     const root = html instanceof HTMLElement ? html : html?.[0] ?? sheet.element;
     if (root) bindCombatControls(sheet, root);
