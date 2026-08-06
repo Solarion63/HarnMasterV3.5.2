@@ -86,3 +86,21 @@ function installLegacyGridMeasurement() {
 Hooks.on("canvasInit", installLegacyGridMeasurement);
 Hooks.on("canvasReady", installLegacyGridMeasurement);
 Hooks.once("ready", installLegacyGridMeasurement);
+
+/**
+ * Translate the small subset of legacy ChatMessage creation fields still used
+ * by automated HM3 combat cards. This avoids modifying Foundry's frozen CONST
+ * object and can be removed when combat.js is fully migrated.
+ */
+const originalChatMessageCreate = ChatMessage.create.bind(ChatMessage);
+ChatMessage.create = function hm3CreateChatMessage(data, options = {}) {
+  const normalize = source => {
+    if (!source || typeof source !== "object" || !("type" in source) || "style" in source) return source;
+    const normalized = { ...source, style: source.type };
+    delete normalized.type;
+    return normalized;
+  };
+
+  const normalizedData = Array.isArray(data) ? data.map(normalize) : normalize(data);
+  return originalChatMessageCreate(normalizedData, options);
+};
