@@ -52,6 +52,37 @@ DiceHM3._calcLocation = function calcLocation(location, aim, items) {
   return armorLocations.at(-1) ?? null;
 };
 
+DiceHM3.createInjury = async function createInjury(actor, result) {
+  if (!actor || Number(result.injuryLevel) === 0) return null;
+
+  const injuryDesc = {
+    Blunt: { M: "Bruise", S: "Fracture", G: "Crush" },
+    Edged: { M: "Cut", S: "Slash", G: "Gash" },
+    Piercing: { M: "Poke", S: "Stab", G: "Impale" },
+    Fire: { M: "Singe", S: "Burn", G: "Scorch" }
+  };
+
+  const injuryLevel = Number(result.injuryLevel) || 0;
+  const severity = injuryLevel === 1 ? "M" : injuryLevel <= 3 ? "S" : "G";
+  const description = injuryDesc[result.aspect]?.[severity];
+  const locationName = description
+    ? `${result.location} ${description}`
+    : result.location;
+
+  const created = await actor.createEmbeddedDocuments("Item", [{
+    name: locationName,
+    type: "injury",
+    system: {
+      severity,
+      injuryLevel,
+      healRate: 0,
+      notes: `Aspect: ${result.aspect}`
+    }
+  }]);
+
+  return created[0] ?? null;
+};
+
 DiceHM3.injuryDialog = async function injuryDialog(dialogOptions) {
   const recordInjury = game.settings.get("hm3", "addInjuryToActorSheet");
   const askRecordInjury = recordInjury === "ask";
@@ -70,19 +101,21 @@ DiceHM3.injuryDialog = async function injuryDialog(dialogOptions) {
     ok: {
       label: "Determine Injury",
       callback: (_event, _button, dialog) => {
-        const form = dialog.element?.querySelector("form");
-        if (!form) throw new Error("HM3 | Injury dialog form was not found.");
-
+        const root = dialog.element;
+        const location = root?.querySelector('[name="location"]')?.value ?? "Random";
+        const impact = Number(root?.querySelector('[name="impact"]')?.value) || 0;
+        const aspect = root?.querySelector('[name="aspect"]')?.value ?? "Blunt";
+        const aim = root?.querySelector('[name="aim"]')?.value ?? "Mid";
         const addToCharSheet = askRecordInjury
-          ? Boolean(form.elements.addToCharSheet?.checked)
+          ? Boolean(root?.querySelector('[name="addToCharSheet"]')?.checked)
           : recordInjury === "enable";
 
         return DiceHM3._calcInjury(
-          form.elements.location?.value ?? "Random",
-          Number(form.elements.impact?.value) || 0,
-          form.elements.aspect?.value ?? "Blunt",
+          location,
+          impact,
+          aspect,
           addToCharSheet,
-          form.elements.aim?.value ?? "mid",
+          aim,
           dialogOptions
         );
       }
