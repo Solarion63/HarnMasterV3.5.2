@@ -8,6 +8,7 @@ on:
       - ".github/workflows/rebuild-compendiums.yml"
       - "packs/esoteric/_source/**"
       - "packs/system-help/_source/**"
+      - "scripts/prepare-system-help.mjs"
 
 permissions:
   contents: write
@@ -43,6 +44,11 @@ jobs:
           test "${esoteric_count}" -eq 424
           test "${help_count}" -eq 20
 
+      - name: Prepare System Help for Foundry v14
+        shell: bash
+        run: |
+          node scripts/prepare-system-help.mjs packs/system-help/_source .tmp/system-help-v14
+
       - name: Rebuild Esoterics and System Help packs
         shell: bash
         run: |
@@ -53,7 +59,7 @@ jobs:
           import { compilePack } from "@foundryvtt/foundryvtt-cli";
 
           await compilePack("packs/esoteric/_source", "packs/esoteric", { log: true });
-          await compilePack("packs/system-help/_source", "packs/system-help", { log: true });
+          await compilePack(".tmp/system-help-v14", "packs/system-help", { log: true });
           NODE
 
       - name: Verify generated databases are populated
