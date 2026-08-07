@@ -189,6 +189,29 @@
   color: #4b4a44 !important;
 }
 
+/* Preserve the v13 carried/equipped visual state contract. */
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item.nocarry .item-name.gear-name h4,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item.nocarry .item-detail {
+  color: #9a998f !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-equip,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-carry,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-equip i,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-carry i {
+  color: #9a998f !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-equip i.active,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-carry i.active {
+  color: #4b4a44 !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-edit i.active,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-delete i.active {
+  color: #4b4a44 !important;
+}
+
 .application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] input.gear-name-filter {
   box-sizing: border-box !important;
   width: 100% !important;
