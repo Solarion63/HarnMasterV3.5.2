@@ -1,5 +1,6 @@
 import * as utility from "../utility.js";
 import { onManageActiveEffect } from "../effect.js";
+import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 import { bindSkillControls } from "./actor-skills-v2.js";
 
 const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -106,6 +107,7 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     this.#bindItemDrag(root);
     this.#bindAbilityControls(root);
     bindSkillControls(this, root);
+    bindDocumentImagePicker(this, root);
     this.#bindInjuryRoll(root);
 
     const form = root.querySelector("form");
