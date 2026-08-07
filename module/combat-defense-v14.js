@@ -231,7 +231,7 @@ async function performBlock(button, attacker, defender, attackRoll) {
   });
 }
 
-async function performDefense(button, defense) {
+export async function performDefense(button, defense) {
   const attacker = tokenFromId(button.dataset.atkTokenId, "Attacker");
   const defender = tokenFromId(button.dataset.defTokenId, "Defender");
   if (!attacker || !defender) return null;
