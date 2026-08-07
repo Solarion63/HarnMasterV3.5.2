@@ -26,6 +26,7 @@
     "module/combat-consequences-v14.js",
     "module/combat-dta-v14.js",
     "module/chat-actions-v14.js",
+    "module/document-image-picker-v14.js",
     "module/actor/actor-tab-state-v2.js",
     "module/actor/actor-filters-v2.js",
     "module/actor/actor-effects-v2.js",
@@ -47,7 +48,7 @@
   ],
   "packFolders": [
     {
-      "name": "HârnMaster 3 System",
+      "name": "HM3 System",
       "sorting": "m",
       "packs": ["character", "possessions", "esoteric", "system-help"],
       "folders": []
