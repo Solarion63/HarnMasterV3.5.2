@@ -35,7 +35,8 @@
     "module/actor/actor-combat-v2.js",
     "module/actor/actor-injury-v2.js",
     "module/actor/actor-create-dialog-v14.js",
-    "module/hm3.js"
+    "module/hm3.js",
+    "module/combat-macro-api-v14.js"
   ],
   "styles": [
     "css/hm3.css",
