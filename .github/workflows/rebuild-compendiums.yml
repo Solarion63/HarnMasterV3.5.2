@@ -72,7 +72,7 @@ jobs:
           await db.open();
 
           const welcomePageKeyPrefix = "!journal.pages!CT4P5XgVp0c0oz2a.";
-          const expectedLink = "@UUID[Compendium.hm3.system-help.JournalEntry.BvmWEdDHSifdaM0z]{Characters}";
+          const expectedLink = "@UUID[Compendium.hm3.system-help.JournalEntry.BvmWEdDHSifdaM0z]{@JournalEntry[Characters]}";
           let welcomeText = null;
 
           for await (const [key, value] of db.iterator()) {
@@ -90,12 +90,7 @@ jobs:
 
           if (!welcomeText.includes(expectedLink)) {
             console.error(welcomeText);
-            throw new Error(`Compiled Welcome page does not contain expected link: ${expectedLink}`);
-          }
-
-          if (welcomeText.includes("@JournalEntry[Characters]")) {
-            console.error(welcomeText);
-            throw new Error("Compiled Welcome page still contains the legacy Characters JournalEntry link.");
+            throw new Error(`Compiled Welcome page does not contain expected Foundry serialization: ${expectedLink}`);
           }
 
           console.log(`Verified compiled Welcome link: ${expectedLink}`);
