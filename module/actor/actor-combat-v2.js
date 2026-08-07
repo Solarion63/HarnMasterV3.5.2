@@ -117,15 +117,13 @@ async function attackDialog(attacker, defender, item, distance = null) {
     ok: {
       label: "Attack",
       callback: (_event, _button, dialog) => {
-        const form = dialog.element?.querySelector("form");
-        if (!form) throw new Error("HM3 | Attack dialog form was not found.");
-
-        const rangeValue = form.elements.range?.value ?? null;
+        const root = dialog.element;
+        const rangeValue = root?.querySelector('[name="range"]')?.value ?? null;
         const result = {
           weapon: item,
-          aspect: form.elements.weaponAspect?.value ?? null,
-          aim: form.elements.aim?.value ?? null,
-          addlModifier: Number(form.elements.addlModifier?.value) || 0,
+          aspect: root?.querySelector('[name="weaponAspect"]')?.value ?? null,
+          aim: root?.querySelector('[name="aim"]')?.value ?? null,
+          addlModifier: Number(root?.querySelector('[name="addlModifier"]')?.value) || 0,
           range: null,
           rangeMod: 0,
           rangeExceedsExtreme: Boolean(data.rangeExceedsExtreme),
