@@ -1,4 +1,5 @@
 const { DialogV2 } = foundry.applications.api;
+const { Macro } = foundry.documents;
 
 function macroName(item, suffix) {
   return item.actor ? `${item.actor.name}'s ${item.name} ${suffix}` : `${item.name} ${suffix}`;
