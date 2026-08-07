@@ -77,7 +77,7 @@
       "type": "Item",
       "name": "esoteric",
       "system": "hm3",
-      "path": "packs/esoterics",
+      "path": "packs/esoteric",
       "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
