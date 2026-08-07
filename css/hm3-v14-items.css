@@ -1,0 +1,91 @@
+/* Foundry VTT v14 Item and gear sheet refinements. */
+
+.application.hm3.sheet.item .hm3-image-picker {
+  cursor: pointer;
+  transition: box-shadow 120ms ease, filter 120ms ease;
+}
+
+.application.hm3.sheet.item .hm3-image-picker:hover,
+.application.hm3.sheet.item .hm3-image-picker:focus-visible {
+  filter: brightness(1.06);
+  outline: none;
+  box-shadow: 0 0 8px rgba(68, 25, 26, 0.55);
+}
+
+.application.hm3.sheet.item .sheet-body > .tab.properties {
+  padding: 4px 6px 10px 2px;
+}
+
+.application.hm3.sheet.item .sheet-body > .tab.properties > .grid:first-child {
+  margin-top: 4px;
+}
+
+.application.hm3.sheet.item .grid-fixed-row {
+  grid-template-rows: none;
+  grid-auto-rows: minmax(44px, auto);
+  align-items: end;
+}
+
+.application.hm3.sheet.item .grid-fixed-row > div:empty {
+  display: none;
+}
+
+.application.hm3.sheet.item .grid-fixed-row.grid-3col {
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+}
+
+.application.hm3.sheet.item .resource {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.application.hm3.sheet.item .resource > input,
+.application.hm3.sheet.item .resource > select {
+  flex: 0 0 26px;
+  min-height: 26px;
+}
+
+.application.hm3.sheet.item .resource.artifact,
+.application.hm3.sheet.item fieldset .resource:has(input[type="checkbox"]) {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.application.hm3.sheet.item .resource.artifact input[type="checkbox"],
+.application.hm3.sheet.item fieldset .resource input[type="checkbox"] {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0 5px 0 0;
+}
+
+.application.hm3.sheet.item .resource.artifact .resource-label,
+.application.hm3.sheet.item fieldset .resource:has(input[type="checkbox"]) .resource-label {
+  margin: 0;
+}
+
+.application.hm3.sheet.item #weapongear-source,
+.application.hm3.sheet.item #weapongear-note,
+.application.hm3.sheet.item #missilegear-source,
+.application.hm3.sheet.item #missilegear-note,
+.application.hm3.sheet.item #armorgear-source,
+.application.hm3.sheet.item #armorgear-note,
+.application.hm3.sheet.item #miscgear-source,
+.application.hm3.sheet.item #miscgear-note,
+.application.hm3.sheet.item #containergear-source,
+.application.hm3.sheet.item #containergear-note {
+  margin: 7px 0 0;
+}
+
+.application.hm3.sheet.item fieldset {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 520px) {
+  .application.hm3.sheet.item .grid-fixed-row.grid-3col {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}
