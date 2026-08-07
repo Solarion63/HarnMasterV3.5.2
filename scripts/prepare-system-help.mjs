@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -64,6 +65,95 @@ function migrateJournalLinks(content, lookup, sourceName) {
   return { migrated, replacements };
 }
 
+function stablePageId(documentId, kind) {
+  // Foundry document IDs are 16 characters. Hex is valid, deterministic, and
+  // avoids generating different embedded-page IDs on every pack rebuild.
+  return crypto
+    .createHash("sha256")
+    .update(`${documentId}:${kind}`)
+    .digest("hex")
+    .slice(0, 16);
+}
+
+function makeImagePage(document) {
+  if (!document.img) return null;
+
+  return {
+    name: `Figure: ${document.name}`,
+    type: "image",
+    src: document.img,
+    title: {
+      show: false,
+      level: 1
+    },
+    _id: stablePageId(document._id, "image"),
+    system: {},
+    image: {},
+    text: {
+      format: 1
+    },
+    video: {
+      controls: true,
+      volume: 0.5
+    },
+    category: null,
+    sort: 0,
+    flags: {},
+    ownership: {
+      default: -1
+    }
+  };
+}
+
+function makeTextPage(document, content) {
+  return {
+    name: document.name,
+    type: "text",
+    title: {
+      show: false,
+      level: 1
+    },
+    text: {
+      format: 1,
+      content
+    },
+    _id: stablePageId(document._id, "text"),
+    system: {},
+    image: {},
+    video: {
+      controls: true,
+      volume: 0.5
+    },
+    src: null,
+    category: null,
+    sort: document.img ? 1 : 0,
+    flags: {},
+    ownership: {
+      default: -1
+    }
+  };
+}
+
+function makeV14Journal(document, content) {
+  const pages = [];
+  const imagePage = makeImagePage(document);
+  if (imagePage) pages.push(imagePage);
+  pages.push(makeTextPage(document, content));
+
+  return {
+    _id: document._id,
+    name: document.name,
+    folder: document.folder || null,
+    flags: document.flags ?? {},
+    pages,
+    categories: [],
+    ownership: {
+      default: 0
+    },
+    _key: document._key ?? `!journal!${document._id}`
+  };
+}
+
 const sourceDocuments = await readSourceDocuments(sourceDir);
 const lookup = buildLookup(sourceDocuments);
 
@@ -73,24 +163,24 @@ await fs.mkdir(outputDir, { recursive: true });
 let totalReplacements = 0;
 
 for (const { filename, document } of sourceDocuments) {
-  if (typeof document.content === "string") {
-    const { migrated, replacements } = migrateJournalLinks(
-      document.content,
-      lookup,
-      document.name
-    );
-    document.content = migrated;
-    totalReplacements += replacements;
-  }
+  const legacyContent = typeof document.content === "string" ? document.content : "";
+  const { migrated, replacements } = migrateJournalLinks(
+    legacyContent,
+    lookup,
+    document.name
+  );
+  totalReplacements += replacements;
+
+  const preparedDocument = makeV14Journal(document, migrated);
 
   await fs.writeFile(
     path.join(outputDir, filename),
-    `${JSON.stringify(document, null, 2)}\n`,
+    `${JSON.stringify(preparedDocument, null, 2)}\n`,
     "utf8"
   );
 }
 
-console.log(`Prepared ${sourceDocuments.length} System Help documents.`);
+console.log(`Prepared ${sourceDocuments.length} native v14 System Help documents.`);
 console.log(`Migrated ${totalReplacements} legacy Journal links to v14 UUID links.`);
 
 if (sourceDocuments.length !== 20) {
