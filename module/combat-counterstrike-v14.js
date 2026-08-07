@@ -195,7 +195,12 @@ async function createCounterstrikeCard({
   return chatData;
 }
 
-async function performCounterstrike(button) {
+/**
+ * Resolve Counterstrike from the dataset used by HM3 attack-card buttons.
+ * Exported so the public macro API can route legacy resume calls through the
+ * same v14 implementation used by chat-card buttons.
+ */
+export async function performCounterstrike(button) {
   const attacker = tokenFromId(button.dataset.atkTokenId, "Attacker");
   const defender = tokenFromId(button.dataset.defTokenId, "Defender");
   if (!attacker || !defender) return null;
