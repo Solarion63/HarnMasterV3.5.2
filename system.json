@@ -19,6 +19,7 @@
     "module/dice-combat-v14.js",
     "module/injury-v14.js",
     "module/damage-v14.js",
+    "module/missile-rolls-v14.js",
     "module/combat-defense-v14.js",
     "module/combat-counterstrike-v14.js",
     "module/weapon-break-v14.js",
