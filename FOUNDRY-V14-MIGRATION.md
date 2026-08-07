@@ -59,7 +59,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 
 ### Phase 5 — release validation
 
-- [ ] Test as GM, trusted player, and regular player.
+- [x] Test as GM, trusted player, regular player, and limited/observer access while preserving v13 ownership restrictions.
 - [ ] Test a copied v12/v13 campaign world through normal play workflows.
 - [x] Add automated static checks and package validation.
 - [x] Validate hotbar macro creation through macro execution, including Skill, automated melee, automated missile, and chooser cancellation.
@@ -100,6 +100,7 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Hotbar automated melee macro creation and execution works with an active combatant and one target.
 - Hotbar automated missile macro creation and execution works, including normal missile/ammunition handling.
 - Closing the melee/missile macro chooser without a selection leaves the target hotbar slot unchanged.
+- GM, owner/trusted-player, observer/non-owner, and limited-user Actor-sheet permissions match the v13 ownership model in focused testing.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
@@ -107,7 +108,6 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 
 The following areas still need explicit release-level validation even though related runtime paths are already working:
 
-- GM, trusted-player, and regular-player permissions and ownership restrictions.
 - A copied v12/v13 campaign world, including existing Actors, Items, Active Effects, macros, and scenes.
 - Synthetic-token Actors and unlinked Token Active Effects.
 - Actor Item sorting and container movement.
