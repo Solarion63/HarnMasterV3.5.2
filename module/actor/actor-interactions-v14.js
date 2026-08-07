@@ -3,6 +3,34 @@ import * as utility from "../utility.js";
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
 
+const READ_ONLY_ACTION_SELECTOR = [
+  ".skill-roll",
+  ".spell-roll",
+  ".invocation-roll",
+  ".psionic-roll",
+  ".ability-d6-roll",
+  ".ability-d100-roll",
+  ".weapon-damage-roll",
+  ".missile-damage-roll",
+  ".melee-weapon-attack",
+  ".missile-weapon-attack",
+  ".weapon-attack-roll",
+  ".weapon-defend-roll",
+  ".missile-attack-roll",
+  ".injury-roll",
+  ".healing-roll",
+  ".dodge-roll",
+  ".shock-roll",
+  ".stumble-roll",
+  ".fumble-roll",
+  ".damage-roll",
+  ".item-carry",
+  ".item-equip",
+  ".item-improve",
+  ".item-dumpdesc",
+  ".more-info"
+].join(",");
+
 function rootFromRender(sheet, html) {
   if (html instanceof HTMLElement) return html;
   if (html?.[0] instanceof HTMLElement) return html[0];
@@ -24,6 +52,17 @@ function run(label, action) {
     console.error(`HM3 | ${label} failed`, error);
     ui.notifications.error(`${label} failed. See the console for details.`);
   });
+}
+
+function bindReadOnlyGuard(root) {
+  root.addEventListener("click", event => {
+    const control = event.target?.closest?.(READ_ONLY_ACTION_SELECTOR);
+    if (!control || !root.contains(control)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  }, { capture: true });
 }
 
 function bindRoll(root, selector, label, macroName, sheet) {
@@ -102,7 +141,13 @@ async function openHelp(control) {
 }
 
 function bindActorInteractions(sheet, root) {
-  if (!sheet.isEditable) return;
+  // v13 only activated Actor-sheet action listeners on editable sheets. Several
+  // v14 controllers bind independently during rendering, so explicitly block
+  // those actions for Observer/Limited users to preserve the original model.
+  if (!sheet.isEditable) {
+    bindReadOnlyGuard(root);
+    return;
+  }
 
   bindRoll(root, ".spell-roll", "Spell roll", "castSpellRoll", sheet);
   bindRoll(root, ".invocation-roll", "Invocation roll", "invokeRitualRoll", sheet);
