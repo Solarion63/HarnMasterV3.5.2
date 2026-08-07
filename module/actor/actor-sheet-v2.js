@@ -34,8 +34,8 @@ const ACTOR_FILTERS = [
  * Shared Foundry VTT v14 Actor sheet foundation.
  *
  * Owns rendering, persistence, tabs, list filtering, owned Item controls,
- * native Item drag data, and bindings to existing HM3 effect/injury rules.
- * Rules-specific roll, combat, and consequence logic remains isolated in its
+ * native Item drag data, and lightweight bindings to existing HM3 rules.
+ * Rules-specific skill, combat, and consequence logic remains isolated in its
  * dedicated modules.
  */
 export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorSheetV2) {
@@ -103,6 +103,7 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     this.#activateTabs(root);
     this.#bindFilters(root);
     this.#bindItemDrag(root);
+    this.#bindAbilityControls(root);
     this.#bindInjuryRoll(root);
 
     const form = root.querySelector("form");
@@ -148,6 +149,48 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     const row = control.closest(".item");
     const itemId = row?.dataset.itemId;
     return itemId ? this.actor.items.get(itemId) : null;
+  }
+
+  #bindAbilityControls(root) {
+    if (!["character", "creature"].includes(this.actor.type)) return;
+
+    const runAbilityRoll = (event, macroName, label) => {
+      event.preventDefault();
+
+      const ability = event.currentTarget.dataset.ability
+        ?? event.currentTarget.closest("[data-ability]")?.dataset.ability;
+      if (!ability) {
+        console.warn("HM3 | Ability roll control is missing its ability identifier.");
+        return;
+      }
+
+      const roller = game.hm3?.macros?.[macroName];
+      if (typeof roller !== "function") {
+        ui.notifications.error(`${label} is unavailable.`);
+        return;
+      }
+
+      const fastForward = event.shiftKey || event.altKey || event.ctrlKey || event.metaKey;
+      Promise.resolve(roller(ability, fastForward, this.actor)).catch(error => {
+        console.error(`HM3 | ${label} failed`, error);
+        ui.notifications.error(`${label} failed. See the console for details.`);
+      });
+    };
+
+    for (const control of root.querySelectorAll(".ability-d6-roll")) {
+      control.addEventListener("click", event => runAbilityRoll(event, "testAbilityD6Roll", "d6 ability roll"));
+    }
+
+    for (const control of root.querySelectorAll(".ability-d100-roll")) {
+      control.addEventListener("click", event => runAbilityRoll(event, "testAbilityD100Roll", "d100 ability roll"));
+    }
+
+    for (const input of root.querySelectorAll("input.ability-base")) {
+      input.addEventListener("focus", event => event.currentTarget.select());
+      input.addEventListener("wheel", event => {
+        if (document.activeElement === event.currentTarget) event.currentTarget.blur();
+      }, { passive: true });
+    }
   }
 
   #bindEffectControls(root) {
