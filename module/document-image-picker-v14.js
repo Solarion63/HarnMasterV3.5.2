@@ -9,7 +9,15 @@ function filePickerClass() {
   return candidate?.implementation ?? candidate ?? globalThis.FilePicker ?? null;
 }
 
-async function chooseDocumentImage(application) {
+function imageField(image) {
+  return image.dataset.edit || "img";
+}
+
+function currentImage(document, field, image) {
+  return foundry.utils.getProperty(document, field) || image.currentSrc || image.src || document.img;
+}
+
+async function chooseDocumentImage(application, image) {
   const document = application.document ?? application.actor ?? application.item;
   if (!document || !application.isEditable) return null;
 
@@ -20,12 +28,14 @@ async function chooseDocumentImage(application) {
     return null;
   }
 
+  const field = imageField(image);
+  const current = currentImage(document, field, image);
   const picker = new FilePickerClass({
     type: "image",
-    current: document.img,
+    current,
     callback: async path => {
-      if (!path || path === document.img) return;
-      await document.update({ img: path });
+      if (!path || path === current) return;
+      await document.update({ [field]: path });
       application.render({ force: true });
     },
     top: Math.max(Number(application.position?.top) || 0, 0) + 40,
@@ -41,7 +51,7 @@ function bindImagePicker(application, html) {
   const root = renderRoot(application, html);
   if (!root) return;
 
-  for (const image of root.querySelectorAll("img[data-edit='img'], img.profile-img")) {
+  for (const image of root.querySelectorAll("img[data-edit], img.profile-img")) {
     if (image.dataset.hm3ImagePickerBound === "1") continue;
 
     image.classList.add("hm3-image-picker");
@@ -52,7 +62,7 @@ function bindImagePicker(application, html) {
     const openPicker = event => {
       event.preventDefault();
       event.stopPropagation();
-      chooseDocumentImage(application).catch(error => {
+      chooseDocumentImage(application, image).catch(error => {
         console.error("HM3 | Image selection failed", error);
         ui.notifications.error("Image selection failed. See the console for details.");
       });
