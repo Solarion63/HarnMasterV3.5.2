@@ -5,11 +5,36 @@ const { ActorSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
 
+const actorTabState = new WeakMap();
+const actorFilterState = new WeakMap();
+
+const ACTOR_FILTERS = [
+  {
+    input: ".skill-name-filter",
+    rows: ".skill-item",
+    attribute: "itemName",
+    key: "skills"
+  },
+  {
+    input: ".gear-name-filter",
+    rows: ".gear-item",
+    attribute: "itemName",
+    key: "gear"
+  },
+  {
+    input: ".effects-name-filter",
+    rows: ".effect",
+    attribute: "effectName",
+    key: "effects"
+  }
+];
+
 /**
  * Shared Foundry VTT v14 Actor sheet foundation.
  *
- * This stage migrates rendering, persistence, tabs, and basic owned Item
- * controls. Rolls, filters, effects, and drag-and-drop are migrated separately.
+ * Owns rendering, persistence, tabs, list filtering, owned Item controls, and
+ * native Item drag data. Rules-specific rolls, effects, combat, and injury
+ * behavior remain isolated in their dedicated modules.
  */
 export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorSheetV2) {
   static DEFAULT_OPTIONS = {
@@ -74,6 +99,8 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     if (!root) return;
 
     this.#activateTabs(root);
+    this.#bindFilters(root);
+    this.#bindItemDrag(root);
 
     const form = root.querySelector("form");
     if (form && this.isEditable) {
@@ -116,6 +143,51 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     const row = control.closest(".item");
     const itemId = row?.dataset.itemId;
     return itemId ? this.actor.items.get(itemId) : null;
+  }
+
+  #bindItemDrag(root) {
+    if (!this.actor.isOwner) return;
+
+    for (const row of root.querySelectorAll(".item[data-item-id]")) {
+      row.draggable = true;
+      row.addEventListener("dragstart", event => {
+        const itemId = row.dataset.itemId;
+        const item = itemId ? this.actor.items.get(itemId) : null;
+        if (!item || !event.dataTransfer) return;
+
+        const dragData = typeof item.toDragData === "function"
+          ? item.toDragData()
+          : { type: "Item", uuid: item.uuid };
+
+        event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        event.dataTransfer.effectAllowed = "copyMove";
+      });
+    }
+  }
+
+  #bindFilters(root) {
+    const state = actorFilterState.get(this) ?? {};
+    actorFilterState.set(this, state);
+
+    for (const definition of ACTOR_FILTERS) {
+      const input = root.querySelector(definition.input);
+      if (!input) continue;
+
+      const apply = value => {
+        const rawValue = String(value ?? "");
+        const normalized = rawValue.trim().toLowerCase();
+        state[definition.key] = rawValue;
+
+        for (const row of root.querySelectorAll(definition.rows)) {
+          const name = String(row.dataset[definition.attribute] ?? "").toLowerCase();
+          row.hidden = Boolean(normalized) && !name.includes(normalized);
+        }
+      };
+
+      input.value = state[definition.key] ?? input.value ?? "";
+      input.addEventListener("input", event => apply(event.currentTarget.value));
+      apply(input.value);
+    }
   }
 
   async #onItemEdit(event) {
@@ -283,9 +355,13 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     const panels = Array.from(root.querySelectorAll(".sheet-body [data-tab]"));
     if (!tabs.length || !panels.length) return;
 
+    const validTabs = new Set(tabs.map(tab => tab.dataset.tab));
     const activate = tabId => {
-      for (const tab of tabs) tab.classList.toggle("active", tab.dataset.tab === tabId);
-      for (const panel of panels) panel.classList.toggle("active", panel.dataset.tab === tabId);
+      const selected = validTabs.has(tabId) ? tabId : tabs[0].dataset.tab;
+      actorTabState.set(this, selected);
+
+      for (const tab of tabs) tab.classList.toggle("active", tab.dataset.tab === selected);
+      for (const panel of panels) panel.classList.toggle("active", panel.dataset.tab === selected);
     };
 
     for (const tab of tabs) {
@@ -295,10 +371,11 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
       });
     }
 
-    const activeTab = tabs.find(tab => tab.classList.contains("active"))?.dataset.tab
+    const selected = actorTabState.get(this)
+      ?? tabs.find(tab => tab.classList.contains("active"))?.dataset.tab
       ?? this.constructor.INITIAL_TAB
       ?? tabs[0].dataset.tab;
-    activate(activeTab);
+    activate(selected);
   }
 }
 
