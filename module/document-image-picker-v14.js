@@ -1,9 +1,3 @@
-function renderRoot(application, html) {
-  if (html instanceof HTMLElement) return html;
-  if (html?.[0] instanceof HTMLElement) return html[0];
-  return application.element ?? null;
-}
-
 function filePickerClass() {
   const candidate = foundry.applications.apps.FilePicker;
   return candidate?.implementation ?? candidate ?? globalThis.FilePicker ?? null;
@@ -45,15 +39,17 @@ async function chooseDocumentImage(application, image) {
   return picker.browse();
 }
 
-function bindImagePicker(application, html) {
-  if (!application.isEditable) return;
-
-  const root = renderRoot(application, html);
-  if (!root) return;
+/**
+ * Bind the shared HM3 image picker to image controls in an ApplicationV2
+ * document sheet.
+ *
+ * @param {object} application The ActorSheetV2 or ItemSheetV2 instance.
+ * @param {HTMLElement} root The rendered sheet root.
+ */
+export function bindDocumentImagePicker(application, root) {
+  if (!application.isEditable || !root) return;
 
   for (const image of root.querySelectorAll("img[data-edit], img.profile-img")) {
-    if (image.dataset.hm3ImagePickerBound === "1") continue;
-
     image.classList.add("hm3-image-picker");
     image.setAttribute("role", "button");
     image.setAttribute("tabindex", "0");
@@ -73,28 +69,5 @@ function bindImagePicker(application, html) {
       if (!["Enter", " "].includes(event.key)) return;
       openPicker(event);
     });
-    image.dataset.hm3ImagePickerBound = "1";
   }
-}
-
-const hooks = [
-  "renderHarnMasterCharacterSheetV2",
-  "renderHarnMasterCreatureSheetV2",
-  "renderHarnMasterContainerSheetV2",
-  "renderHarnMasterSkillItemSheetV2",
-  "renderHarnMasterSpellItemSheetV2",
-  "renderHarnMasterInvocationItemSheetV2",
-  "renderHarnMasterPsionicItemSheetV2",
-  "renderHarnMasterWeapongearItemSheetV2",
-  "renderHarnMasterContainergearItemSheetV2",
-  "renderHarnMasterMissilegearItemSheetV2",
-  "renderHarnMasterArmorgearItemSheetV2",
-  "renderHarnMasterMiscgearItemSheetV2",
-  "renderHarnMasterInjuryItemSheetV2",
-  "renderHarnMasterArmorlocationItemSheetV2",
-  "renderHarnMasterTraitItemSheetV2"
-];
-
-for (const hook of hooks) {
-  Hooks.on(hook, bindImagePicker);
 }
