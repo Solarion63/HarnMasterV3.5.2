@@ -68,12 +68,10 @@ DiceHM3.missileAttackDialog = async function missileAttackDialog(dialogOptions) 
     ok: {
       label: "Roll",
       callback: async (_event, _button, dialog) => {
-        const form = dialog.element?.querySelector("form");
-        if (!form) throw new Error("HM3 | Missile attack dialog form was not found.");
-
-        const selectedLabel = form.elements.range?.value;
+        const root = dialog.element;
+        const selectedLabel = root?.querySelector('[name="range"]')?.value;
         const range = rangeLabels[selectedLabel] ?? "Extreme";
-        const addlModifier = Number(form.elements.addlModifier?.value) || 0;
+        const addlModifier = Number(root?.querySelector('[name="addlModifier"]')?.value) || 0;
         const rm = rangeModifier(range);
         const test = await evaluateD100(
           dialogOptions.target,
@@ -167,15 +165,13 @@ DiceHM3.missileDamageDialog = async function missileDamageDialog(dialogOptions) 
     ok: {
       label: "Roll",
       callback: async (_event, _button, dialog) => {
-        const form = dialog.element?.querySelector("form");
-        if (!form) throw new Error("HM3 | Missile damage dialog form was not found.");
-
-        const damageDice = Math.max(Number(form.elements.damageDice?.value) || 1, 1);
+        const root = dialog.element;
+        const damageDice = Math.max(Number(root?.querySelector('[name="damageDice"]')?.value) || 1, 1);
         return {
           type: dialogOptions.type,
-          range: form.elements.range?.value ?? dialogOptions.defaultRange,
+          range: root?.querySelector('[name="range"]')?.value ?? dialogOptions.defaultRange,
           damageDice,
-          addlImpact: Number(form.elements.addlImpact?.value) || 0,
+          addlImpact: Number(root?.querySelector('[name="addlImpact"]')?.value) || 0,
           rollObj: await new Roll(`${damageDice}d6`, dialogOptions.data).evaluate()
         };
       }
