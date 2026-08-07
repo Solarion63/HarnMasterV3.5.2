@@ -1,20 +1,17 @@
 /*
  * Temporary Foundry VTT v14 compatibility bootstrap.
  *
- * A small number of legacy HM3 workflows still rely on historical global
- * aliases. Keep only the globals which are exercised by those live workflows;
- * ApplicationV2 sheets and sheet registration use namespaced v14 APIs directly.
+ * Only the legacy macro-facing combat API still relies on historical global
+ * rendering helpers and grid measurement. ApplicationV2 sheets, document
+ * creation, effects, and sheet registration now use namespaced v14 APIs.
  *
- * Remove this file when the remaining legacy globals and grid measurement
- * compatibility have been migrated to native Foundry v14 APIs.
+ * Remove this file when the exported legacy combat helpers have been migrated
+ * to native Foundry v14 APIs.
  */
 
 const legacyGlobals = {
   Dialog: foundry.applications.api.DialogV2,
-  FormDataExtended: foundry.applications.ux.FormDataExtended,
-  renderTemplate: foundry.applications.handlebars.renderTemplate,
-  Actors: foundry.documents.collections.Actors,
-  Items: foundry.documents.collections.Items
+  renderTemplate: foundry.applications.handlebars.renderTemplate
 };
 
 for (const [name, implementation] of Object.entries(legacyGlobals)) {
