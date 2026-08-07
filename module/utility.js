@@ -426,7 +426,7 @@ export function aeChanges(effect) {
     }
 
     return effect.changes.map(ch => {
-        const modes = CONST.ACTIVE_EFFECT_MODES;
+        const types = CONST.ACTIVE_EFFECT_CHANGE_TYPES;
         const key = ch.key;
         let val = 0;
         let prefix = '';
@@ -451,16 +451,16 @@ export function aeChanges(effect) {
             val = ch.value;
             prefix = HM3.activeEffectKey[key];
         }
-        switch (ch.mode) {
-            case modes.ADD:
+        switch (ch.type) {
+            case types.ADD:
                 return `${prefix} ${val < 0 ? '-' : '+'} ${Math.abs(val)}`;
-            case modes.MULTIPLY:
+            case types.MULTIPLY:
                 return `${prefix} x ${val}`;
-            case modes.OVERRIDE:
+            case types.OVERRIDE:
                 return `${prefix} = ${val}`;
-            case modes.UPGRADE:
+            case types.UPGRADE:
                 return `${prefix} >= ${val}`;
-            case modes.DOWNGRADE:
+            case types.DOWNGRADE:
                 return `${prefix} <= ${val}`;
             default:
                 return `${prefix} custom`;
