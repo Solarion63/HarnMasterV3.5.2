@@ -211,7 +211,7 @@ Hooks.once("ready", async function () {
         await game.settings.set("hm3", "systemMigrationVersion", game.system.version);
     }
 
-    Hooks.on("hotbarDrop", (bar, data, slot) => macros.createHM3Macro(data, slot));
+    Hooks.on("hotbarDrop", (bar, data, slot) => game.hm3.macros.createHM3Macro(data, slot));
     HM3.ready = true;
 
     if (game.settings.get("hm3", "showWelcomeDialog")) {
