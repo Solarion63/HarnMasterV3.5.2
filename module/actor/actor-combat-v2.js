@@ -210,12 +210,22 @@ async function consumeMissile(item) {
   return true;
 }
 
-async function automatedAttack(sheet, control, expectedType) {
-  const attacker = getSheetToken(sheet);
-  const defender = getSingleTarget();
-  const item = itemFromControl(sheet, control);
-  if (!attacker || !defender || !item) return null;
-  if (item.type !== expectedType) return null;
+/**
+ * Execute the native v14 automated attack flow for an already-resolved token pair
+ * and owned weapon Item. This is shared by Actor-sheet controls and the public
+ * macro API so legacy world macros retain their existing command surface.
+ */
+export async function performAutomatedAttack(attacker, defender, item) {
+  if (!attacker?.actor || !defender?.actor || !item) return null;
+  if (!attacker.isOwner) {
+    ui.notifications.warn(`You do not have permissions to perform this operation on ${attacker.name}.`);
+    return null;
+  }
+  if (!["weapongear", "missilegear"].includes(item.type)) return null;
+  if (!item.system.isEquipped) {
+    ui.notifications.warn(`${item.name} is not equipped.`);
+    return null;
+  }
 
   let distance = null;
   if (item.type === "weapongear") {
@@ -232,6 +242,14 @@ async function automatedAttack(sheet, control, expectedType) {
   if (!result) return null;
   if (item.type === "missilegear" && !(await consumeMissile(item))) return null;
   return createAttackCard(attacker, defender, item, result, distance);
+}
+
+async function automatedAttack(sheet, control, expectedType) {
+  const attacker = getSheetToken(sheet);
+  const defender = getSingleTarget();
+  const item = itemFromControl(sheet, control);
+  if (!attacker || !defender || !item || item.type !== expectedType) return null;
+  return performAutomatedAttack(attacker, defender, item);
 }
 
 function bindCombatControls(sheet, root) {
