@@ -131,25 +131,32 @@ async function simpleItemMacro(item, slot) {
   );
 }
 
-export async function createHM3Macro(data, slot) {
-  if (data.type !== "Item") return true;
-
+async function createItemMacro(data, slot) {
   const item = data.uuid ? await fromUuid(data.uuid) : null;
   if (!item?.system) {
     ui.notifications.warn("No macro exists for that type of object.");
-    return false;
+    return null;
   }
 
-  if (item.type === "weapongear") {
-    await chooseWeaponMacro(item, slot);
-    return false;
-  }
-  if (item.type === "missilegear") {
-    await chooseMissileMacro(item, slot);
-    return false;
-  }
+  if (item.type === "weapongear") return chooseWeaponMacro(item, slot);
+  if (item.type === "missilegear") return chooseMissileMacro(item, slot);
+  return simpleItemMacro(item, slot);
+}
 
-  await simpleItemMacro(item, slot);
+/**
+ * Handle an HM3 Item hotbar drop.
+ *
+ * Foundry's hotbarDrop hook checks the return value synchronously. Return false
+ * immediately for Item drops so core does not create its default Item shortcut;
+ * perform the asynchronous HM3 macro creation work separately.
+ */
+export function createHM3Macro(data, slot) {
+  if (data.type !== "Item") return true;
+
+  void createItemMacro(data, slot).catch(error => {
+    console.error("HM3 | Hotbar macro creation failed", error);
+    ui.notifications.error("Hotbar macro creation failed. See the console for details.");
+  });
   return false;
 }
 
