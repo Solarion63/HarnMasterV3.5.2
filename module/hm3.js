@@ -17,6 +17,7 @@ import * as combat from "./combat.js";
 import * as effect from "./effect.js";
 import { DiceHM3 } from "./dice-hm3.js";
 
+const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
 const { DocumentSheetConfig } = foundry.applications.apps;
 const { ActiveEffectConfig, ActorSheetV2, ItemSheetV2 } = foundry.applications.sheets;
@@ -276,16 +277,18 @@ Hooks.on("closeSceneConfig", async (app, html) => {
 async function welcomeDialog() {
     const content = await renderTemplate("systems/hm3/templates/dialog/welcome.html", {});
 
-    return foundry.appv1.api.Dialog.prompt({
-        title: "Welcome!",
+    return DialogV2.prompt({
+        window: { title: "Welcome!" },
         content,
-        label: "OK",
-        callback: html => {
-            const root = html instanceof HTMLElement ? html : html?.[0];
-            const form = root.querySelector("#welcome");
-            return new FormDataExtended(form).object.showOnStartup;
+        ok: {
+            label: "OK",
+            callback: (_event, _button, dialog) => {
+                const form = dialog.element?.querySelector("#welcome");
+                if (!form) throw new Error("HM3 | Welcome dialog form was not found.");
+                return Boolean(new FormDataExtended(form).object.showOnStartup);
+            }
         },
-        options: { jQuery: false }
+        rejectClose: false
     });
 }
 
