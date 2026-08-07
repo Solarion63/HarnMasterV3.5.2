@@ -121,7 +121,7 @@ async function disableExpiredAE(actor) {
         if (effect.disabled) continue;
 
         const duration = effect.duration;
-        if (duration.type !== "none" && duration.remaining <= 0) {
+        if (duration.units !== "none" && duration.remaining <= 0) {
             await effect.update({ disabled: true });
         }
     }
