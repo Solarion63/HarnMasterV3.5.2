@@ -1,5 +1,6 @@
 import * as utility from "../utility.js";
 import { onManageActiveEffect } from "../effect.js";
+import { bindSkillControls } from "./actor-skills-v2.js";
 
 const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -104,6 +105,7 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     this.#bindFilters(root);
     this.#bindItemDrag(root);
     this.#bindAbilityControls(root);
+    bindSkillControls(this, root);
     this.#bindInjuryRoll(root);
 
     const form = root.querySelector("form");
