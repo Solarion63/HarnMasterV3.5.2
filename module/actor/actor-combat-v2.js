@@ -52,12 +52,29 @@ function getSingleTarget() {
   return targets[0];
 }
 
+function tokenPlaceable(tokenOrDocument) {
+  if (!tokenOrDocument) return null;
+  if (tokenOrDocument.center?.x != null && tokenOrDocument.center?.y != null) {
+    return tokenOrDocument;
+  }
+
+  const document = tokenOrDocument.document ?? tokenOrDocument;
+  const placeable = document.object ?? (document.id ? canvas.tokens.get(document.id) : null);
+  return placeable?.center?.x != null && placeable?.center?.y != null ? placeable : null;
+}
+
 function measureRange(sourceToken, targetToken, gridUnits = false) {
   if (canvas.scene?.getFlag("hm3", "isTotm")) return 0;
 
+  const source = tokenPlaceable(sourceToken);
+  const target = tokenPlaceable(targetToken);
+  if (!source || !target) {
+    throw new Error("HM3 | Unable to resolve token positions for range measurement.");
+  }
+
   const measurement = canvas.grid.measurePath([
-    { x: sourceToken.center.x, y: sourceToken.center.y },
-    { x: targetToken.center.x, y: targetToken.center.y }
+    { x: source.center.x, y: source.center.y },
+    { x: target.center.x, y: target.center.y }
   ]);
   if (gridUnits) {
     return measurement.spaces ?? Math.round(measurement.distance / canvas.dimensions.distance);
