@@ -1,5 +1,6 @@
 import { onManageActiveEffect } from "../effect.js";
 import * as utility from "../utility.js";
+import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ItemSheetV2 } = foundry.applications.sheets;
@@ -64,6 +65,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     if (!root) return;
 
     this.#activateTabs(root);
+    bindDocumentImagePicker(this, root);
 
     const form = root.querySelector("form");
     if (form && this.isEditable) {
