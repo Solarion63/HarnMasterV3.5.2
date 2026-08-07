@@ -75,9 +75,14 @@ function stablePageId(documentId, kind) {
     .slice(0, 16);
 }
 
+function pageKey(documentId, pageId) {
+  return `!journal.pages!${documentId}.${pageId}`;
+}
+
 function makeImagePage(document) {
   if (!document.img) return null;
 
+  const pageId = stablePageId(document._id, "image");
   return {
     name: `Figure: ${document.name}`,
     type: "image",
@@ -86,7 +91,7 @@ function makeImagePage(document) {
       show: false,
       level: 1
     },
-    _id: stablePageId(document._id, "image"),
+    _id: pageId,
     system: {},
     image: {},
     text: {
@@ -101,11 +106,13 @@ function makeImagePage(document) {
     flags: {},
     ownership: {
       default: -1
-    }
+    },
+    _key: pageKey(document._id, pageId)
   };
 }
 
 function makeTextPage(document, content) {
+  const pageId = stablePageId(document._id, "text");
   return {
     name: document.name,
     type: "text",
@@ -117,7 +124,7 @@ function makeTextPage(document, content) {
       format: 1,
       content
     },
-    _id: stablePageId(document._id, "text"),
+    _id: pageId,
     system: {},
     image: {},
     video: {
@@ -130,7 +137,8 @@ function makeTextPage(document, content) {
     flags: {},
     ownership: {
       default: -1
-    }
+    },
+    _key: pageKey(document._id, pageId)
   };
 }
 
