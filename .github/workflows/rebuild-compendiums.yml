@@ -8,13 +8,6 @@ on:
       - ".github/workflows/rebuild-compendiums.yml"
       - "packs/esoteric/_source/**"
       - "packs/system-help/_source/**"
-  pull_request:
-    branches:
-      - master
-    paths:
-      - ".github/workflows/rebuild-compendiums.yml"
-      - "packs/esoteric/_source/**"
-      - "packs/system-help/_source/**"
 
 permissions:
   contents: write
