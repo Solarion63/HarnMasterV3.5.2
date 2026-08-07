@@ -14,7 +14,6 @@
   "flags": { "allowBugReporter": true },
   "compatibility": { "minimum": "14", "verified": "14.365" },
   "esmodules": [
-    "module/v14-compat.js",
     "module/dice-v14.js",
     "module/dice-combat-v14.js",
     "module/injury-v14.js",
@@ -36,7 +35,8 @@
     "module/actor/actor-injury-v2.js",
     "module/actor/actor-create-dialog-v14.js",
     "module/hm3.js",
-    "module/combat-macro-api-v14.js"
+    "module/combat-macro-api-v14.js",
+    "module/macro-create-v14.js"
   ],
   "styles": [
     "css/hm3.css",
