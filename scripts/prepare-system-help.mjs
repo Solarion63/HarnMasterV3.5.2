@@ -57,7 +57,12 @@ function migrateJournalLinks(content, lookup, sourceName) {
       }
 
       replacements += 1;
-      const label = explicitLabel ?? destination.name;
+
+      // Match the serialization produced by Foundry v14 when a JournalEntry is
+      // dragged onto selected rich-text content. The outer UUID is the stable
+      // compendium target; preserving the original JournalEntry expression as
+      // the label reproduces the known-good editor output exactly.
+      const label = explicitLabel ?? `@JournalEntry[${rawTarget}]`;
       return `@UUID[${PACK_UUID_PREFIX}.${destination._id}]{${label}}`;
     }
   );
