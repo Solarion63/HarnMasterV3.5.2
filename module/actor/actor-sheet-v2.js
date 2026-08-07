@@ -1,4 +1,5 @@
 import * as utility from "../utility.js";
+import { onManageActiveEffect } from "../effect.js";
 
 const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -32,9 +33,10 @@ const ACTOR_FILTERS = [
 /**
  * Shared Foundry VTT v14 Actor sheet foundation.
  *
- * Owns rendering, persistence, tabs, list filtering, owned Item controls, and
- * native Item drag data. Rules-specific rolls, effects, combat, and injury
- * behavior remain isolated in their dedicated modules.
+ * Owns rendering, persistence, tabs, list filtering, owned Item controls,
+ * native Item drag data, and bindings to existing HM3 effect/injury rules.
+ * Rules-specific roll, combat, and consequence logic remains isolated in its
+ * dedicated modules.
  */
 export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorSheetV2) {
   static DEFAULT_OPTIONS = {
@@ -101,6 +103,7 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     this.#activateTabs(root);
     this.#bindFilters(root);
     this.#bindItemDrag(root);
+    this.#bindInjuryRoll(root);
 
     const form = root.querySelector("form");
     if (form && this.isEditable) {
@@ -112,6 +115,8 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     });
 
     if (!this.isEditable) return;
+
+    this.#bindEffectControls(root);
 
     root.querySelectorAll(".item-create").forEach(control => {
       control.addEventListener("click", event => this.#onItemCreate(event));
@@ -143,6 +148,39 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     const row = control.closest(".item");
     const itemId = row?.dataset.itemId;
     return itemId ? this.actor.items.get(itemId) : null;
+  }
+
+  #bindEffectControls(root) {
+    for (const control of root.querySelectorAll(".effect-control")) {
+      control.addEventListener("click", async event => {
+        event.preventDefault();
+
+        try {
+          await onManageActiveEffect(event, this.actor);
+        } catch (error) {
+          console.error("HM3 | Failed to manage Actor Active Effect", error);
+          ui.notifications.error("The Active Effect operation failed. See the console for details.");
+        }
+      });
+    }
+  }
+
+  #bindInjuryRoll(root) {
+    if (!["character", "creature"].includes(this.actor.type)) return;
+
+    for (const control of root.querySelectorAll(".injury-roll")) {
+      control.addEventListener("click", event => {
+        event.preventDefault();
+        control.setAttribute("aria-disabled", "true");
+
+        Promise.resolve(game.hm3?.macros?.injuryRoll?.(this.actor))
+          .catch(error => {
+            console.error("HM3 | Generic injury roll failed", error);
+            ui.notifications.error("Injury roll failed. See the console for details.");
+          })
+          .finally(() => control.removeAttribute("aria-disabled"));
+      });
+    }
   }
 
   #bindItemDrag(root) {
