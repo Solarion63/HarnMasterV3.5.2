@@ -48,7 +48,7 @@
   ],
   "packFolders": [
     {
-      "name": "HM3 System",
+      "name": "H\u00e2rnMaster 3 System",
       "sorting": "m",
       "packs": ["character", "possessions", "esoteric", "system-help"],
       "folders": []
