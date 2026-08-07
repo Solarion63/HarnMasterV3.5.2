@@ -6,7 +6,7 @@
  * historical global names. Expose only the names required while the sheets
  * are migrated to ApplicationV2.
  *
- * Remove this file when the Actor, Active Effect, dialog, and chat layers have
+ * Remove this file when the Actor, Active Effect, dialog, and DOM layers have
  * completed their ApplicationV2/native DOM migration.
  */
 
@@ -86,22 +86,3 @@ function installLegacyGridMeasurement() {
 Hooks.on("canvasInit", installLegacyGridMeasurement);
 Hooks.on("canvasReady", installLegacyGridMeasurement);
 Hooks.once("ready", installLegacyGridMeasurement);
-
-/**
- * Translate the small subset of legacy ChatMessage creation fields still used
- * by unmigrated HM3 roll workflows. This avoids modifying Foundry's frozen
- * CONST object and can be removed after those remaining workflows use native
- * v14 message fields.
- */
-const originalChatMessageCreate = ChatMessage.create.bind(ChatMessage);
-ChatMessage.create = function hm3CreateChatMessage(data, options = {}) {
-  const normalize = source => {
-    if (!source || typeof source !== "object" || !("type" in source) || "style" in source) return source;
-    const normalized = { ...source, style: source.type };
-    delete normalized.type;
-    return normalized;
-  };
-
-  const normalizedData = Array.isArray(data) ? data.map(normalize) : normalize(data);
-  return originalChatMessageCreate(normalizedData, options);
-};
