@@ -6,8 +6,8 @@
  * historical global names. Expose only the names required while the sheets
  * are migrated to ApplicationV2.
  *
- * Remove this file when the Actor, Active Effect, dialog, and DOM layers have
- * completed their ApplicationV2/native DOM migration.
+ * Remove this file when the remaining legacy globals and grid measurement
+ * compatibility have been migrated to native Foundry v14 APIs.
  */
 
 const legacyGlobals = {
@@ -35,29 +35,6 @@ for (const [name, implementation] of Object.entries(legacyGlobals)) {
       writable: false
     });
   }
-}
-
-class HM3LegacyElementCollection extends Array {
-  find(selector) {
-    return new HM3LegacyElementCollection(
-      ...this.flatMap(element => Array.from(element.querySelectorAll(selector)))
-    );
-  }
-
-  each(callback) {
-    this.forEach((element, index) => callback(index, element));
-    return this;
-  }
-}
-
-if (typeof HTMLElement !== "undefined" && !HTMLElement.prototype.find) {
-  Object.defineProperty(HTMLElement.prototype, "find", {
-    configurable: true,
-    value(selector) {
-      return new HM3LegacyElementCollection(...this.querySelectorAll(selector));
-    },
-    writable: true
-  });
 }
 
 function installLegacyGridMeasurement() {
