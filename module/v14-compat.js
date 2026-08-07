@@ -1,25 +1,20 @@
 /*
  * Temporary Foundry VTT v14 compatibility bootstrap.
  *
- * The existing HM3 sheets still use ApplicationV1 globals. Foundry v14 keeps
- * those implementations under foundry.appv1, but no longer guarantees the
- * historical global names. Expose only the names required while the sheets
- * are migrated to ApplicationV2.
+ * A small number of legacy HM3 workflows still rely on historical global
+ * aliases. Keep only the globals which are exercised by those live workflows;
+ * ApplicationV2 sheets and sheet registration use namespaced v14 APIs directly.
  *
  * Remove this file when the remaining legacy globals and grid measurement
  * compatibility have been migrated to native Foundry v14 APIs.
  */
 
 const legacyGlobals = {
-  ActorSheet: foundry.appv1.sheets.ActorSheet,
-  ItemSheet: foundry.appv1.sheets.ItemSheet,
-  ActiveEffectConfig: foundry.applications.sheets.ActiveEffectConfig,
   Dialog: foundry.applications.api.DialogV2,
   FormDataExtended: foundry.applications.ux.FormDataExtended,
   renderTemplate: foundry.applications.handlebars.renderTemplate,
   Actors: foundry.documents.collections.Actors,
-  Items: foundry.documents.collections.Items,
-  DocumentSheetConfig: foundry.applications.apps.DocumentSheetConfig
+  Items: foundry.documents.collections.Items
 };
 
 for (const [name, implementation] of Object.entries(legacyGlobals)) {
