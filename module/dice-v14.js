@@ -4,12 +4,6 @@ import * as utility from "./utility.js";
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
 
-function dialogRoot(html) {
-  if (html instanceof HTMLElement) return html;
-  if (html?.[0] instanceof HTMLElement) return html[0];
-  return null;
-}
-
 function dieValues(roll) {
   const die = roll.dice?.[0];
   if (!die) return [];
@@ -92,9 +86,7 @@ async function standardDialog(dialogOptions, diceSides, diceNum) {
     ok: {
       label: "Roll",
       callback: (_event, _button, dialog) => {
-        const root = dialog?.element ?? dialogRoot(dialog);
-        const form = root?.querySelector("form");
-        const modifier = form?.elements?.modifier?.value ?? 0;
+        const modifier = dialog.element?.querySelector('[name="modifier"]')?.value ?? 0;
         return DiceHM3.rollTest({
           type: dialogOptions.type,
           target: dialogOptions.target,
