@@ -52,7 +52,18 @@ async function toggleImprove(sheet, event) {
   });
 }
 
-function bindSkillControls(sheet, root) {
+/**
+ * Bind Skill roll and development controls for a rendered Actor sheet.
+ *
+ * Skill-specific behavior remains here while the Actor sheet owns the render
+ * lifecycle and explicitly invokes this controller.
+ *
+ * @param {object} sheet The ActorSheetV2 instance.
+ * @param {HTMLElement} root The rendered sheet root.
+ */
+export function bindSkillControls(sheet, root) {
+  if (!["character", "creature"].includes(sheet.actor.type)) return;
+
   for (const control of root.querySelectorAll(".skill-roll")) {
     control.addEventListener("click", event => {
       rollSkill(sheet, event).catch(error => {
@@ -72,14 +83,4 @@ function bindSkillControls(sheet, root) {
       });
     });
   }
-}
-
-for (const hook of [
-  "renderHarnMasterCharacterSheetV2",
-  "renderHarnMasterCreatureSheetV2"
-]) {
-  Hooks.on(hook, (sheet, html) => {
-    const root = html instanceof HTMLElement ? html : html?.[0] ?? sheet.element;
-    if (root) bindSkillControls(sheet, root);
-  });
 }
