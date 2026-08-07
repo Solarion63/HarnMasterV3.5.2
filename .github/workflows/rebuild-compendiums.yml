@@ -1,0 +1,63 @@
+name: Rebuild Compendiums
+
+on:
+  push:
+    branches:
+      - feature/foundry-v14-master
+    paths:
+      - ".github/workflows/rebuild-compendiums.yml"
+      - "packs/esoteric/_source/**"
+      - "packs/system-help/_source/**"
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/foundry-v14-master
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Foundry CLI without changing project dependencies
+        run: npm install --no-save --ignore-scripts @foundryvtt/foundryvtt-cli@3.0.4
+
+      - name: Rebuild Esoterics and System Help packs
+        shell: bash
+        run: |
+          rm -f packs/esoteric/*.ldb packs/system-help/*.ldb
+          node --input-type=module <<'NODE'
+          import { compilePack } from "@foundryvtt/foundryvtt-cli";
+
+          await compilePack("packs/esoteric/_source", "packs/esoteric");
+          await compilePack("packs/system-help/_source", "packs/system-help");
+          NODE
+
+      - name: Verify generated databases are populated
+        shell: bash
+        run: |
+          test -n "$(find packs/esoteric -maxdepth 1 -type f -name '*.ldb' -size +0c -print -quit)"
+          test -n "$(find packs/system-help -maxdepth 1 -type f -name '*.ldb' -size +0c -print -quit)"
+
+      - name: Commit rebuilt pack databases
+        shell: bash
+        run: |
+          if git diff --quiet -- packs/esoteric packs/system-help; then
+            echo "Compendium databases are already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packs/esoteric packs/system-help
+          git commit -m "build: compile esoteric and system-help compendiums"
+          git push origin HEAD:feature/foundry-v14-master
