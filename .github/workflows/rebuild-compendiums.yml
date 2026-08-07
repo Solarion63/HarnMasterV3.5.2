@@ -62,6 +62,45 @@ jobs:
           await compilePack(".tmp/system-help-v14", "packs/system-help", { log: true });
           NODE
 
+      - name: Verify compiled Welcome link content
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { ClassicLevel } from "classic-level";
+
+          const db = new ClassicLevel("packs/system-help", { valueEncoding: "utf8" });
+          await db.open();
+
+          const welcomePageKeyPrefix = "!journal.pages!CT4P5XgVp0c0oz2a.";
+          const expectedLink = "@UUID[Compendium.hm3.system-help.JournalEntry.BvmWEdDHSifdaM0z]{Characters}";
+          let welcomeText = null;
+
+          for await (const [key, value] of db.iterator()) {
+            if (!String(key).startsWith(welcomePageKeyPrefix)) continue;
+            if (!String(value).includes("Table Of Contents")) continue;
+            welcomeText = String(value);
+            break;
+          }
+
+          await db.close();
+
+          if (!welcomeText) {
+            throw new Error("Compiled Welcome text page was not found in System Help LevelDB.");
+          }
+
+          if (!welcomeText.includes(expectedLink)) {
+            console.error(welcomeText);
+            throw new Error(`Compiled Welcome page does not contain expected link: ${expectedLink}`);
+          }
+
+          if (welcomeText.includes("@JournalEntry[Characters]")) {
+            console.error(welcomeText);
+            throw new Error("Compiled Welcome page still contains the legacy Characters JournalEntry link.");
+          }
+
+          console.log(`Verified compiled Welcome link: ${expectedLink}`);
+          NODE
+
       - name: Verify generated databases are populated
         shell: bash
         run: |
