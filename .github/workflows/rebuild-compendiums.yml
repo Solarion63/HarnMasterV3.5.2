@@ -31,27 +31,47 @@ jobs:
       - name: Install Foundry CLI without changing project dependencies
         run: npm install --no-save --ignore-scripts @foundryvtt/foundryvtt-cli@3.0.4
 
+      - name: Verify source documents are present
+        shell: bash
+        run: |
+          esoteric_count=$(find packs/esoteric/_source -maxdepth 1 -type f -name '*.json' | wc -l)
+          help_count=$(find packs/system-help/_source -maxdepth 1 -type f -name '*.json' | wc -l)
+
+          echo "Esoterics source documents: ${esoteric_count}"
+          echo "System Help source documents: ${help_count}"
+
+          test "${esoteric_count}" -eq 424
+          test "${help_count}" -eq 20
+
       - name: Rebuild Esoterics and System Help packs
         shell: bash
         run: |
-          rm -f packs/esoteric/*.ldb packs/system-help/*.ldb
+          find packs/esoteric -maxdepth 1 -type f -delete
+          find packs/system-help -maxdepth 1 -type f -delete
+
           node --input-type=module <<'NODE'
           import { compilePack } from "@foundryvtt/foundryvtt-cli";
 
-          await compilePack("packs/esoteric/_source", "packs/esoteric");
-          await compilePack("packs/system-help/_source", "packs/system-help");
+          await compilePack("packs/esoteric/_source", "packs/esoteric", { log: true });
+          await compilePack("packs/system-help/_source", "packs/system-help", { log: true });
           NODE
 
       - name: Verify generated databases are populated
         shell: bash
         run: |
-          test -n "$(find packs/esoteric -maxdepth 1 -type f -name '*.ldb' -size +0c -print -quit)"
-          test -n "$(find packs/system-help -maxdepth 1 -type f -name '*.ldb' -size +0c -print -quit)"
+          esoteric_bytes=$(find packs/esoteric -maxdepth 1 -type f -printf '%s\n' | awk '{ total += $1 } END { print total + 0 }')
+          help_bytes=$(find packs/system-help -maxdepth 1 -type f -printf '%s\n' | awk '{ total += $1 } END { print total + 0 }')
+
+          echo "Esoterics LevelDB bytes: ${esoteric_bytes}"
+          echo "System Help LevelDB bytes: ${help_bytes}"
+
+          test "${esoteric_bytes}" -gt 10000
+          test "${help_bytes}" -gt 5000
 
       - name: Commit rebuilt pack databases
         shell: bash
         run: |
-          git add -f packs/esoteric/*.ldb packs/system-help/*.ldb
+          git add -f packs/esoteric packs/system-help
           if git diff --cached --quiet; then
             echo "Compendium databases are already current."
             exit 0
@@ -60,4 +80,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "build: compile esoteric and system-help compendiums"
+
+          git pull --rebase origin feature/foundry-v14-master
           git push origin HEAD:feature/foundry-v14-master
