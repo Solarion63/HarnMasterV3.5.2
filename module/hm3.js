@@ -13,7 +13,6 @@ import { HM3 } from "./config.js";
 import { registerSystemSettings } from "./settings.js";
 import * as migrations from "./migrations.js";
 import * as macros from "./macros.js";
-import * as combat from "./combat.js";
 import * as effect from "./effect.js";
 import { DiceHM3 } from "./dice-hm3.js";
 
@@ -21,7 +20,6 @@ const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
 const { DocumentSheetConfig } = foundry.applications.apps;
 const { ActiveEffectConfig, ActorSheetV2, ItemSheetV2 } = foundry.applications.sheets;
-const { FormDataExtended } = foundry.applications.ux;
 const { ActiveEffect, Actor, Item } = foundry.documents;
 
 Hooks.once("init", async function () {
@@ -282,11 +280,9 @@ async function welcomeDialog() {
         content,
         ok: {
             label: "OK",
-            callback: (_event, _button, dialog) => {
-                const form = dialog.element?.querySelector("#welcome");
-                if (!form) throw new Error("HM3 | Welcome dialog form was not found.");
-                return Boolean(new FormDataExtended(form).object.showOnStartup);
-            }
+            callback: (_event, _button, dialog) => Boolean(
+                dialog.element?.querySelector('[name="showOnStartup"]')?.checked
+            )
         },
         rejectClose: false
     });
