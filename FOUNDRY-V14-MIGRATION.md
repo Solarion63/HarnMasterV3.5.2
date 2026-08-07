@@ -55,7 +55,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Use native embedded-document creation for migrated Injury and Active Effect workflows.
 - [ ] Complete synthetic-token-specific regression coverage.
 - [ ] Review world migration helpers against copied legacy campaign data.
-- [ ] Validate all four LevelDB compendium packs through import/use workflows.
+- [x] Validate all four LevelDB compendium packs through browse/import/use workflows.
 - [ ] Introduce formal Foundry DataModel classes in a later architectural phase.
 
 ### Phase 5 — release validation
@@ -64,7 +64,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [ ] Test a copied v12/v13 campaign world through normal play workflows.
 - [x] Add automated static checks and package validation.
 - [x] Validate hotbar macro creation through macro execution, including Skill, automated melee, automated missile, and chooser cancellation.
-- [ ] Complete synthetic-token and compendium regression scenarios.
+- [ ] Complete synthetic-token regression scenarios.
 - [ ] Publish a release candidate only after legacy-world migration testing succeeds.
 
 ## ApplicationV2 and Runtime Architecture
@@ -103,9 +103,12 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Closing the melee/missile macro chooser without a selection leaves the target hotbar slot unchanged.
 - GM, owner/trusted-player, observer/non-owner, and limited-user Actor-sheet permissions match the v13 ownership model in focused testing.
 - Character and Possessions compendiums browse normally and Items can be added to an Actor.
-- Rebuilt Esoterics and System Help LevelDB packs now expose their source entries in Foundry.
+- Rebuilt Esoterics and System Help LevelDB packs expose their source entries in Foundry.
 - Esoterics Items can be dragged to an Actor and Ritual Invocation rolls execute successfully.
-- Spell, Ritual Invocation, and Psionic Talent rows on the Esoterics tab now match the intended v13-style layout and typography.
+- Spell, Ritual Invocation, and Psionic Talent rows on the Esoterics tab match the intended v13-style layout and typography.
+- System Help Journal entries open directly from the compendium.
+- Actor-sheet Help icons open the correct System Help entries.
+- Internal System Help Journal links resolve correctly after conversion to native v14 Journal pages and UUID-based compendium links.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
@@ -116,7 +119,6 @@ The following areas still need explicit release-level validation even though rel
 - A copied v12/v13 campaign world, including existing Actors, Items, Active Effects, macros, and scenes.
 - Synthetic-token Actors and unlinked Token Active Effects.
 - Actor Item sorting and container movement.
-- Complete the System Help validation by opening a Journal entry directly and through an Actor-sheet Help link; then close the all-four-compendium gate.
 - Initiative/combat-turn progression with effect expiration over a longer combat sequence.
 - Less frequently used invocation, psionic, and healing workflows under migrated sheets.
 
