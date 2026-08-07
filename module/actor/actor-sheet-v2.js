@@ -1,6 +1,6 @@
 import * as utility from "../utility.js";
 
-const { HandlebarsApplicationMixin } = foundry.applications.api;
+const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -180,52 +180,53 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
       extraLabel
     });
 
-    return foundry.appv1.api.Dialog.prompt({
-      title: name,
+    return DialogV2.prompt({
+      window: { title: name },
       content,
-      label: "Create",
-      callback: async html => {
-        const root = html instanceof HTMLElement ? html : html?.[0];
-        const form = root?.querySelector("#create-item");
-        if (!form) throw new Error("HM3 | Create Item dialog form was not found.");
+      ok: {
+        label: "Create",
+        callback: async (_event, _button, dialog) => {
+          const form = dialog.element?.querySelector("#create-item");
+          if (!form) throw new Error("HM3 | Create Item dialog form was not found.");
 
-        const formData = new FormDataExtended(form).object;
-        const updateData = {
-          name: formData.name || name,
-          type: dataset.type
-        };
-        const extraValue = formData.extra_value;
-
-        if (dataset.type === "gear") {
-          const gearTypes = {
-            Container: "containergear",
-            Armor: "armorgear",
-            "Melee Weapon": "weapongear",
-            "Missile Weapon": "missilegear",
-            "Misc. Gear": "miscgear"
+          const formData = new FormDataExtended(form).object;
+          const updateData = {
+            name: formData.name || name,
+            type: dataset.type
           };
-          updateData.type = gearTypes[extraValue] ?? "miscgear";
+          const extraValue = formData.extra_value;
+
+          if (dataset.type === "gear") {
+            const gearTypes = {
+              Container: "containergear",
+              Armor: "armorgear",
+              "Melee Weapon": "weapongear",
+              "Missile Weapon": "missilegear",
+              "Misc. Gear": "miscgear"
+            };
+            updateData.type = gearTypes[extraValue] ?? "miscgear";
+          }
+
+          if (dataset.type === "skill") updateData["system.type"] = dataset.skilltype;
+          else if (dataset.type === "trait") updateData["system.type"] = dataset.traittype;
+          else if (dataset.type?.endsWith("gear")) {
+            updateData["system.container"] = dataset.containerId ?? "on-person";
+          } else if (dataset.type === "spell") updateData["system.convocation"] = extraValue;
+          else if (dataset.type === "invocation") updateData["system.diety"] = extraValue;
+
+          const items = await this.actor.createEmbeddedDocuments("Item", [updateData]);
+          const created = items[0];
+          if (!created) {
+            throw new Error(
+              `Error creating Item '${updateData.name}' of type '${updateData.type}' on Actor '${this.actor.name}'.`
+            );
+          }
+
+          created.sheet.render(true);
+          return created;
         }
-
-        if (dataset.type === "skill") updateData["system.type"] = dataset.skilltype;
-        else if (dataset.type === "trait") updateData["system.type"] = dataset.traittype;
-        else if (dataset.type?.endsWith("gear")) {
-          updateData["system.container"] = dataset.containerId ?? "on-person";
-        } else if (dataset.type === "spell") updateData["system.convocation"] = extraValue;
-        else if (dataset.type === "invocation") updateData["system.diety"] = extraValue;
-
-        const item = await this.actor.createEmbeddedDocuments("Item", [updateData]);
-        const created = item[0];
-        if (!created) {
-          throw new Error(
-            `Error creating Item '${updateData.name}' of type '${updateData.type}' on Actor '${this.actor.name}'.`
-          );
-        }
-
-        created.sheet.render(true);
-        return created;
       },
-      options: { jQuery: false }
+      rejectClose: false
     });
   }
 
