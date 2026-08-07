@@ -1,9 +1,9 @@
 name: Rebuild Compendiums
 
 on:
-  push:
+  pull_request:
     branches:
-      - feature/foundry-v14-master
+      - master
     paths:
       - ".github/workflows/rebuild-compendiums.yml"
       - "packs/esoteric/_source/**"
