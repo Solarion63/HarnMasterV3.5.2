@@ -39,6 +39,7 @@
   "styles": [
     "css/hm3.css",
     "css/hm3-v14.css",
+    "css/hm3-v14-items.css",
     "css/hm3-v14-actor.css",
     "css/hm3-v14-skills.css",
     "css/hm3-v14-combat.css"
@@ -76,7 +77,7 @@
       "type": "Item",
       "name": "esoteric",
       "system": "hm3",
-      "path": "packs/esoteric",
+      "path": "packs/esoterics",
       "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
