@@ -33,12 +33,10 @@ DiceHM3.damageDialog = async function damageDialog(dialogOptions) {
     ok: {
       label: "Roll",
       callback: async (_event, _button, dialog) => {
-        const form = dialog.element?.querySelector("form");
-        if (!form) throw new Error("HM3 | Damage dialog form was not found.");
-
-        const damageDice = Math.max(Number(form.elements.damageDice?.value) || 1, 1);
-        const chosenAspect = form.elements.weaponAspect?.value ?? dialogOptions.weaponAspect;
-        const addlWeaponImpact = Number(form.elements.addlWeaponImpact?.value) || 0;
+        const root = dialog.element;
+        const damageDice = Math.max(Number(root?.querySelector('[name="damageDice"]')?.value) || 1, 1);
+        const chosenAspect = root?.querySelector('[name="weaponAspect"]')?.value ?? dialogOptions.weaponAspect;
+        const addlWeaponImpact = Number(root?.querySelector('[name="addlWeaponImpact"]')?.value) || 0;
         const rollObj = await new Roll(`${damageDice}d6`).evaluate();
 
         return {
