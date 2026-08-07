@@ -40,6 +40,8 @@ Always test with a copied world. Do not open the only copy of an established cam
 
 - [x] Convert Actor sheet listeners to native DOM handlers under the ApplicationV2 lifecycle.
 - [x] Restore owned-Item drag data for hotbar macro creation.
+- [x] Restore legacy Actor-sheet controls omitted during the initial ApplicationV2 conversion, including Carry/Equip, esoteric rolls, healing, description-to-chat, and Help links.
+- [x] Restore v13-style Carry/Equip visual state feedback on the Gear tab.
 - [x] Convert live HM3 dialogs to `DialogV2` or focused v14 implementations.
 - [x] Replace live nested-form assumptions in DialogV2 callbacks with direct field access.
 - [x] Validate chat-card rendering and native chat actions.
@@ -60,7 +62,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [ ] Test as GM, trusted player, and regular player.
 - [ ] Test a copied v12/v13 campaign world through normal play workflows.
 - [x] Add automated static checks and package validation.
-- [ ] Validate hotbar macro creation through macro execution, not only chooser creation.
+- [x] Validate hotbar macro creation through macro execution, including Skill, automated melee, automated missile, and chooser cancellation.
 - [ ] Complete synthetic-token and compendium regression scenarios.
 - [ ] Publish a release candidate only after legacy-world migration testing succeeds.
 
@@ -84,16 +86,20 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Character, Creature, and Container creation dialogs operate correctly, including default initialization choices and cancellation.
 - Character, Creature, Container, and Item ApplicationV2 sheets render and persist edits.
 - Actor tab retention and Skill/Gear/Effects filtering survive rerenders.
-- Owned Items drag to the hotbar and open the appropriate melee or missile macro-selection dialog.
+- Carry and Equip controls update owned Gear state correctly and reproduce the v13 visual feedback for inactive/carried/equipped states.
 - Actor and Item image selection works through the shared v14 image-picker implementation.
 - Ability d6/d100 rolls work, including fast-forward modifier-key behavior.
 - Skill rolls and Skill Development Roll/disable-flag handling work.
+- Spell roll execution works from the migrated Actor sheet.
 - Standalone and automated melee/missile combat flows work.
 - Defense actions, counterstrike, weapon breakage, shock, stumble, fumble, DTA, and native chat actions work.
 - Standalone generic damage and standalone missile attack/damage rolls work.
 - Manual Injury resolution correctly produces no Injury at zero effective impact and creates an owned Injury when effective impact produces an injury result.
 - Active Effect add, edit, toggle, and delete operations work without the previously observed v14 deprecation warnings.
-- Actor and Item image changes persist.
+- Hotbar Skill macro creation and execution works.
+- Hotbar automated melee macro creation and execution works with an active combatant and one target.
+- Hotbar automated missile macro creation and execution works, including normal missile/ammunition handling.
+- Closing the melee/missile macro chooser without a selection leaves the target hotbar slot unchanged.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
@@ -105,10 +111,9 @@ The following areas still need explicit release-level validation even though rel
 - A copied v12/v13 campaign world, including existing Actors, Items, Active Effects, macros, and scenes.
 - Synthetic-token Actors and unlinked Token Active Effects.
 - Actor Item sorting and container movement.
-- Hotbar macro creation followed by execution for melee, missile, Skill, and cancellation cases.
 - Compendium browsing, import, and use for Character, Possessions, Esoterics, and System Help packs.
 - Initiative/combat-turn progression with effect expiration over a longer combat sequence.
-- Less frequently used spell, ritual, psionic, and healing workflows under migrated sheets.
+- Less frequently used invocation, psionic, and healing workflows under migrated sheets.
 
 ## Deferred Work
 
