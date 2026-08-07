@@ -186,15 +186,16 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
       ok: {
         label: "Create",
         callback: async (_event, _button, dialog) => {
-          const form = dialog.element?.querySelector("#create-item");
-          if (!form) throw new Error("HM3 | Create Item dialog form was not found.");
+          const root = dialog.element;
+          const nameInput = root?.querySelector?.("[name='name']");
+          const extraInput = root?.querySelector?.("[name='extra_value']");
+          if (!nameInput) throw new Error("HM3 | Create Item dialog fields were not found.");
 
-          const formData = new FormDataExtended(form).object;
           const updateData = {
-            name: formData.name || name,
+            name: nameInput.value || name,
             type: dataset.type
           };
-          const extraValue = formData.extra_value;
+          const extraValue = extraInput?.value;
 
           if (dataset.type === "gear") {
             const gearTypes = {
