@@ -53,7 +53,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Audit and migrate live Actor, Item, Combat, Active Effect, injury, damage, and chat-action paths used by the v14 runtime.
 - [x] Replace demonstrated deprecated Active Effect change-mode access with v14 string change types.
 - [x] Use native embedded-document creation for migrated Injury and Active Effect workflows.
-- [ ] Complete synthetic-token-specific regression coverage.
+- [x] Complete synthetic-token-specific regression coverage.
 - [ ] Review world migration helpers against copied legacy campaign data.
 - [x] Validate all four LevelDB compendium packs through browse/import/use workflows.
 - [ ] Introduce formal Foundry DataModel classes in a later architectural phase.
@@ -64,7 +64,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [ ] Test a copied v12/v13 campaign world through normal play workflows.
 - [x] Add automated static checks and package validation.
 - [x] Validate hotbar macro creation through macro execution, including Skill, automated melee, automated missile, and chooser cancellation.
-- [ ] Complete synthetic-token regression scenarios.
+- [x] Complete synthetic-token regression scenarios.
 - [ ] Publish a release candidate only after legacy-world migration testing succeeds.
 
 ## ApplicationV2 and Runtime Architecture
@@ -109,6 +109,9 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - System Help Journal entries open directly from the compendium.
 - Actor-sheet Help icons open the correct System Help entries.
 - Internal System Help Journal links resolve correctly after conversion to native v14 Journal pages and UUID-based compendium links.
+- Synthetic/unlinked Token Actors preserve token-local state for Actor edits, Active Effects, recorded Injuries, automated melee defense/injury/consequence flows, and Active Effect expiration without modifying sibling tokens or the source Actor.
+- Automated melee range handling accepts both canvas Token placeables and synthetic-Actor TokenDocuments.
+- Active Effect expiration uses the native v14 duration-units API without compatibility warnings.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
@@ -117,7 +120,6 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 The following areas still need explicit release-level validation even though related runtime paths are already working:
 
 - A copied v12/v13 campaign world, including existing Actors, Items, Active Effects, macros, and scenes.
-- Synthetic-token Actors and unlinked Token Active Effects.
 - Actor Item sorting and container movement.
 - Initiative/combat-turn progression with effect expiration over a longer combat sequence.
 - Less frequently used invocation, psionic, and healing workflows under migrated sheets.
