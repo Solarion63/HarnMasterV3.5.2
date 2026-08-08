@@ -46,7 +46,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Convert live HM3 dialogs to `DialogV2` or focused v14 implementations.
 - [x] Replace live nested-form assumptions in DialogV2 callbacks with direct field access.
 - [x] Validate chat-card rendering and native chat actions.
-- [ ] Validate Actor Item sorting and container-to-container movement separately from hotbar dragging.
+- [x] Validate Actor Item sorting and container-to-container movement separately from hotbar dragging.
 
 ### Phase 4 — documents and migrations
 
@@ -112,6 +112,7 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Synthetic/unlinked Token Actors preserve token-local state for Actor edits, Active Effects, recorded Injuries, automated melee defense/injury/consequence flows, and Active Effect expiration without modifying sibling tokens or the source Actor.
 - Automated melee range handling accepts both canvas Token placeables and synthetic-Actor TokenDocuments.
 - Active Effect expiration uses the native v14 duration-units API without compatibility warnings.
+- Actor Item sorting persists across sheet reopen, gear moves correctly between On Person and HM3 containers, cross-Actor quantity moves and stack merging work, container subtrees move together, and Container Actors reject non-physical Item drops.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
@@ -120,7 +121,6 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 The following areas still need explicit release-level validation even though related runtime paths are already working:
 
 - A copied v12/v13 campaign world, including existing Actors, Items, Active Effects, macros, and scenes.
-- Actor Item sorting and container movement.
 - Initiative/combat-turn progression with effect expiration over a longer combat sequence.
 - Less frequently used invocation, psionic, and healing workflows under migrated sheets.
 
