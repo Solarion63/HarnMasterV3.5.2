@@ -36,7 +36,7 @@ const ACTOR_FILTERS = [
  * Shared Foundry VTT v14 Actor sheet foundation.
  *
  * Owns rendering, persistence, tabs, list filtering, owned Item controls,
- * native Item drag data, and lightweight bindings to existing HM3 rules.
+ * native Item drag/drop data, and lightweight bindings to existing HM3 rules.
  * Rules-specific skill, combat, and consequence logic remains isolated in its
  * dedicated modules.
  */
@@ -141,6 +141,188 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     const form = this.element?.querySelector("form");
     if (form && this.isEditable) await this.#persistForm(form);
     return super._preClose(options);
+  }
+
+  /**
+   * Preserve HM3's container-aware gear drops while using ActorSheetV2's
+   * native document-drop lifecycle for ordinary Item creation and sorting.
+   *
+   * @override
+   */
+  async _onDropItem(event, item) {
+    if (!this.actor.isOwner) return null;
+
+    const isGear = item?.type?.endsWith("gear");
+    if (!isGear) {
+      if (this.actor.type === "container") {
+        ui.notifications.warn(
+          `You may only place physical objects in a container; drop of ${item?.name ?? "Item"} refused.`
+        );
+        return null;
+      }
+      return super._onDropItem(event, item);
+    }
+
+    const destinationContainer = this.#dropContainerId(event);
+    const sameActor = item.parent?.uuid === this.actor.uuid;
+
+    if (sameActor) {
+      // Physical containers remain top-level HM3 gear. Dropping other gear on a
+      // container changes its logical container before Foundry performs any
+      // normal sibling sort implied by the drop target.
+      if (item.type !== "containergear" && item.system.container !== destinationContainer) {
+        await item.update({ "system.container": destinationContainer });
+      }
+      return super._onDropItem(event, item);
+    }
+
+    // World/compendium Items have no Actor source to remove from, so retain
+    // Foundry's standard copy semantics while assigning dropped gear to the
+    // selected HM3 destination container after creation.
+    if (!item.parent) {
+      const created = await super._onDropItem(event, item);
+      if (created?.type?.endsWith("gear") && created.type !== "containergear") {
+        await created.update({ "system.container": destinationContainer });
+      }
+      return created;
+    }
+
+    if (item.type === "containergear") {
+      return this.#moveContainerBetweenActors(item);
+    }
+
+    const quantity = Math.max(0, Number(item.system.quantity) || 0);
+    if (quantity <= 0) {
+      ui.notifications.warn(`${item.name} has no quantity available to move.`);
+      return null;
+    }
+
+    const moveQuantity = quantity > 1
+      ? await this.#promptMoveQuantity(item, quantity)
+      : 1;
+    if (!moveQuantity) return null;
+
+    return this.#moveGearBetweenActors(item, moveQuantity, destinationContainer);
+  }
+
+  #dropContainerId(event) {
+    const target = event.target instanceof Element ? event.target : null;
+    return target?.closest("[data-container-id]")?.dataset.containerId ?? "on-person";
+  }
+
+  async #promptMoveQuantity(item, maximum) {
+    const content = await renderTemplate("systems/hm3/templates/dialog/item-qty.html", {
+      itemName: item.name,
+      sourceName: item.parent?.name ?? "Unknown",
+      targetName: this.actor.name,
+      maxItems: maximum
+    });
+
+    return DialogV2.prompt({
+      window: { title: "Move Items" },
+      content: content.trim(),
+      ok: {
+        label: "Move",
+        callback: (_event, _button, dialog) => {
+          const raw = dialog.element?.querySelector('[name="itemstomove"]')?.value;
+          const quantity = Math.trunc(Number(raw));
+          if (!Number.isFinite(quantity) || quantity <= 0) return null;
+          return Math.min(quantity, maximum);
+        }
+      },
+      rejectClose: false
+    });
+  }
+
+  async #moveGearBetweenActors(item, moveQuantity, destinationContainer) {
+    const sourceActor = item.parent;
+    if (!sourceActor) return null;
+
+    const target = this.actor.items.find(candidate =>
+      candidate.type === item.type
+      && candidate.name === item.name
+      && candidate.system.container === destinationContainer
+    );
+
+    let result = target;
+    if (target) {
+      const targetQuantity = Number(target.system.quantity) || 0;
+      await target.update({ "system.quantity": targetQuantity + moveQuantity });
+    } else {
+      const itemData = item.toObject();
+      delete itemData._id;
+      itemData.system.quantity = moveQuantity;
+      itemData.system.container = destinationContainer;
+      const created = await this.actor.createEmbeddedDocuments("Item", [itemData]);
+      result = created[0] ?? null;
+    }
+
+    if (!result) return null;
+
+    const sourceQuantity = Number(item.system.quantity) || 0;
+    if (moveQuantity >= sourceQuantity) {
+      await sourceActor.deleteEmbeddedDocuments("Item", [item.id]);
+    } else {
+      await item.update({ "system.quantity": sourceQuantity - moveQuantity });
+    }
+    return result;
+  }
+
+  async #moveContainerBetweenActors(container) {
+    const sourceActor = container.parent;
+    if (!sourceActor) return null;
+
+    // Build a complete subtree before creating anything. This supports nested
+    // container data if it exists while remaining compatible with the normal
+    // HM3 top-level-container presentation.
+    const childrenByContainer = new Map();
+    for (const item of sourceActor.items) {
+      const containerId = item.system?.container;
+      if (!containerId || containerId === "on-person") continue;
+      const children = childrenByContainer.get(containerId) ?? [];
+      children.push(item);
+      childrenByContainer.set(containerId, children);
+    }
+
+    const sourceItems = [];
+    const collect = current => {
+      sourceItems.push(current);
+      for (const child of childrenByContainer.get(current.id) ?? []) {
+        collect(child);
+      }
+    };
+    collect(container);
+
+    const createdIds = [];
+    const idMap = new Map();
+    try {
+      for (const sourceItem of sourceItems) {
+        const itemData = sourceItem.toObject();
+        delete itemData._id;
+
+        if (sourceItem.id === container.id) {
+          itemData.system.container = "on-person";
+        } else if (idMap.has(sourceItem.system?.container)) {
+          itemData.system.container = idMap.get(sourceItem.system.container);
+        }
+
+        const created = await this.actor.createEmbeddedDocuments("Item", [itemData]);
+        const newItem = created[0];
+        if (!newItem) throw new Error(`Failed to create ${sourceItem.name}.`);
+        createdIds.push(newItem.id);
+        idMap.set(sourceItem.id, newItem.id);
+      }
+    } catch (error) {
+      if (createdIds.length) {
+        await this.actor.deleteEmbeddedDocuments("Item", createdIds);
+      }
+      console.error("HM3 | Container move failed and was rolled back", error);
+      ui.notifications.error("Container move failed; no source items were removed.");
+      return null;
+    }
+
+    await sourceActor.deleteEmbeddedDocuments("Item", sourceItems.map(sourceItem => sourceItem.id));
+    return this.actor.items.get(idMap.get(container.id)) ?? null;
   }
 
   async #persistForm(form) {
