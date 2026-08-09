@@ -2,7 +2,7 @@ const {
   deepClone,
   expandObject,
   flattenObject,
-  isObjectEmpty
+  isEmpty
 } = foundry.utils;
 
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object ?? {}, key);
@@ -10,9 +10,9 @@ const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object ?? {
 /**
  * Perform the HM3 world migration using Foundry v14 document APIs.
  *
- * The migration intentionally preserves the legacy HM3 transformations while
- * applying them to current Actor, Item, ActorDelta, and Compendium documents.
- * Every transformation is conditional so the migration is safe to rerun.
+ * The migration is deliberately idempotent. The migration version is advanced
+ * only after every supported world document and world Compendium is processed
+ * without an HM3 migration error.
  */
 export async function migrateWorld() {
   ui.notifications.info(
@@ -21,28 +21,33 @@ export async function migrateWorld() {
   );
   console.log("HM3 | Starting Migration");
 
+  const failures = [];
+
   for (const actor of game.actors.contents) {
-    await migrateDocument(actor, migrateActorData, "Actor");
+    await migrateDocument(actor, migrateActorData, "Actor", failures);
   }
 
   for (const item of game.items.contents) {
-    await migrateDocument(item, migrateItemData, "Item");
+    await migrateDocument(item, migrateItemData, "Item", failures);
   }
 
-  // In Foundry v14, unlinked Token overrides are ActorDelta documents. Updating
-  // the synthetic Actor writes the resulting changes back to that Token's delta.
+  // Foundry v14 stores unlinked Token overrides in ActorDelta documents. The
+  // synthetic Actor is the supported document surface for applying migrations.
   for (const scene of game.scenes.contents) {
     for (const token of scene.tokens) {
       if (token.actorLink || !token.actor) continue;
       try {
         const updateData = migrateActorData(token.actor.toObject());
-        if (!isObjectEmpty(updateData)) {
+        if (!isEmpty(updateData)) {
           console.log(`HM3 | Migrating unlinked Token ${token.name} in Scene ${scene.name}`);
           await token.actor.update(updateData, { enforceTypes: false });
         }
       } catch (error) {
-        error.message = `Failed HM3 system migration for Token ${token.name} in Scene ${scene.name}: ${error.message}`;
-        console.error(error);
+        recordFailure(
+          failures,
+          error,
+          `Token ${token.name} in Scene ${scene.name}`
+        );
       }
     }
   }
@@ -54,11 +59,19 @@ export async function migrateWorld() {
 
     try {
       console.log(`HM3 | Starting Migration for Pack ${pack.metadata.label}`);
-      await migrateCompendium(pack);
+      await migrateCompendium(pack, failures);
     } catch (error) {
-      error.message = `Failed HM3 migration for Compendium ${pack.metadata.label}: ${error.message}`;
-      console.error(error);
+      recordFailure(failures, error, `Compendium ${pack.metadata.label}`);
     }
+  }
+
+  if (failures.length) {
+    console.error(`HM3 | Migration incomplete: ${failures.length} error(s) occurred.`, failures);
+    ui.notifications.error(
+      `HM3 System Migration encountered ${failures.length} error(s). The world migration version was not advanced. Review the console before continuing.`,
+      { permanent: true }
+    );
+    return { success: false, failures };
   }
 
   await game.settings.set("hm3", "systemMigrationVersion", game.system.version);
@@ -67,27 +80,34 @@ export async function migrateWorld() {
     `HM3 System Migration to version ${game.system.version} completed!`,
     { permanent: true }
   );
+  return { success: true, failures: [] };
 }
 
-async function migrateDocument(document, migration, label) {
+function recordFailure(failures, error, label) {
+  const migrationError = error instanceof Error ? error : new Error(String(error));
+  migrationError.message = `Failed HM3 system migration for ${label}: ${migrationError.message}`;
+  failures.push({ label, error: migrationError });
+  console.error(migrationError);
+}
+
+async function migrateDocument(document, migration, label, failures = []) {
   try {
     const updateData = migration(document.toObject());
-    if (isObjectEmpty(updateData)) return;
+    if (isEmpty(updateData)) return true;
 
     console.log(`HM3 | Migrating ${label} ${document.name}`);
     await document.update(updateData, { enforceTypes: false });
+    return true;
   } catch (error) {
-    error.message = `Failed HM3 system migration for ${label} ${document.name}: ${error.message}`;
-    console.error(error);
+    recordFailure(failures, error, `${label} ${document.name}`);
+    return false;
   }
 }
 
 /**
  * Apply HM3 migration rules to supported world Compendium documents.
- * Foundry's pack.migrate() first applies the current core/system data model;
- * HM3 then applies its historical field transformations.
  */
-export async function migrateCompendium(pack) {
+export async function migrateCompendium(pack, failures = []) {
   if (!["Actor", "Item", "Scene"].includes(pack.documentName)) return;
 
   const wasLocked = pack.locked;
@@ -98,23 +118,26 @@ export async function migrateCompendium(pack) {
     const documents = await pack.getDocuments();
 
     for (const document of documents) {
-      try {
-        if (document.documentName === "Actor") {
-          await migrateDocument(document, migrateActorData, "Compendium Actor");
-        } else if (document.documentName === "Item") {
-          await migrateDocument(document, migrateItemData, "Compendium Item");
-        } else if (document.documentName === "Scene") {
-          for (const token of document.tokens) {
-            if (token.actorLink || !token.actor) continue;
+      if (document.documentName === "Actor") {
+        await migrateDocument(document, migrateActorData, "Compendium Actor", failures);
+      } else if (document.documentName === "Item") {
+        await migrateDocument(document, migrateItemData, "Compendium Item", failures);
+      } else if (document.documentName === "Scene") {
+        for (const token of document.tokens) {
+          if (token.actorLink || !token.actor) continue;
+          try {
             const updateData = migrateActorData(token.actor.toObject());
-            if (!isObjectEmpty(updateData)) {
+            if (!isEmpty(updateData)) {
               await token.actor.update(updateData, { enforceTypes: false });
             }
+          } catch (error) {
+            recordFailure(
+              failures,
+              error,
+              `unlinked Token ${token.name} in Compendium Scene ${document.name}`
+            );
           }
         }
-      } catch (error) {
-        error.message = `Failed HM3 system migration for ${document.documentName} ${document.name} in pack ${pack.collection}: ${error.message}`;
-        console.error(error);
       }
     }
   } finally {
@@ -124,9 +147,7 @@ export async function migrateCompendium(pack) {
   console.log(`HM3 | Migrated ${pack.documentName} documents in Compendium ${pack.collection}`);
 }
 
-/**
- * Produce an update object for one Actor or synthetic Actor.
- */
+/** Produce an update object for one Actor or synthetic Actor. */
 export function migrateActorData(actor) {
   const updateData = {};
   const actorData = actor?.system ?? {};
@@ -175,7 +196,7 @@ export function migrateActorData(actor) {
   const itemUpdates = actorItems.reduce((updates, item) => {
     const itemData = typeof item?.toObject === "function" ? item.toObject() : item;
     const itemUpdate = migrateItemData(itemData);
-    if (isObjectEmpty(itemUpdate)) return updates;
+    if (isEmpty(itemUpdate)) return updates;
 
     itemUpdate._id = itemData._id;
     updates.push(expandObject(itemUpdate));
@@ -186,9 +207,7 @@ export function migrateActorData(actor) {
   return updateData;
 }
 
-/**
- * Produce an update object for one Item.
- */
+/** Produce an update object for one Item. */
 export function migrateItemData(item) {
   const updateData = {};
   const system = item?.system ?? {};
@@ -284,11 +303,8 @@ export function migrateSceneData(scene) {
       flags: delta.flags ?? {}
     };
     const updateData = migrateActorData(actorLike);
-    if (isObjectEmpty(updateData)) return token;
+    if (isEmpty(updateData)) return token;
 
-    // ActorDelta data can accept the same system update syntax when persisted as
-    // a Document. For serialized Scene data, expand and merge the straightforward
-    // field additions; deletion directives are left for the live ActorDelta path.
     const additions = Object.fromEntries(
       Object.entries(updateData).filter(([key]) => !key.includes(".-="))
     );
@@ -299,9 +315,7 @@ export function migrateSceneData(scene) {
   return { tokens };
 }
 
-/**
- * Remove fields explicitly marked by legacy `_deprecated: true` markers.
- */
+/** Remove fields explicitly marked by legacy `_deprecated: true` markers. */
 function migrateRemoveDeprecated(entity, updateData) {
   const flat = flattenObject(entity ?? {});
   const deprecatedParents = Object.entries(flat)
@@ -316,9 +330,7 @@ function migrateRemoveDeprecated(entity, updateData) {
   }
 }
 
-/**
- * Purge non-HM3 flags from a Compendium while preserving its lock state.
- */
+/** Purge non-HM3 flags from a Compendium while preserving its lock state. */
 export async function purgeFlags(pack) {
   const cleanFlags = flags => flags?.hm3 ? { hm3: flags.hm3 } : {};
   const wasLocked = pack.locked;
