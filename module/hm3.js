@@ -13,7 +13,6 @@ import { HM3 } from "./config.js";
 import { registerSystemSettings } from "./settings.js";
 import * as migrations from "./migrations.js";
 import * as macros from "./macros.js";
-import * as effect from "./effect.js";
 import { DiceHM3 } from "./dice-hm3.js";
 
 const { DialogV2 } = foundry.applications.api;
@@ -42,6 +41,11 @@ Hooks.once("init", async function () {
     CONFIG.time.roundTime = 10;
     CONFIG.time.turnTime = 0;
     CONFIG.HM3 = HM3;
+
+    // Let Foundry v14's ActiveEffect registry own expiry processing. HM3 uses
+    // deletion for expired temporary effects so stale disabled rows do not
+    // accumulate, including on synthetic/unlinked-token Actors.
+    CONFIG.ActiveEffect.expiryAction = "delete";
 
     registerSystemSettings();
 
@@ -184,14 +188,6 @@ function bindHm3ChatButtons(message, html) {
 }
 
 Hooks.on("renderChatMessageHTML", bindHm3ChatButtons);
-
-Hooks.on("updateWorldTime", async () => {
-    await effect.checkExpiredActiveEffects();
-});
-
-Hooks.on("updateCombat", async () => {
-    await effect.checkExpiredActiveEffects();
-});
 
 Hooks.once("ready", async function () {
     const currentMigrationVersion = String(
