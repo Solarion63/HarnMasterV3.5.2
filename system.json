@@ -40,7 +40,8 @@
     "css/hm3-v14-actor-inventory.css",
     "css/hm3-v14-skills.css",
     "css/hm3-v14-esoterics.css",
-    "css/hm3-v14-combat.css"
+    "css/hm3-v14-combat.css",
+    "css/hm3-v14-dialogs.css"
   ],
   "languages": [
     { "lang": "en", "name": "English", "path": "lang/en.json", "flags": {} }
