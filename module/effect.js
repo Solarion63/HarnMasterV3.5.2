@@ -5,6 +5,10 @@ const { ActiveEffect } = foundry.documents;
 /**
  * Manage Active Effect instances through Actor and Item sheet controls.
  *
+ * Expiration itself is handled by Foundry v14's ActiveEffect registry. HM3
+ * configures the registry to delete expired effects rather than duplicating
+ * core expiry processing with system hooks.
+ *
  * @param {MouseEvent} event The left-click event on the effect control.
  * @param {Actor|Item} owner The owning document which manages this effect.
  */
@@ -91,47 +95,5 @@ export async function onManageActiveEffect(event, owner) {
             }
             return effect.update({ disabled: true });
         }
-    }
-}
-
-/**
- * Search all world Actors and owned unlinked Tokens for finite Active Effects
- * whose prepared v14 duration has expired, deleting them from their owner.
- */
-export async function checkExpiredActiveEffects() {
-    for (const actor of game.actors.values()) {
-        if (actor.isOwner && actor.effects?.size) {
-            await deleteExpiredActiveEffects(actor);
-        }
-    }
-
-    for (const token of canvas.tokens.ownedTokens.values()) {
-        if (!token.document.actorLink && token.actor?.effects?.size) {
-            await deleteExpiredActiveEffects(token.actor);
-        }
-    }
-}
-
-/**
- * Delete expired, enabled Active Effects for a single Actor.
- * Manually-disabled effects are retained until explicitly enabled or deleted.
- *
- * @param {Actor} actor
- */
-async function deleteExpiredActiveEffects(actor) {
-    const expiredIds = [];
-
-    for (const effect of actor.effects.values()) {
-        if (effect.disabled) continue;
-
-        const duration = effect.duration;
-        const finiteDuration = duration.value !== null && Number.isFinite(duration.remaining);
-        if (finiteDuration && (duration.expired || duration.remaining <= 0)) {
-            expiredIds.push(effect.id);
-        }
-    }
-
-    if (expiredIds.length) {
-        await actor.deleteEmbeddedDocuments("ActiveEffect", expiredIds);
     }
 }
