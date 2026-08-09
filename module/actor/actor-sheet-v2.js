@@ -167,18 +167,12 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     const sameActor = item.parent?.uuid === this.actor.uuid;
 
     if (sameActor) {
-      // Physical containers remain top-level HM3 gear. Dropping other gear on a
-      // container changes its logical container before Foundry performs any
-      // normal sibling sort implied by the drop target.
       if (item.type !== "containergear" && item.system.container !== destinationContainer) {
         await item.update({ "system.container": destinationContainer });
       }
       return super._onDropItem(event, item);
     }
 
-    // World/compendium Items have no Actor source to remove from, so retain
-    // Foundry's standard copy semantics while assigning dropped gear to the
-    // selected HM3 destination container after creation.
     if (!item.parent) {
       const created = await super._onDropItem(event, item);
       if (created?.type?.endsWith("gear") && created.type !== "containergear") {
@@ -272,9 +266,6 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     const sourceActor = container.parent;
     if (!sourceActor) return null;
 
-    // Build a complete subtree before creating anything. This supports nested
-    // container data if it exists while remaining compatible with the normal
-    // HM3 top-level-container presentation.
     const childrenByContainer = new Map();
     for (const item of sourceActor.items) {
       const containerId = item.system?.container;
@@ -608,6 +599,7 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
       context.effects[effect.id] = {
         id: effect.id,
         label: effect.name,
+        icon: effect.img,
         sourceName: effect.sourceName,
         duration: utility.aeDuration(effect),
         source: effect,
