@@ -1,34 +1,44 @@
 <form id="active-effect-start">
     <h2>Effect Start</h2>
 
-    <div class="effect-start-options" role="radiogroup" aria-label="Effect start time">
-        <label class="effect-start-option">
-            <input type="radio" name="startType" value="unspecified">
-            <span>Unspecified</span>
-        </label>
-        <label class="effect-start-option">
-            <input type="radio" name="startType" value="nowGameTime" checked>
-            <span>Now (Game Time)</span>
-        </label>
+    <fieldset class="effect-start-options">
+        <legend>Start Time</legend>
+
+        <div class="effect-start-option-row">
+            <label class="effect-start-option">
+                <input type="radio" name="startType" value="unspecified">
+                <span>Unspecified</span>
+            </label>
+        </div>
+
+        <div class="effect-start-option-row">
+            <label class="effect-start-option">
+                <input type="radio" name="startType" value="nowGameTime" checked>
+                <span>Now (Game Time)</span>
+            </label>
+        </div>
+
         {{#if combatId}}
-        <label class="effect-start-option">
-            <input type="radio" name="startType" value="nowCombat">
-            <span>Now (Current Combat Round)</span>
-        </label>
+        <div class="effect-start-option-row">
+            <label class="effect-start-option">
+                <input type="radio" name="startType" value="nowCombat">
+                <span>Now (Current Combat Round)</span>
+            </label>
+        </div>
+        {{/if}}
+    </fieldset>
+
+    <div class="effect-start-summary">
+        <div class="effect-start-summary-row">
+            <strong>Current Game Time</strong>
+            <span>{{gameTime}}</span>
+        </div>
+
+        {{#if combatId}}
+        <div class="effect-start-summary-row">
+            <strong>Current Combat Round</strong>
+            <span>Round {{combatRound}}</span>
+        </div>
         {{/if}}
     </div>
-
-    <dl class="effect-start-summary">
-        <div class="effect-start-summary-row">
-            <dt>Current Game Time</dt>
-            <dd>{{gameTime}}</dd>
-        </div>
-
-        {{#if combatId}}
-        <div class="effect-start-summary-row">
-            <dt>Current Combat Round</dt>
-            <dd>Round {{combatRound}}</dd>
-        </div>
-        {{/if}}
-    </dl>
 </form>
