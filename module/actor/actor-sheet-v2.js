@@ -4,6 +4,7 @@ import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 import { bindSkillControls } from "./actor-skills-v2.js";
 
 const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const { HTMLProseMirrorElement } = foundry.applications.elements;
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -324,9 +325,21 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
   }
 
   #prepareRichTextEditors(root, form) {
-    for (const editor of root.querySelectorAll("prose-mirror")) {
-      editor.removeAttribute("toggled");
-      editor.addEventListener("save", () => this.#persistForm(form));
+    for (const editor of Array.from(root.querySelectorAll("prose-mirror"))) {
+      const replacement = HTMLProseMirrorElement.create({
+        name: editor.name,
+        value: editor.value,
+        readonly: false,
+        disabled: false,
+        classes: editor.className,
+        collaborate: false,
+        documentUUID: this.actor.uuid,
+        toggled: false
+      });
+
+      editor.replaceWith(replacement);
+      replacement.addEventListener("save", () => this.#persistForm(form));
+      replacement.addEventListener("change", () => this.#persistForm(form));
     }
   }
 
