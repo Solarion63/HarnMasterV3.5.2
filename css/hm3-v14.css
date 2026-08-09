@@ -102,7 +102,7 @@
   margin: 4px 0;
   border: none;
   font-family: "Modesto Condensed", "Palatino Linotype", serif;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
 }
 
@@ -112,8 +112,8 @@
   align-items: center;
   justify-content: center;
   height: 30px;
-  line-height: 32px;
-  margin: 0 24px;
+  line-height: 28px;
+  margin: 0 16px;
   padding: 0;
   border-bottom: 3px solid #b5b3a4;
   color: #191813;
@@ -130,7 +130,7 @@
 .application.hm3.sheet.item .sheet-tabs [data-tab].active {
   border-bottom-color: #000;
   color: #191813;
-  font-size: 25px;
+  font-size: 17px;
   text-shadow: none;
 }
 
