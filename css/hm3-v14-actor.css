@@ -483,6 +483,9 @@
 
 .application.hm3.sheet.actor prose-mirror .editor-content.ProseMirror {
   display: block;
+  position: relative !important;
+  inset: auto !important;
+  z-index: 1;
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;
