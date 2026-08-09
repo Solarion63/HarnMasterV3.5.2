@@ -5,7 +5,7 @@
         <label class="checkbox"><input type="radio" name="startType" value="unspecified"> Unspecified</label>
         <label class="checkbox"><input type="radio" name="startType" value="nowGameTime" checked> Now (Game Time)</label>
         {{#if combatId}}
-        <label class="checkbox"><input type="radio" name="startType" value="nowCombat"> Now (Current Combat)</label>
+        <label class="checkbox"><input type="radio" name="startType" value="nowCombat"> Now (Current Combat Round)</label>
         {{/if}}
     </div>
 
@@ -16,8 +16,8 @@
 
 {{#if combatId}}
     <div class="form-group">
-        <label>Current Combat Time:</label>
-        <span>Round {{combatRound}}, Turn {{combatTurn}}</span>
+        <label>Current Combat Round:</label>
+        <span>Round {{combatRound}}</span>
     </div>
 {{/if}}
 </form>
