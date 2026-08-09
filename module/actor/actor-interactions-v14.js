@@ -1,6 +1,7 @@
 import * as utility from "../utility.js";
 
 const { DialogV2 } = foundry.applications.api;
+const { HTMLProseMirrorElement } = foundry.applications.elements;
 const { renderTemplate } = foundry.applications.handlebars;
 
 const READ_ONLY_ACTION_SELECTOR = [
@@ -153,6 +154,44 @@ async function openHelp(control) {
   return article.sheet.render(true, { editable: false });
 }
 
+function bindRichTextEditors(sheet, root) {
+  for (const legacyContent of root.querySelectorAll(".editor-content[data-edit]")) {
+    const fieldPath = legacyContent.dataset.edit;
+    if (!fieldPath) continue;
+
+    const value = foundry.utils.getProperty(sheet.actor, fieldPath)
+      ?? foundry.utils.getProperty(sheet.actor.toObject(false), fieldPath)
+      ?? "";
+
+    const editor = HTMLProseMirrorElement.create({
+      name: fieldPath,
+      value: String(value),
+      readonly: false,
+      disabled: false,
+      collaborate: false,
+      documentUUID: sheet.actor.uuid,
+      toggled: false
+    });
+
+    legacyContent.replaceWith(editor);
+
+    let lastSaved = String(value);
+    const persist = async () => {
+      const current = String(editor.value ?? "");
+      if (current === lastSaved) return;
+      await sheet.actor.update({ [fieldPath]: current });
+      lastSaved = current;
+    };
+
+    editor.addEventListener("save", () => run("Save Actor rich text", persist));
+    editor.addEventListener("change", () => run("Save Actor rich text", persist));
+    editor.addEventListener("focusout", event => {
+      if (editor.contains(event.relatedTarget)) return;
+      run("Save Actor rich text", persist);
+    });
+  }
+}
+
 function bindActorInteractions(sheet, root) {
   // v13 only activated Actor-sheet action listeners on editable sheets. Several
   // v14 controllers bind independently during rendering, so explicitly block
@@ -162,6 +201,7 @@ function bindActorInteractions(sheet, root) {
     return;
   }
 
+  bindRichTextEditors(sheet, root);
   bindRoll(root, ".spell-roll", "Spell roll", "castSpellRoll", sheet);
   bindRoll(root, ".invocation-roll", "Invocation roll", "invokeRitualRoll", sheet);
   bindRoll(root, ".psionic-roll", "Psionic roll", "usePsionicRoll", sheet);
