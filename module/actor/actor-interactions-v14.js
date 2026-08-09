@@ -86,28 +86,41 @@ function bindRoll(root, selector, label, macroName, sheet) {
   }
 }
 
+function formatEsotericSubtitle(name, level) {
+  const normalizedName = String(name ?? "").trim();
+  const normalizedLevel = String(level ?? "").trim();
+  if (!normalizedLevel) return normalizedName;
+
+  const suffix = `(${normalizedLevel})`;
+  return normalizedName.toLocaleLowerCase().endsWith(suffix.toLocaleLowerCase())
+    ? normalizedName
+    : `${normalizedName} ${suffix}`;
+}
+
 async function postEsotericDescription(sheet, control) {
   const item = itemFromControl(sheet, control);
   if (!item || !["spell", "invocation", "psionic"].includes(item.type)) return null;
 
   const data = item.system;
   const chatData = {
-    name: item.name,
     desc: data.description,
     notes: data.notes || null,
     fatigue: item.type === "psionic" ? data.fatigue : null
   };
 
+  let level;
   if (item.type === "spell") {
-    chatData.level = utility.romanize(data.level);
+    level = utility.romanize(data.level);
     chatData.title = `${data.convocation} Spell`;
   } else if (item.type === "invocation") {
-    chatData.level = utility.romanize(data.circle);
+    level = utility.romanize(data.circle);
     chatData.title = `${data.diety ?? data.deity ?? ""} Invocation`;
   } else {
-    chatData.level = `F${data.fatigue}`;
+    level = `F${data.fatigue}`;
     chatData.title = "Psionic Talent";
   }
+
+  chatData.subtitle = formatEsotericSubtitle(item.name, level);
 
   const content = await renderTemplate("systems/hm3/templates/chat/esoteric-desc-card.html", chatData);
   return ChatMessage.create({
