@@ -5,7 +5,16 @@ const {
   isEmpty
 } = foundry.utils;
 
+const { ForcedDeletion } = foundry.data.operators;
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object ?? {}, key);
+
+/**
+ * Mark one document field for deletion using Foundry v14's native data-field
+ * operator instead of the deprecated "-=field" update-key syntax.
+ */
+function deleteField(updateData, path) {
+  updateData[path] = new ForcedDeletion();
+}
 
 /**
  * Perform the HM3 world migration using Foundry v14 document APIs.
@@ -158,31 +167,31 @@ export function migrateActorData(actor) {
     "will", "eyesight", "hearing", "smell", "voice", "morality"
   ]) {
     if (hasOwn(abilities[ability], "effective")) {
-      updateData[`system.abilities.${ability}.-=effective`] = null;
+      deleteField(updateData, `system.abilities.${ability}.effective`);
     }
   }
 
   if (hasOwn(abilities, "comliness")) {
     updateData["system.abilities.comeliness.base"] = abilities.comliness?.base ?? 0;
-    updateData["system.abilities.-=comliness"] = null;
+    deleteField(updateData, "system.abilities.comliness");
   }
 
   for (const ability of ["endurance", "speed", "touch", "frame"]) {
     if (!hasOwn(abilities, ability)) continue;
     const value = abilities[ability]?.base;
     if (value) updateData[`flags.hm-gold.ability-${ability}`] = value;
-    updateData[`system.abilities.-=${ability}`] = null;
+    deleteField(updateData, `system.abilities.${ability}`);
   }
 
   for (const field of [
     "dodge", "initiative", "endurance", "universalPenalty", "physicalPenalty",
     "totalInjuryLevels", "hasCondition", "encumbrance", "totalWeight"
   ]) {
-    if (hasOwn(actorData, field)) updateData[`system.-=${field}`] = null;
+    if (hasOwn(actorData, field)) deleteField(updateData, `system.${field}`);
   }
 
   if (hasOwn(actorData.move, "effective")) {
-    updateData["system.move.-=effective"] = null;
+    deleteField(updateData, "system.move.effective");
   }
 
   if (!hasOwn(actorData, "macros") || !hasOwn(actorData.macros, "type")) {
@@ -220,11 +229,11 @@ export function migrateItemData(item) {
   if (item?.type === "weapongear") {
     if (hasOwn(system, "squeeze")) {
       if (system.squeeze) updateData["flags.hm-gold.squeeze-impact"] = system.squeeze;
-      updateData["system.-=squeeze"] = null;
+      deleteField(updateData, "system.squeeze");
     }
     if (hasOwn(system, "tear")) {
       if (system.tear) updateData["flags.hm-gold.tear-impact"] = system.tear;
-      updateData["system.-=tear"] = null;
+      deleteField(updateData, "system.tear");
     }
   }
 
@@ -233,7 +242,7 @@ export function migrateItemData(item) {
     const impact = system.impact ?? {};
 
     for (const field of ["extreme64", "extreme128", "extreme256"]) {
-      if (hasOwn(range, field)) updateData[`system.range.-=${field}`] = null;
+      if (hasOwn(range, field)) deleteField(updateData, `system.range.${field}`);
     }
 
     if (hasOwn(impact, "extreme64")) {
@@ -244,7 +253,7 @@ export function migrateItemData(item) {
         updateData["flags.hm-gold.range32-impact"] = impact.extreme;
         updateData["flags.hm-gold.range64-impact"] = impact.extreme64;
       }
-      updateData["system.impact.-=extreme64"] = null;
+      deleteField(updateData, "system.impact.extreme64");
     }
 
     for (const field of ["extreme128", "extreme256"]) {
@@ -253,7 +262,7 @@ export function migrateItemData(item) {
         const suffix = field.replace("extreme", "");
         updateData[`flags.hm-gold.range${suffix}-impact`] = impact[field];
       }
-      updateData[`system.impact.-=${field}`] = null;
+      deleteField(updateData, `system.impact.${field}`);
     }
   }
 
@@ -262,7 +271,7 @@ export function migrateItemData(item) {
     for (const field of ["squeeze", "tear"]) {
       if (!hasOwn(protection, field)) continue;
       if (protection[field]) updateData[`flags.hm-gold.${field}`] = protection[field];
-      updateData[`system.protection.-=${field}`] = null;
+      deleteField(updateData, `system.protection.${field}`);
     }
   }
 
@@ -270,13 +279,13 @@ export function migrateItemData(item) {
     for (const field of ["squeeze", "tear"]) {
       if (!hasOwn(system, field)) continue;
       if (system[field]) updateData[`flags.hm-gold.${field}`] = system[field];
-      updateData[`system.-=${field}`] = null;
+      deleteField(updateData, `system.${field}`);
     }
 
     const probWeight = system.probWeight ?? {};
     if (hasOwn(probWeight, "arms")) {
       if (probWeight.arms) updateData["flags.hm-gold.probweight-arms"] = probWeight.arms;
-      updateData["system.probWeight.-=arms"] = null;
+      deleteField(updateData, "system.probWeight.arms");
     }
   }
 
@@ -306,7 +315,7 @@ export function migrateSceneData(scene) {
     if (isEmpty(updateData)) return token;
 
     const additions = Object.fromEntries(
-      Object.entries(updateData).filter(([key]) => !key.includes(".-="))
+      Object.entries(updateData).filter(([, value]) => !(value instanceof ForcedDeletion))
     );
     foundry.utils.mergeObject(delta, expandObject(additions), { inplace: true });
     return token;
@@ -324,9 +333,7 @@ function migrateRemoveDeprecated(entity, updateData) {
 
   for (const parent of deprecatedParents) {
     if (!parent.startsWith("system.")) continue;
-    const parts = parent.split(".");
-    parts[parts.length - 1] = `-=${parts.at(-1)}`;
-    updateData[parts.join(".")] = null;
+    deleteField(updateData, parent);
   }
 }
 
