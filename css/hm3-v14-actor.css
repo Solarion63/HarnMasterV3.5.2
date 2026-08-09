@@ -325,3 +325,74 @@
 .application.hm3.sheet.actor .effect:not(.disabled) .effect-control[data-action="toggle"] i {
   color: #44191a;
 }
+
+/* Effects tab: use one explicit column model for the header and every row.
+ * The legacy flex rules allowed columns and controls to drift under
+ * ApplicationV2. The grid keeps labels and values aligned at all widths.
+ */
+.application.hm3.sheet.actor .tab.effects .effects-header,
+.application.hm3.sheet.actor .tab.effects .effect-list > .effect {
+  display: grid !important;
+  grid-template-columns: minmax(210px, 2fr) 100px 100px minmax(130px, 1fr) 72px;
+  align-items: center;
+  column-gap: 0;
+}
+
+.application.hm3.sheet.actor .tab.effects .effects-header > *,
+.application.hm3.sheet.actor .tab.effects .effect-list > .effect > * {
+  min-width: 0;
+}
+
+.application.hm3.sheet.actor .tab.effects .effect-name {
+  width: auto;
+  min-width: 0;
+  padding-right: 8px;
+}
+
+.application.hm3.sheet.actor .tab.effects .effect-list .effect-name .effect-image {
+  display: none;
+}
+
+.application.hm3.sheet.actor .tab.effects .effect-list .effect-name h4 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.effects .effect-source,
+.application.hm3.sheet.actor .tab.effects .effect-duration,
+.application.hm3.sheet.actor .tab.effects .effect-changes {
+  width: auto;
+  min-width: 0;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.effects .effect-controls {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: auto;
+  min-width: 72px;
+  padding: 0 6px;
+  text-align: right;
+}
+
+.application.hm3.sheet.actor .tab.effects .effect-controls .effect-control {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  min-width: 16px;
+  padding: 0;
+  text-align: center;
+}
+
+.application.hm3.sheet.actor .tab.effects .effects-header .effect-controls {
+  justify-content: flex-end;
+  min-width: 72px;
+}
