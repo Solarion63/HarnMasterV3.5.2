@@ -194,20 +194,17 @@ Hooks.on("updateCombat", async () => {
 });
 
 Hooks.once("ready", async function () {
-    const currentMigrationVersion = game.settings.get("hm3", "systemMigrationVersion");
-    const needsMigrationVersion = "1.2.19";
+    const currentMigrationVersion = String(
+        game.settings.get("hm3", "systemMigrationVersion") || "0"
+    );
+    const targetMigrationVersion = game.system.version;
+    const needsMigration = foundry.utils.isNewerVersion(
+        targetMigrationVersion,
+        currentMigrationVersion
+    );
 
-    if (currentMigrationVersion) {
-        const needsMigration = foundry.utils.isNewerVersion(
-            needsMigrationVersion,
-            currentMigrationVersion
-        );
-
-        if (needsMigration && game.user.isGM) {
-            await migrations.migrateWorld();
-        }
-    } else {
-        await game.settings.set("hm3", "systemMigrationVersion", game.system.version);
+    if (needsMigration && game.user.isGM) {
+        await migrations.migrateWorld();
     }
 
     Hooks.on("hotbarDrop", (bar, data, slot) => game.hm3.macros.createHM3Macro(data, slot));
