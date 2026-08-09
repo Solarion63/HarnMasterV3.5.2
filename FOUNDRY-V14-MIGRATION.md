@@ -67,7 +67,8 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Complete synthetic-token regression scenarios.
 - [x] Validate longer combat progression and round-based Active Effect expiration for linked and unlinked Tokens.
 - [x] Validate Invocation, Psionic Talent, and Healing workflows, including fast-forward, cancellation, Psionic improvement/SDR, and Esoterics description cards.
-- [ ] Publish a release candidate only after the remaining focused regression scenarios are complete.
+- [x] Validate migration and continued use of a pre-existing Active Effect from a v13 world.
+- [ ] Publish a release candidate after final packaging, version, and release-note review.
 
 ## ApplicationV2 and Runtime Architecture
 
@@ -125,15 +126,14 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Active Effect expiration uses the native v14 duration-units API without compatibility warnings.
 - Actor Item sorting persists across sheet reopen, gear moves correctly between On Person and HM3 containers, cross-Actor quantity moves and stack merging work, container subtrees move together, and Container Actors reject non-physical Item drops.
 - A copied legacy campaign world migrates successfully to `2.0.0-alpha.1` with existing Actors, Items, Scenes, linked Tokens, unlinked Tokens/ActorDeltas, legacy Macros, and representative world data remaining usable after migration.
+- A pre-existing Active Effect created in a v13 world survives migration to v14 and remains visible, editable, and otherwise usable after migration.
 - The legacy-world migration completes without HM3 migration errors or legacy forced-deletion compatibility warnings and does not rerun after the migration version is recorded.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
 ## Required Regression Scenarios Before Release Candidate
 
-The following area still needs an explicit release-level decision:
-
-- Migration of a legacy world containing a pre-existing Active Effect was not exercised by the available source world and remains an explicit coverage gap.
+All explicit release-level regression scenarios in the current migration plan have been completed successfully.
 
 ## Deferred Work
 
