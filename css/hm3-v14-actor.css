@@ -246,8 +246,7 @@
 .application.hm3.sheet.actor .trait-header,
 .application.hm3.sheet.actor .biography-header,
 .application.hm3.sheet.actor .items-header h3,
-.application.hm3.sheet.actor .effect-name h3,
-.application.hm3.sheet.actor .effect-name h4 {
+.application.hm3.sheet.actor .effect-name h3 {
   font-family: "Modesto Condensed", "Palatino Linotype", serif;
   font-weight: 700;
   text-transform: uppercase;
@@ -354,8 +353,15 @@
 }
 
 .application.hm3.sheet.actor .tab.effects .effect-list .effect-name h4 {
+  margin: 0;
   overflow: hidden;
+  color: #191813;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 30px;
   text-overflow: ellipsis;
+  text-transform: none;
   white-space: nowrap;
 }
 
