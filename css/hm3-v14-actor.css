@@ -301,6 +301,28 @@
   text-shadow: none;
 }
 
+/* Profile trait rows use ordinary item typography, not heading typography. */
+.application.hm3.sheet.actor .tab.profile .traits-list .trait .trait-name h4 {
+  margin: 0;
+  overflow: hidden;
+  color: #191813;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 30px;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+/* The legacy HR hover background omitted no-repeat/position, causing the d20
+ * image to tile across the 30px field under v14. */
+.application.hm3.sheet.actor .injuries-list .injury-healrate.active:hover {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 27px;
+}
+
 /* Foundry v14 globally disables pointer events on elements using the generic
  * .disabled class. HM3 uses that class to describe an inactive Active Effect,
  * but its row controls must remain available so the effect can be re-enabled,
