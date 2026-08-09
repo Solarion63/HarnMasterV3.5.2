@@ -1,5 +1,6 @@
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
+const { ActiveEffect } = foundry.documents;
 
 /**
  * Manage Active Effect instances through Actor and Item sheet controls.
@@ -22,7 +23,6 @@ export async function onManageActiveEffect(event, owner) {
             if (game.combat) {
                 dialogData.combatId = game.combat.id;
                 dialogData.combatRound = game.combat.round;
-                dialogData.combatTurn = game.combat.turn;
             }
 
             const content = await renderTemplate(
@@ -43,18 +43,23 @@ export async function onManageActiveEffect(event, owner) {
                         const effectData = {
                             name: "New Effect",
                             img: "icons/svg/aura.svg",
-                            origin: owner.uuid
+                            origin: owner.uuid,
+                            duration: {
+                                value: null,
+                                units: "rounds",
+                                expiry: null,
+                                expired: false
+                            }
                         };
 
                         if (startType === "nowGameTime") {
-                            effectData["duration.startTime"] = dialogData.gameTime;
-                            effectData["duration.seconds"] = 1;
+                            effectData.start = ActiveEffect.getEffectStart(null);
+                            effectData.duration.value = 1;
+                            effectData.duration.units = "seconds";
                         } else if (startType === "nowCombat") {
-                            effectData["duration.combat"] = dialogData.combatId;
-                            effectData["duration.startRound"] = dialogData.combatRound;
-                            effectData["duration.startTurn"] = dialogData.combatTurn;
-                            effectData["duration.rounds"] = 1;
-                            effectData["duration.turns"] = 0;
+                            effectData.start = ActiveEffect.getEffectStart(game.combat);
+                            effectData.duration.value = 1;
+                            effectData.duration.units = "rounds";
                         }
 
                         const created = await owner.createEmbeddedDocuments(
@@ -77,52 +82,56 @@ export async function onManageActiveEffect(event, owner) {
         case "toggle": {
             if (!effect) return null;
 
-            const updateData = {};
             if (effect.disabled) {
-                updateData.disabled = false;
-                updateData["duration.startTime"] = game.time.worldTime;
-                if (game.combat) {
-                    updateData["duration.startRound"] = game.combat.round;
-                    updateData["duration.startTurn"] = game.combat.turn;
-                }
-            } else {
-                updateData.disabled = true;
+                return effect.update({
+                    disabled: false,
+                    start: ActiveEffect.getEffectStart(game.combat ?? null),
+                    "duration.expired": false
+                });
             }
-            return effect.update(updateData);
+            return effect.update({ disabled: true });
         }
     }
 }
 
 /**
- * Search all Actors and unlinked Tokens owned by the user and disable Active
- * Effects whose duration has expired.
+ * Search all world Actors and owned unlinked Tokens for finite Active Effects
+ * whose prepared v14 duration has expired, deleting them from their owner.
  */
 export async function checkExpiredActiveEffects() {
     for (const actor of game.actors.values()) {
         if (actor.isOwner && actor.effects?.size) {
-            await disableExpiredAE(actor);
+            await deleteExpiredActiveEffects(actor);
         }
     }
 
     for (const token of canvas.tokens.ownedTokens.values()) {
         if (!token.document.actorLink && token.actor?.effects?.size) {
-            await disableExpiredAE(token.actor);
+            await deleteExpiredActiveEffects(token.actor);
         }
     }
 }
 
 /**
- * Disable expired Active Effects for a single Actor.
+ * Delete expired, enabled Active Effects for a single Actor.
+ * Manually-disabled effects are retained until explicitly enabled or deleted.
  *
  * @param {Actor} actor
  */
-async function disableExpiredAE(actor) {
+async function deleteExpiredActiveEffects(actor) {
+    const expiredIds = [];
+
     for (const effect of actor.effects.values()) {
         if (effect.disabled) continue;
 
         const duration = effect.duration;
-        if (duration.units !== "none" && duration.remaining <= 0) {
-            await effect.update({ disabled: true });
+        const finiteDuration = duration.value !== null && Number.isFinite(duration.remaining);
+        if (finiteDuration && (duration.expired || duration.remaining <= 0)) {
+            expiredIds.push(effect.id);
         }
+    }
+
+    if (expiredIds.length) {
+        await actor.deleteEmbeddedDocuments("ActiveEffect", expiredIds);
     }
 }
