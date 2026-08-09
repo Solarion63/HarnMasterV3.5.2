@@ -1,23 +1,34 @@
 <form id="active-effect-start">
     <h2>Effect Start</h2>
 
-    <div class="form-group">
-        <label class="checkbox"><input type="radio" name="startType" value="unspecified"> Unspecified</label>
-        <label class="checkbox"><input type="radio" name="startType" value="nowGameTime" checked> Now (Game Time)</label>
+    <div class="effect-start-options" role="radiogroup" aria-label="Effect start time">
+        <label class="effect-start-option">
+            <input type="radio" name="startType" value="unspecified">
+            <span>Unspecified</span>
+        </label>
+        <label class="effect-start-option">
+            <input type="radio" name="startType" value="nowGameTime" checked>
+            <span>Now (Game Time)</span>
+        </label>
         {{#if combatId}}
-        <label class="checkbox"><input type="radio" name="startType" value="nowCombat"> Now (Current Combat Round)</label>
+        <label class="effect-start-option">
+            <input type="radio" name="startType" value="nowCombat">
+            <span>Now (Current Combat Round)</span>
+        </label>
         {{/if}}
     </div>
 
-    <div class="form-group">
-        <label>Current Game Time:</label>
-        <span>{{gameTime}}</span>
-    </div>
+    <dl class="effect-start-summary">
+        <div class="effect-start-summary-row">
+            <dt>Current Game Time</dt>
+            <dd>{{gameTime}}</dd>
+        </div>
 
-{{#if combatId}}
-    <div class="form-group">
-        <label>Current Combat Round:</label>
-        <span>Round {{combatRound}}</span>
-    </div>
-{{/if}}
+        {{#if combatId}}
+        <div class="effect-start-summary-row">
+            <dt>Current Combat Round</dt>
+            <dd>Round {{combatRound}}</dd>
+        </div>
+        {{/if}}
+    </dl>
 </form>
