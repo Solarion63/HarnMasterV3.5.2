@@ -65,6 +65,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Add automated static checks and package validation.
 - [x] Validate hotbar macro creation through macro execution, including Skill, automated melee, automated missile, and chooser cancellation.
 - [x] Complete synthetic-token regression scenarios.
+- [x] Validate longer combat progression and round-based Active Effect expiration for linked and unlinked Tokens.
 - [ ] Publish a release candidate only after the remaining focused regression scenarios are complete.
 
 ## ApplicationV2 and Runtime Architecture
@@ -97,6 +98,10 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Standalone generic damage and standalone missile attack/damage rolls work.
 - Manual Injury resolution correctly produces no Injury at zero effective impact and creates an owned Injury when effective impact produces an injury result.
 - Active Effect add, edit, toggle, and delete operations work without the previously observed v14 deprecation warnings.
+- Round-based Active Effects decrement correctly during extended combat and expire cleanly through Foundry v14's native expiry processing.
+- Expired temporary Active Effects are deleted rather than left behind as disabled rows.
+- Linked and unlinked Token Active Effects expire without duplicate processing or synthetic-Actor collection errors.
+- HM3's Active Effect creation workflow presents combat duration in rounds rather than Foundry-style turns.
 - Hotbar Skill macro creation and execution works.
 - Hotbar automated melee macro creation and execution works with an active combatant and one target.
 - Hotbar automated missile macro creation and execution works, including normal missile/ammunition handling.
@@ -122,7 +127,6 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 
 The following areas still need explicit release-level validation:
 
-- Initiative/combat-turn progression with effect expiration over a longer combat sequence.
 - Less frequently used invocation, psionic, and healing workflows under migrated sheets.
 - Migration of a legacy world containing a pre-existing Active Effect was not exercised by the available source world and remains an explicit coverage gap.
 
