@@ -1,549 +1,344 @@
-/**
- * Perform a system migration for the entire World, applying migrations for Actors, Items, and Compendium packs
- * @return {Promise}      A Promise which resolves once the migration is completed
- */
-export const migrateWorld = async function () {
-  ui.notifications.info(`Applying HM3 System Migration for version ${game.system.version}. Please be patient and do not close your game or shut down your server.`, { permanent: true });
-  console.log(`HM3 | Starting Migration`);
+const {
+  deepClone,
+  expandObject,
+  flattenObject,
+  isObjectEmpty
+} = foundry.utils;
 
-  // Migrate World Actors
-  for (let a of game.actors.contents) {
-    try {
-      const updateData = migrateActorData(a.toObject());
-      if (!foundry.utils.isObjectEmpty(updateData)) {
-        console.log(`HM3 | Migrating Actor ${a.name}`);
-        await a.update(updateData, { enforceTypes: false });
-      }
-    } catch (err) {
-      err.message = `Failed HM3 system migration for Actor ${a.name}: ${err.message}`;
-      console.error(err);
-    }
-  }
-
-  // Migrate World Items
-  for (let i of game.items.contents) {
-    try {
-      const updateData = migrateItemData(i.toObject());
-      if (!foundry.utils.isObjectEmpty(updateData)) {
-        console.log(`HM3 | Migrating Item ${i.name}`);
-        await i.update(updateData, { enforceTypes: false });
-      }
-    } catch (err) {
-      err.message = `Failed HM3 system migration for Item ${i.name}: ${err.message}`;
-      console.error(err);
-    }
-  }
-
-  // Migrate Actor Override Tokens
-  for (let s of game.scenes.contents) {
-    try {
-      const updateData = migrateSceneData(s.toObject());
-      if (!foundry.utils.ObjectEmpty(updateData)) {
-        console.log(`HM3 | Migrating Scene ${s.name}`);
-        await s.update(updateData, { enforceTypes: false });
-      }
-    } catch (err) {
-      err.message = `Failed HM3 system migration for Scene ${s.name}: ${err.message}`;
-      console.error(err);
-    }
-  }
-
-  // Migrate World Compendium Packs
-  console.log(`HM3 | Migrating Compendium Packs`);
-  for (let p of game.packs) {
-    if (p.metadata.package !== 'world') continue;
-    if (!['Actor', 'Item', 'Scene'].includes(p.documentName)) continue;
-    console.log(`HM3 | Starting Migration for Pack ${p.metadata.label}`);
-    await migrateCompendium(p);
-  }
-
-  // Set the migration as complete
-  game.settings.set("hm3", "systemMigrationVersion", game.system.version);
-  console.log(`HM3 | Migration Complete`)
-  ui.notifications.info(`HM3 System Migration to version ${game.system.version} completed!`, { permanent: true });
-};
-
-/* -------------------------------------------- */
+const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object ?? {}, key);
 
 /**
- * Apply migration rules to all Entities within a single Compendium pack
- * @param pack
- * @return {Promise}
+ * Perform the HM3 world migration using Foundry v14 document APIs.
+ *
+ * The migration intentionally preserves the legacy HM3 transformations while
+ * applying them to current Actor, Item, ActorDelta, and Compendium documents.
+ * Every transformation is conditional so the migration is safe to rerun.
  */
- export const migrateCompendium = async function(pack) {
-  const doc = pack.documentName;
-  if ( !["Actor", "Item", "Scene"].includes(doc) ) return;
+export async function migrateWorld() {
+  ui.notifications.info(
+    `Applying HM3 System Migration for version ${game.system.version}. Please be patient and do not close your game or shut down your server.`,
+    { permanent: true }
+  );
+  console.log("HM3 | Starting Migration");
 
-  // Unlock the pack for editing
-  const wasLocked = pack.locked;
-  await pack.configure({locked: false});
+  for (const actor of game.actors.contents) {
+    await migrateDocument(actor, migrateActorData, "Actor");
+  }
 
-  // Begin by requesting server-side data model migration and get the migrated content
-  await pack.migrate();
-  const documents = await pack.getDocuments();
+  for (const item of game.items.contents) {
+    await migrateDocument(item, migrateItemData, "Item");
+  }
 
-  // Iterate over compendium entries - applying fine-tuned migration functions
-  for ( let doc of documents ) {
-    let updateData = {};
-    try {
-      switch (doc) {
-        case "Actor":
-          updateData = migrateActorData(doc.toObject());
-          break;
-        case "Item":
-          updateData = migrateItemData(doc.toObject());
-          break;
-        case "Scene":
-          updateData = migrateSceneData(doc.toObject());
-          break;
+  // In Foundry v14, unlinked Token overrides are ActorDelta documents. Updating
+  // the synthetic Actor writes the resulting changes back to that Token's delta.
+  for (const scene of game.scenes.contents) {
+    for (const token of scene.tokens) {
+      if (token.actorLink || !token.actor) continue;
+      try {
+        const updateData = migrateActorData(token.actor.toObject());
+        if (!isObjectEmpty(updateData)) {
+          console.log(`HM3 | Migrating unlinked Token ${token.name} in Scene ${scene.name}`);
+          await token.actor.update(updateData, { enforceTypes: false });
+        }
+      } catch (error) {
+        error.message = `Failed HM3 system migration for Token ${token.name} in Scene ${scene.name}: ${error.message}`;
+        console.error(error);
       }
-
-      // Save the entry, if data was changed
-      if ( foundry.utils.isObjectEmpty(updateData) ) continue;
-      await doc.update(updateData);
-      console.log(`Migrated ${doc} ${doc.name} in Compendium ${pack.collection}`);
-    }
-
-    // Handle migration failures
-    catch(err) {
-      err.message = `Failed dnd5e system migration for ${doc.name} in pack ${pack.collection}: ${err.message}`;
-      console.error(err);
     }
   }
 
-  // Apply the original locked status for the pack
-  await pack.configure({locked: wasLocked});
-  console.log(`Migrated all ${doc} entities from Compendium ${pack.collection}`);
-};
+  console.log("HM3 | Migrating world Compendium Packs");
+  for (const pack of game.packs) {
+    if (pack.metadata.package !== "world") continue;
+    if (!["Actor", "Item", "Scene"].includes(pack.documentName)) continue;
 
-/* -------------------------------------------- */
-/*  Document Type Migration Helpers               */
-/* -------------------------------------------- */
-
-/**
- * Migrate a single Actor to incorporate latest data model changes
- * Return an Object of updateData to be applied
- * @param {Actor} actor   The actor to Update
- * @return {Object}       The updateData to apply
- */
-export const migrateActorData = function (actor) {
-  const updateData = {};
-  const actorData = actor.system;
-
-  // Actor Data Updates
-  /*
-  * -------- ACTOR UPDATES GO HERE -------------
-  */
-
-  if (actorData.abilities.strength.hasOwnProperty('effective')) {
-    updateData['system.abilities.strength.-=effective'] = null
-  }
-
-  if (actorData.abilities.stamina.hasOwnProperty('effective')) {
-    updateData['system.abilities.stamina.-=effective'] = null
-  }
-
-  if (actorData.abilities.dexterity.hasOwnProperty('effective')) {
-    updateData['system.abilities.dexterity.-=effective'] = null
-  }
-
-  if (actorData.abilities.agility.hasOwnProperty('effective')) {
-    updateData['system.abilities.agility.-=effective'] = null
-  }
-
-  if (actorData.abilities.intelligence.hasOwnProperty('effective')) {
-    updateData['system.abilities.intelligence.-=effective'] = null
-  }
-
-  if (actorData.abilities.aura.hasOwnProperty('effective')) {
-    updateData['system.abilities.aura.-=effective'] = null
-  }
-
-  if (actorData.abilities.will.hasOwnProperty('effective')) {
-    updateData['system.abilities.will.-=effective'] = null
-  }
-
-  if (actorData.abilities.eyesight.hasOwnProperty('effective')) {
-    updateData['system.abilities.eyesight.-=effective'] = null
-  }
-
-  if (actorData.abilities.hearing.hasOwnProperty('effective')) {
-    updateData['system.abilities.hearing.-=effective'] = null
-  }
-
-  if (actorData.abilities.smell.hasOwnProperty('effective')) {
-    updateData['system.abilities.smell.-=effective'] = null
-  }
-
-  if (actorData.abilities.voice.hasOwnProperty('effective')) {
-    updateData['system.abilities.voice.-=effective'] = null
-  }
-
-  if (actorData.abilities.hasOwnProperty('comliness')) {
-    // Rename 'comliness' to 'comeliness'
-    updateData['system.abilities.comeliness.base'] = actorData.abilities.comliness.base;
-    updateData['system.abilities.-=comliness'] = null;
-  }
-
-  if (actorData.abilities.morality.hasOwnProperty('effective')) {
-    updateData['system.abilities.morality.-=effective'] = null
-  }
-
-  if (actorData.abilities.hasOwnProperty('endurance')) {
-    if (actorData.abilities.endurance.base) {
-      updateData['flags.hm-gold.ability-endurance'] = actorData.abilities.endurance.base;
+    try {
+      console.log(`HM3 | Starting Migration for Pack ${pack.metadata.label}`);
+      await migrateCompendium(pack);
+    } catch (error) {
+      error.message = `Failed HM3 migration for Compendium ${pack.metadata.label}: ${error.message}`;
+      console.error(error);
     }
-    updateData['system.abilities.-=endurance'] = null;
   }
 
-  if (actorData.abilities.hasOwnProperty('speed')) {
-    if (actorData.abilities.speed.base) {
-      updateData['flags.hm-gold.ability-speed'] = actorData.abilities.speed.base;
-    }
-    updateData['system.abilities.-=speed'] = null;
-  }
-
-  if (actorData.abilities.hasOwnProperty('touch')) {
-    if (actorData.abilities.touch.base) {
-      updateData['flags.hm-gold.ability-touch'] = actorData.abilities.touch.base;
-    }
-    updateData['system.abilities.-=touch'] = null;
-  }
-
-  if (actorData.abilities.hasOwnProperty('frame')) {
-    if (actorData.abilities.frame.base) {
-      updateData['flags.hm-gold.ability-frame'] = actorData.abilities.frame.base;
-    }
-    updateData['system.abilities.-=frame'] = null;
-  }
-
-  // if (actorData.hasOwnProperty('shockIndex')) {
-  //   updateData['system.-=shockIndex'] = null
-  // }
-
-  if (actorData.hasOwnProperty('dodge')) {
-    updateData['system.-=dodge'] = null
-  }
-
-  if (actorData.hasOwnProperty('initiative')) {
-    updateData['system.-=initiative'] = null
-  }
-
-  if (actorData.hasOwnProperty('endurance')) {
-    updateData['system.-=endurance'] = null
-  }
-
-  if (actorData.move.hasOwnProperty('effective')) {
-    updateData['system.move.-=effective'] = null
-  }
-
-  if (actorData.hasOwnProperty('universalPenalty')) {
-    updateData['system.-=universalPenalty'] = null
-  }
-
-  if (actorData.hasOwnProperty('physicalPenalty')) {
-    updateData['system.-=physicalPenalty'] = null
-  }
-
-  if (actorData.hasOwnProperty('totalInjuryLevels')) {
-    updateData['system.-=totalInjuryLevels'] = null
-  }
-
-  if (actorData.hasOwnProperty('hasCondition')) {
-    updateData['system.-=hasCondition'] = null
-  }
-
-  if (actorData.hasOwnProperty('encumbrance')) {
-    updateData['system.-=encumbrance'] = null
-  }
-
-  if (actorData.hasOwnProperty('totalWeight')) {
-    updateData['system.-=totalWeight'] = null
-  }
-
-  if (!actorData.hasOwnProperty('macros') || !actorData.macros.hasOwnProperty('type')) {
-    updateData['system.macros.command'] = '';
-    updateData['system.macros.type'] = 'script';
-  }
-
-  // Remove deprecated fields
-  _migrateRemoveDeprecated(actor, updateData);
-
-  // Migrate Owned Items
-  if (!actor.items) return updateData;
-
-  if ( !actor.items ) return updateData;
-  const items = actor.items.reduce((arr, i) => {
-    // Migrate the Owned Item
-    const itemData = i instanceof CONFIG.Item.documentClass ? i.toObject() : i;
-    let itemUpdate = migrateItemData(itemData);
-
-    // Update the Owned Item
-    if ( !isObjectEmpty(itemUpdate) ) {
-      itemUpdate._id = itemData._id;
-      arr.push(expandObject(itemUpdate));
-    }
-
-    return arr;
-  }, []);
-  if ( items.length > 0 ) updateData.items = items;
- return updateData;
-};
-
-/* -------------------------------------------- */
-
-
-/**
- * Scrub an Actor's system data, removing all keys which are not explicitly defined in the system template
- * @param {Object} actorData    The data object for an Actor
- * @return {Object}             The scrubbed Actor data
- */
-function cleanActorData(actorData) {
-
-  // Scrub system data
-  const model = game.model.Actor[actorData.type];
-  actorData.system = filterObject(actorData.system, model);
-
-  // Scrub system flags
-  const allowedFlags = CONFIG.HM3.allowedActorFlags.reduce((obj, f) => {
-    obj[f] = null;
-    return obj;
-  }, {});
-  if (actorData.flags.hm3) {
-    actorData.flags.hm3 = filterObject(actorData.flags.hm3, allowedFlags);
-  }
-
-  // Return the scrubbed data
-  return actorData;
+  await game.settings.set("hm3", "systemMigrationVersion", game.system.version);
+  console.log("HM3 | Migration Complete");
+  ui.notifications.info(
+    `HM3 System Migration to version ${game.system.version} completed!`,
+    { permanent: true }
+  );
 }
 
+async function migrateDocument(document, migration, label) {
+  try {
+    const updateData = migration(document.toObject());
+    if (isObjectEmpty(updateData)) return;
 
-/* -------------------------------------------- */
+    console.log(`HM3 | Migrating ${label} ${document.name}`);
+    await document.update(updateData, { enforceTypes: false });
+  } catch (error) {
+    error.message = `Failed HM3 system migration for ${label} ${document.name}: ${error.message}`;
+    console.error(error);
+  }
+}
 
 /**
- * Migrate a single Item to incorporate latest data model changes
- * @param itemData
+ * Apply HM3 migration rules to supported world Compendium documents.
+ * Foundry's pack.migrate() first applies the current core/system data model;
+ * HM3 then applies its historical field transformations.
  */
-export const migrateItemData = function (item) {
+export async function migrateCompendium(pack) {
+  if (!["Actor", "Item", "Scene"].includes(pack.documentName)) return;
+
+  const wasLocked = pack.locked;
+  await pack.configure({ locked: false });
+
+  try {
+    await pack.migrate({ notify: false });
+    const documents = await pack.getDocuments();
+
+    for (const document of documents) {
+      try {
+        if (document.documentName === "Actor") {
+          await migrateDocument(document, migrateActorData, "Compendium Actor");
+        } else if (document.documentName === "Item") {
+          await migrateDocument(document, migrateItemData, "Compendium Item");
+        } else if (document.documentName === "Scene") {
+          for (const token of document.tokens) {
+            if (token.actorLink || !token.actor) continue;
+            const updateData = migrateActorData(token.actor.toObject());
+            if (!isObjectEmpty(updateData)) {
+              await token.actor.update(updateData, { enforceTypes: false });
+            }
+          }
+        }
+      } catch (error) {
+        error.message = `Failed HM3 system migration for ${document.documentName} ${document.name} in pack ${pack.collection}: ${error.message}`;
+        console.error(error);
+      }
+    }
+  } finally {
+    await pack.configure({ locked: wasLocked });
+  }
+
+  console.log(`HM3 | Migrated ${pack.documentName} documents in Compendium ${pack.collection}`);
+}
+
+/**
+ * Produce an update object for one Actor or synthetic Actor.
+ */
+export function migrateActorData(actor) {
   const updateData = {};
+  const actorData = actor?.system ?? {};
+  const abilities = actorData.abilities ?? {};
 
-  /*
-  * -------- ITEM UPDATES GO HERE -------------
-  */
-  if (!item.system.macros?.hasOwnProperty('type')) {
-    updateData['system.macros.command'] = '';
-    updateData['system.macros.type'] = 'script';
-  }
-
-  if (item.type === 'weapongear') {
-    if (item.system.hasOwnProperty('squeeze')) {
-      if (item.system.squeeze) {
-        updateData['flags.hm-gold.squeeze-impact'] = item.system.squeeze;
-      }
-      updateData['system.-=squeeze'] = null;
-    }
-
-    if (item.system.hasOwnProperty('tear')) {
-      if (item.system.squeeze) {
-        updateData['flags.hm-gold.tear-impact'] = item.system.tear;
-      }
-      updateData['system.-=tear'] = null;
+  for (const ability of [
+    "strength", "stamina", "dexterity", "agility", "intelligence", "aura",
+    "will", "eyesight", "hearing", "smell", "voice", "morality"
+  ]) {
+    if (hasOwn(abilities[ability], "effective")) {
+      updateData[`system.abilities.${ability}.-=effective`] = null;
     }
   }
 
-  if (item.type === 'missilegear') {
-    if (item.system.range.hasOwnProperty('extreme64')) {
-      updateData['system.range.-=extreme64'] = null;
-    }
-
-    if (item.system.range.hasOwnProperty('extreme128')) {
-      updateData['system.range.-=extreme128'] = null;
-    }
-
-    if (item.system.range.hasOwnProperty('extreme256')) {
-      updateData['system.range.-=extreme256'] = null;
-    }
-
-    if (item.system.impact.hasOwnProperty('extreme64')) {
-      if (item.system.impact.extreme64) {
-        updateData['flags.hm-gold.range4-impact'] = item.system.impact.short;
-        updateData['flags.hm-gold.range8-impact'] = item.system.impact.medium;
-        updateData['flags.hm-gold.range16-impact'] = item.system.impact.long;
-        updateData['flags.hm-gold.range32-impact'] = item.system.impact.extreme;
-        updateData['flags.hm-gold.range64-impact'] = item.system.impact.extreme64;
-      }
-      updateData['system.impact.-=extreme64'] = null;
-    }
-  
-    if (item.system.impact.hasOwnProperty('extreme128')) {
-      if (item.system.impact.extreme128) {
-        updateData['flags.hm-gold.range128-impact'] = item.system.impact.extreme128;
-      }
-      updateData['system.impact.-=extreme128'] = null;
-    }
-
-    if (item.system.impact.hasOwnProperty('extreme256')) {
-      if (item.system.impact.extreme256) {
-        updateData['flags.hm-gold.range256-impact'] = item.system.impact.extreme256;
-      }
-      updateData['system.impact.-=extreme256'] = null;
-    }  
+  if (hasOwn(abilities, "comliness")) {
+    updateData["system.abilities.comeliness.base"] = abilities.comliness?.base ?? 0;
+    updateData["system.abilities.-=comliness"] = null;
   }
 
-  if (item.type === 'armorgear') {
-    if (!item.system.protection.hasOwnProperty('squeeze')) {
-      if (item.system.protection.squeeze) {
-        updateData['flags.hm-gold.squeeze'] = item.system.protection.squeeze;
-      }
-      updateData['system.protection.-=squeeze'] = null;
-    }
-
-    if (item.system.protection.hasOwnProperty('tear')) {
-      if (item.system.protection.tear) {
-        updateData['flags.hm-gold.tear'] = item.system.protection.tear;
-      }
-      updateData['system.protection.-=tear'] = null;
-    }
+  for (const ability of ["endurance", "speed", "touch", "frame"]) {
+    if (!hasOwn(abilities, ability)) continue;
+    const value = abilities[ability]?.base;
+    if (value) updateData[`flags.hm-gold.ability-${ability}`] = value;
+    updateData[`system.abilities.-=${ability}`] = null;
   }
 
-  if (item.type === 'armorlocation') {
-    if (item.system.hasOwnProperty('squeeze')) {
-      if (item.system.squeeze) {
-        updateData['flags.hm-gold.squeeze'] = item.system.squeeze;
-      }      
-      updateData['system.-=squeeze'] = null;
-    }
-
-    if (item.system.hasOwnProperty('tear')) {
-      if (item.system.tear) {
-        updateData['flags.hm-gold.tear'] = item.system.tear;
-      }
-      updateData['system.-=tear'] = null;
-    }
-
-    if (item.system.probWeight.hasOwnProperty('arms')) {
-      if (item.system.probWeight.arms) {
-        updateData['flags.hm-gold.probweight-arms'] = item.system.probWeight.arms;
-      }
-      updateData['system.probWeight.-=arms'] = null;
-    }
+  for (const field of [
+    "dodge", "initiative", "endurance", "universalPenalty", "physicalPenalty",
+    "totalInjuryLevels", "hasCondition", "encumbrance", "totalWeight"
+  ]) {
+    if (hasOwn(actorData, field)) updateData[`system.-=${field}`] = null;
   }
 
-  // Remove deprecated fields
-  _migrateRemoveDeprecated(item, updateData);
+  if (hasOwn(actorData.move, "effective")) {
+    updateData["system.move.-=effective"] = null;
+  }
 
-  // Return the migrated update data
+  if (!hasOwn(actorData, "macros") || !hasOwn(actorData.macros, "type")) {
+    updateData["system.macros.command"] = actorData.macros?.command ?? "";
+    updateData["system.macros.type"] = "script";
+  }
+
+  migrateRemoveDeprecated(actor, updateData);
+
+  const actorItems = Array.isArray(actor?.items) ? actor.items : [];
+  const itemUpdates = actorItems.reduce((updates, item) => {
+    const itemData = typeof item?.toObject === "function" ? item.toObject() : item;
+    const itemUpdate = migrateItemData(itemData);
+    if (isObjectEmpty(itemUpdate)) return updates;
+
+    itemUpdate._id = itemData._id;
+    updates.push(expandObject(itemUpdate));
+    return updates;
+  }, []);
+
+  if (itemUpdates.length) updateData.items = itemUpdates;
   return updateData;
-};
-
-/* -------------------------------------------- */
+}
 
 /**
- * Migrate a single Scene to incorporate changes to the data model of it's actor data overrides
- * Return an Object of updateData to be applied
- * @param {Object} scene  The Scene data to Update
- * @return {Object}       The updateData to apply
+ * Produce an update object for one Item.
  */
- export const migrateSceneData = function(scene) {
-  const tokens = scene.tokens.map(token => {
-    const t = token.toJSON();
-    if (!t.actorId || t.actorLink) {
-      t.actorData = {};
-    }
-    else if ( !game.actors.has(t.actorId) ){
-      t.actorId = null;
-      t.actorData = {};
-    }
-    else if ( !t.actorLink ) {
-      const actorData = duplicate(t.actorData);
-      actorData.type = token.actor?.type;
-      const update = migrateActorData(actorData);
-      ['items', 'effects'].forEach(embeddedName => {
-        if (!update[embeddedName]?.length) return;
-        const updates = new Map(update[embeddedName].map(u => [u._id, u]));
-        t.actorData[embeddedName].forEach(original => {
-          const update = updates.get(original._id);
-          if (update) foundry.utils.mergeObject(original, update);
-        });
-        delete update[embeddedName];
-      });
+export function migrateItemData(item) {
+  const updateData = {};
+  const system = item?.system ?? {};
 
-      foundry.utils.mergeObject(t.actorData, update);
-    }
-    return t;
-  });
-  return {tokens};
-};
-
-/* -------------------------------------------- */
-/*  Low level migration utilities
-/* -------------------------------------------- */
-
-/**
- * Migrate the actor bonuses object
- * @private
- */
-//   function _migrateActorBonuses(actor, updateData) {
-//     const b = game.model.Actor.character.bonuses;
-//     for ( let k of Object.keys(actor.system.bonuses || {}) ) {
-//       if ( k in b ) updateData[`data.bonuses.${k}`] = b[k];
-//       else updateData[`data.bonuses.-=${k}`] = null;
-//     }
-//   }
-
-
-/* -------------------------------------------- */
-
-
-/**
- * A general migration to remove all fields from the data model which are flagged with a _deprecated tag
- * @private
- */
-const _migrateRemoveDeprecated = function (ent, updateData) {
-  const flat = flattenObject(ent);
-
-  const toPreDep = Object.entries(updateData).filter(e => e[0])
-  // Identify objects to deprecate
-  const toDeprecate = Object.entries(flat).filter(e => e[0].endsWith("_deprecated") && (e[1] === true)).map(e => {
-    let parent = e[0].split(".");
-    parent.pop();
-    return parent.join(".");
-  });
-
-  // Remove them
-  for (let k of toDeprecate) {
-    let parts = k.split(".");
-    parts[parts.length - 1] = "-=" + parts[parts.length - 1];
-    updateData[`data.${parts.join(".")}`] = null;
+  if (!hasOwn(system.macros, "type")) {
+    updateData["system.macros.command"] = system.macros?.command ?? "";
+    updateData["system.macros.type"] = "script";
   }
-};
 
+  if (item?.type === "weapongear") {
+    if (hasOwn(system, "squeeze")) {
+      if (system.squeeze) updateData["flags.hm-gold.squeeze-impact"] = system.squeeze;
+      updateData["system.-=squeeze"] = null;
+    }
+    if (hasOwn(system, "tear")) {
+      if (system.tear) updateData["flags.hm-gold.tear-impact"] = system.tear;
+      updateData["system.-=tear"] = null;
+    }
+  }
 
-/* -------------------------------------------- */
+  if (item?.type === "missilegear") {
+    const range = system.range ?? {};
+    const impact = system.impact ?? {};
 
+    for (const field of ["extreme64", "extreme128", "extreme256"]) {
+      if (hasOwn(range, field)) updateData[`system.range.-=${field}`] = null;
+    }
+
+    if (hasOwn(impact, "extreme64")) {
+      if (impact.extreme64) {
+        updateData["flags.hm-gold.range4-impact"] = impact.short;
+        updateData["flags.hm-gold.range8-impact"] = impact.medium;
+        updateData["flags.hm-gold.range16-impact"] = impact.long;
+        updateData["flags.hm-gold.range32-impact"] = impact.extreme;
+        updateData["flags.hm-gold.range64-impact"] = impact.extreme64;
+      }
+      updateData["system.impact.-=extreme64"] = null;
+    }
+
+    for (const field of ["extreme128", "extreme256"]) {
+      if (!hasOwn(impact, field)) continue;
+      if (impact[field]) {
+        const suffix = field.replace("extreme", "");
+        updateData[`flags.hm-gold.range${suffix}-impact`] = impact[field];
+      }
+      updateData[`system.impact.-=${field}`] = null;
+    }
+  }
+
+  if (item?.type === "armorgear") {
+    const protection = system.protection ?? {};
+    for (const field of ["squeeze", "tear"]) {
+      if (!hasOwn(protection, field)) continue;
+      if (protection[field]) updateData[`flags.hm-gold.${field}`] = protection[field];
+      updateData[`system.protection.-=${field}`] = null;
+    }
+  }
+
+  if (item?.type === "armorlocation") {
+    for (const field of ["squeeze", "tear"]) {
+      if (!hasOwn(system, field)) continue;
+      if (system[field]) updateData[`flags.hm-gold.${field}`] = system[field];
+      updateData[`system.-=${field}`] = null;
+    }
+
+    const probWeight = system.probWeight ?? {};
+    if (hasOwn(probWeight, "arms")) {
+      if (probWeight.arms) updateData["flags.hm-gold.probweight-arms"] = probWeight.arms;
+      updateData["system.probWeight.-=arms"] = null;
+    }
+  }
+
+  migrateRemoveDeprecated(item, updateData);
+  return updateData;
+}
 
 /**
- * A general tool to purge flags from all entities in a Compendium pack.
- * @param {Compendium} pack   The compendium pack to clean
- * @private
+ * Retained helper for callers which need a serializable Scene update. Foundry
+ * v14 uses token.delta rather than the legacy token.actorData structure.
+ */
+export function migrateSceneData(scene) {
+  const tokens = (scene?.tokens ?? []).map(sourceToken => {
+    const token = deepClone(
+      typeof sourceToken?.toObject === "function" ? sourceToken.toObject() : sourceToken
+    );
+
+    if (token.actorLink || !token.delta) return token;
+
+    const delta = token.delta;
+    const actorLike = {
+      system: delta.system ?? {},
+      items: delta.items ?? [],
+      flags: delta.flags ?? {}
+    };
+    const updateData = migrateActorData(actorLike);
+    if (isObjectEmpty(updateData)) return token;
+
+    // ActorDelta data can accept the same system update syntax when persisted as
+    // a Document. For serialized Scene data, expand and merge the straightforward
+    // field additions; deletion directives are left for the live ActorDelta path.
+    const additions = Object.fromEntries(
+      Object.entries(updateData).filter(([key]) => !key.includes(".-="))
+    );
+    foundry.utils.mergeObject(delta, expandObject(additions), { inplace: true });
+    return token;
+  });
+
+  return { tokens };
+}
+
+/**
+ * Remove fields explicitly marked by legacy `_deprecated: true` markers.
+ */
+function migrateRemoveDeprecated(entity, updateData) {
+  const flat = flattenObject(entity ?? {});
+  const deprecatedParents = Object.entries(flat)
+    .filter(([key, value]) => key.endsWith("_deprecated") && value === true)
+    .map(([key]) => key.split(".").slice(0, -1).join("."));
+
+  for (const parent of deprecatedParents) {
+    if (!parent.startsWith("system.")) continue;
+    const parts = parent.split(".");
+    parts[parts.length - 1] = `-=${parts.at(-1)}`;
+    updateData[parts.join(".")] = null;
+  }
+}
+
+/**
+ * Purge non-HM3 flags from a Compendium while preserving its lock state.
  */
 export async function purgeFlags(pack) {
-  const cleanFlags = (flags) => {
-    const flagshm3 = flags.hm3 || null;
-    return flagshm3 ? { hm3: flagshm3 } : {};
-  };
+  const cleanFlags = flags => flags?.hm3 ? { hm3: flags.hm3 } : {};
+  const wasLocked = pack.locked;
   await pack.configure({ locked: false });
-  const content = await pack.getDocuments();
-  for (let doc of content) {
-    const update = { flags: cleanFlags(doc.flags) };
-    if (pack.documentName === "Actor") {
-      update.items = doc.items.map(i => {
-        i.flags = cleanFlags(i.flags);
-        return i;
-      });
+
+  try {
+    const documents = await pack.getDocuments();
+    for (const document of documents) {
+      const update = { flags: cleanFlags(document.flags) };
+      if (pack.documentName === "Actor") {
+        update.items = document.items.map(item => {
+          const source = item.toObject();
+          source.flags = cleanFlags(source.flags);
+          return source;
+        });
+      }
+      await document.update(update, { recursive: false });
+      console.log(`HM3 | Purged flags from ${document.name}`);
     }
-    await doc.update(update, { recursive: false });
-    console.log(`HM3 | Purged flags from ${doc.name}`);
+  } finally {
+    await pack.configure({ locked: wasLocked });
   }
-  await pack.configure({ locked: true });
 }
