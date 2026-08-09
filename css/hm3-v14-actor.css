@@ -438,3 +438,55 @@
   justify-content: flex-end;
   min-width: 72px;
 }
+
+/* Rich text editors: the legacy TinyMCE wrappers collapse under v14's
+ * ProseMirror custom element. Give the Façade editor a real flex column and
+ * ensure the WYSIWYG surface itself occupies the editor's available height. */
+.application.hm3.sheet.actor .tab.facade > .flexrow {
+  align-items: stretch;
+  min-height: 300px;
+}
+
+.application.hm3.sheet.actor .tab.facade .facade-image {
+  flex: 0 0 200px;
+  width: 200px;
+  max-width: 200px;
+  height: 300px;
+}
+
+.application.hm3.sheet.actor .tab.facade .facade-description {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 300px;
+  margin-left: 8px;
+}
+
+.application.hm3.sheet.actor .tab.facade .facade-description > .editor,
+.application.hm3.sheet.actor .tab.profile .description > .editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 200px;
+}
+
+.application.hm3.sheet.actor prose-mirror {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 200px;
+}
+
+.application.hm3.sheet.actor prose-mirror .editor-content.ProseMirror {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 180px;
+  height: auto;
+  overflow: auto;
+}
