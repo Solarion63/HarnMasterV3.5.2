@@ -54,18 +54,18 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Replace demonstrated deprecated Active Effect change-mode access with v14 string change types.
 - [x] Use native embedded-document creation for migrated Injury and Active Effect workflows.
 - [x] Complete synthetic-token-specific regression coverage.
-- [ ] Review world migration helpers against copied legacy campaign data.
+- [x] Review world migration helpers against copied legacy campaign data.
 - [x] Validate all four LevelDB compendium packs through browse/import/use workflows.
 - [ ] Introduce formal Foundry DataModel classes in a later architectural phase.
 
 ### Phase 5 — release validation
 
 - [x] Test as GM, trusted player, regular player, and limited/observer access while preserving v13 ownership restrictions.
-- [ ] Test a copied v12/v13 campaign world through normal play workflows.
+- [x] Test a copied v12/v13 campaign world through normal play workflows.
 - [x] Add automated static checks and package validation.
 - [x] Validate hotbar macro creation through macro execution, including Skill, automated melee, automated missile, and chooser cancellation.
 - [x] Complete synthetic-token regression scenarios.
-- [ ] Publish a release candidate only after legacy-world migration testing succeeds.
+- [ ] Publish a release candidate only after the remaining focused regression scenarios are complete.
 
 ## ApplicationV2 and Runtime Architecture
 
@@ -113,16 +113,18 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Automated melee range handling accepts both canvas Token placeables and synthetic-Actor TokenDocuments.
 - Active Effect expiration uses the native v14 duration-units API without compatibility warnings.
 - Actor Item sorting persists across sheet reopen, gear moves correctly between On Person and HM3 containers, cross-Actor quantity moves and stack merging work, container subtrees move together, and Container Actors reject non-physical Item drops.
+- A copied legacy campaign world migrates successfully to `2.0.0-alpha.1` with existing Actors, Items, Scenes, linked Tokens, unlinked Tokens/ActorDeltas, legacy Macros, and representative world data remaining usable after migration.
+- The legacy-world migration completes without HM3 migration errors or legacy forced-deletion compatibility warnings and does not rerun after the migration version is recorded.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
 ## Required Regression Scenarios Before Release Candidate
 
-The following areas still need explicit release-level validation even though related runtime paths are already working:
+The following areas still need explicit release-level validation:
 
-- A copied v12/v13 campaign world, including existing Actors, Items, Active Effects, macros, and scenes.
 - Initiative/combat-turn progression with effect expiration over a longer combat sequence.
 - Less frequently used invocation, psionic, and healing workflows under migrated sheets.
+- Migration of a legacy world containing a pre-existing Active Effect was not exercised by the available source world and remains an explicit coverage gap.
 
 ## Deferred Work
 
