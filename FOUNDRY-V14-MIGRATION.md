@@ -66,6 +66,7 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Validate hotbar macro creation through macro execution, including Skill, automated melee, automated missile, and chooser cancellation.
 - [x] Complete synthetic-token regression scenarios.
 - [x] Validate longer combat progression and round-based Active Effect expiration for linked and unlinked Tokens.
+- [x] Validate Invocation, Psionic Talent, and Healing workflows, including fast-forward, cancellation, Psionic improvement/SDR, and Esoterics description cards.
 - [ ] Publish a release candidate only after the remaining focused regression scenarios are complete.
 
 ## ApplicationV2 and Runtime Architecture
@@ -93,6 +94,11 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Ability d6/d100 rolls work, including fast-forward modifier-key behavior.
 - Skill rolls and Skill Development Roll/disable-flag handling work.
 - Spell roll execution works from the migrated Actor sheet.
+- Invocation rolls work normally and with fast-forward execution.
+- Psionic Talent rolls work normally and with fast-forward execution.
+- Psionic improvement flag enable/disable and Skill Development Roll actions work.
+- Healing rolls work normally and with fast-forward execution, and cancelling the healing dialog exits cleanly without a result or error.
+- Esoterics description/chat cards for Spell, Invocation, and Psionic Talent render without duplicate level/circle/fatigue notation.
 - Standalone and automated melee/missile combat flows work.
 - Defense actions, counterstrike, weapon breakage, shock, stumble, fumble, DTA, and native chat actions work.
 - Standalone generic damage and standalone missile attack/damage rolls work.
@@ -125,9 +131,8 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 
 ## Required Regression Scenarios Before Release Candidate
 
-The following areas still need explicit release-level validation:
+The following area still needs an explicit release-level decision:
 
-- Less frequently used invocation, psionic, and healing workflows under migrated sheets.
 - Migration of a legacy world containing a pre-existing Active Effect was not exercised by the available source world and remains an explicit coverage gap.
 
 ## Deferred Work
