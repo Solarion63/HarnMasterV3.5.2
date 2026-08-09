@@ -348,8 +348,22 @@
   padding-right: 8px;
 }
 
+.application.hm3.sheet.actor .tab.effects .effect-list .effect-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .application.hm3.sheet.actor .tab.effects .effect-list .effect-name .effect-image {
-  display: none;
+  display: block;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 
 .application.hm3.sheet.actor .tab.effects .effect-list .effect-name h4 {
