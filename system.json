@@ -2,7 +2,7 @@
   "id": "hm3",
   "title": "HarnMaster 3",
   "description": "The HarnMaster 3 game system for Foundry Virtual Tabletop.",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-rc.1",
   "authors": [
     { "name": "Toasty", "flags": {} },
     { "name": "Valcorin", "flags": {} }
