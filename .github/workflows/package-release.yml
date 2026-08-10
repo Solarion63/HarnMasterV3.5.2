@@ -1,0 +1,82 @@
+name: Package Release Candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out selected ref
+        uses: actions/checkout@v4
+
+      - name: Read system version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./system.json").version')
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Packaging HarnMaster 3 ${version}"
+
+      - name: Stage release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/hm3-release"
+          rm -rf "$stage"
+          mkdir -p "$stage"
+
+          git archive --format=tar HEAD | tar -xf - -C "$stage"
+
+          # Remove repository/build-only material. Runtime LevelDB packs remain
+          # exactly as committed and already validated by the compendium job.
+          rm -rf "$stage/.github"
+          rm -f "$stage/.gitattributes"
+          rm -f "$stage/FOUNDRY-V14-MIGRATION.md"
+          rm -f "$stage/scripts/prepare-system-help.mjs"
+          find "$stage/packs" -type d -name _source -prune -exec rm -rf {} +
+
+          # Guard against accidentally shipping build-source compendium data.
+          if find "$stage/packs" -type d -name _source -print -quit | grep -q .; then
+            echo "Compendium _source directory remained in staged release." >&2
+            exit 1
+          fi
+
+          test -f "$stage/system.json"
+          test -f "$stage/template.json"
+          test -d "$stage/module"
+          test -d "$stage/templates"
+          test -d "$stage/packs"
+
+      - name: Create release ZIP and manifest
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/hm3-release"
+          mkdir -p dist
+
+          (cd "$stage" && zip -qr "$GITHUB_WORKSPACE/dist/hm3-${VERSION}.zip" .)
+          cp "$stage/system.json" "dist/hm3-${VERSION}.json"
+
+          unzip -t "dist/hm3-${VERSION}.zip"
+          unzip -l "dist/hm3-${VERSION}.zip" | grep -q 'system.json'
+          if unzip -l "dist/hm3-${VERSION}.zip" | grep -q '/_source/'; then
+            echo "Release ZIP unexpectedly contains compendium source files." >&2
+            exit 1
+          fi
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: hm3-${{ steps.version.outputs.version }}
+          path: |
+            dist/hm3-${{ steps.version.outputs.version }}.zip
+            dist/hm3-${{ steps.version.outputs.version }}.json
+          if-no-files-found: error
