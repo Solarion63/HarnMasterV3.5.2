@@ -6,6 +6,8 @@ on:
       - master
     paths:
       - ".github/workflows/rebuild-compendiums.yml"
+      - "packs/character/_source/**"
+      - "packs/possessions/_source/**"
       - "packs/esoteric/_source/**"
       - "packs/system-help/_source/**"
       - "scripts/prepare-system-help.mjs"
@@ -35,12 +37,18 @@ jobs:
       - name: Verify source documents are present
         shell: bash
         run: |
+          character_count=$(find packs/character/_source -maxdepth 1 -type f -name '*.json' | wc -l)
+          possessions_count=$(find packs/possessions/_source -maxdepth 1 -type f -name '*.json' | wc -l)
           esoteric_count=$(find packs/esoteric/_source -maxdepth 1 -type f -name '*.json' | wc -l)
           help_count=$(find packs/system-help/_source -maxdepth 1 -type f -name '*.json' | wc -l)
 
+          echo "Character source documents: ${character_count}"
+          echo "Possessions source documents: ${possessions_count}"
           echo "Esoterics source documents: ${esoteric_count}"
           echo "System Help source documents: ${help_count}"
 
+          test "${character_count}" -eq 132
+          test "${possessions_count}" -eq 126
           test "${esoteric_count}" -eq 424
           test "${help_count}" -eq 20
 
@@ -49,17 +57,51 @@ jobs:
         run: |
           node scripts/prepare-system-help.mjs packs/system-help/_source .tmp/system-help-v14
 
-      - name: Rebuild Esoterics and System Help packs
+      - name: Rebuild all compendium packs
         shell: bash
         run: |
-          find packs/esoteric -maxdepth 1 -type f -delete
-          find packs/system-help -maxdepth 1 -type f -delete
+          for pack in character possessions esoteric system-help; do
+            find "packs/${pack}" -maxdepth 1 -type f -delete
+          done
 
           node --input-type=module <<'NODE'
           import { compilePack } from "@foundryvtt/foundryvtt-cli";
 
+          await compilePack("packs/character/_source", "packs/character", { log: true });
+          await compilePack("packs/possessions/_source", "packs/possessions", { log: true });
           await compilePack("packs/esoteric/_source", "packs/esoteric", { log: true });
           await compilePack(".tmp/system-help-v14", "packs/system-help", { log: true });
+          NODE
+
+      - name: Verify compiled document counts
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { ClassicLevel } from "classic-level";
+
+          const packs = [
+            ["character", "!items!", 132],
+            ["possessions", "!items!", 126],
+            ["esoteric", "!items!", 424],
+            ["system-help", "!journal!", 20]
+          ];
+
+          for (const [name, prefix, expected] of packs) {
+            const db = new ClassicLevel(`packs/${name}`, { valueEncoding: "utf8" });
+            await db.open();
+
+            let count = 0;
+            for await (const [key] of db.iterator()) {
+              if (String(key).startsWith(prefix)) count += 1;
+            }
+
+            await db.close();
+            console.log(`${name} compiled documents: ${count}`);
+
+            if (count !== expected) {
+              throw new Error(`${name} compiled document count ${count} did not match expected ${expected}`);
+            }
+          }
           NODE
 
       - name: Verify compiled Welcome link content
@@ -99,14 +141,11 @@ jobs:
       - name: Verify generated databases are populated
         shell: bash
         run: |
-          esoteric_bytes=$(find packs/esoteric -maxdepth 1 -type f -printf '%s\n' | awk '{ total += $1 } END { print total + 0 }')
-          help_bytes=$(find packs/system-help -maxdepth 1 -type f -printf '%s\n' | awk '{ total += $1 } END { print total + 0 }')
-
-          echo "Esoterics LevelDB bytes: ${esoteric_bytes}"
-          echo "System Help LevelDB bytes: ${help_bytes}"
-
-          test "${esoteric_bytes}" -gt 10000
-          test "${help_bytes}" -gt 5000
+          for pack in character possessions esoteric system-help; do
+            bytes=$(find "packs/${pack}" -maxdepth 1 -type f -printf '%s\n' | awk '{ total += $1 } END { print total + 0 }')
+            echo "${pack} LevelDB bytes: ${bytes}"
+            test "${bytes}" -gt 5000
+          done
 
       - name: Remove non-deterministic LevelDB diagnostic logs
         shell: bash
@@ -114,13 +153,14 @@ jobs:
           # LevelDB LOG/LOG.old are human-readable diagnostic logs containing
           # timestamps and thread IDs. They are not database state and cause
           # otherwise-identical rebuilds to produce noisy bot commits.
-          rm -f packs/esoteric/LOG packs/esoteric/LOG.old
-          rm -f packs/system-help/LOG packs/system-help/LOG.old
+          for pack in character possessions esoteric system-help; do
+            rm -f "packs/${pack}/LOG" "packs/${pack}/LOG.old"
+          done
 
       - name: Commit rebuilt pack databases
         shell: bash
         run: |
-          git add -f packs/esoteric packs/system-help
+          git add -f packs/character packs/possessions packs/esoteric packs/system-help
           if git diff --cached --quiet; then
             echo "Compendium databases are already current."
             exit 0
@@ -128,7 +168,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "build: compile esoteric and system-help compendiums"
+          git commit -m "build: compile all Foundry v14 compendiums"
 
           git pull --rebase origin feature/foundry-v14-master
           git push origin HEAD:feature/foundry-v14-master
