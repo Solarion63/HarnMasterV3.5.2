@@ -47,8 +47,8 @@ jobs:
           echo "Esoterics source documents: ${esoteric_count}"
           echo "System Help source documents: ${help_count}"
 
-          test "${character_count}" -eq 132
-          test "${possessions_count}" -eq 126
+          test "${character_count}" -eq 105
+          test "${possessions_count}" -eq 125
           test "${esoteric_count}" -eq 424
           test "${help_count}" -eq 20
 
@@ -80,8 +80,8 @@ jobs:
           import { ClassicLevel } from "classic-level";
 
           const packs = [
-            ["character", "!items!", 132],
-            ["possessions", "!items!", 126],
+            ["character", "!items!", 105],
+            ["possessions", "!items!", 125],
             ["esoteric", "!items!", 424],
             ["system-help", "!journal!", 20]
           ];
