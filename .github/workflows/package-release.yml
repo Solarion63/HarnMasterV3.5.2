@@ -8,6 +8,7 @@ on:
       - ".github/workflows/package-release.yml"
       - "system.json"
       - "CHANGELOG.md"
+      - "packs/**"
   workflow_dispatch:
 
 permissions:
@@ -21,6 +22,14 @@ jobs:
       - name: Check out selected ref
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install LevelDB verification dependency
+        run: npm install --no-save --ignore-scripts classic-level
+
       - name: Read system version
         id: version
         shell: bash
@@ -29,6 +38,37 @@ jobs:
           version=$(node -p 'require("./system.json").version')
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "Packaging HarnMaster 3 ${version}"
+
+      - name: Verify compiled compendium document counts
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { ClassicLevel } from "classic-level";
+
+          const packs = [
+            ["character", "!items!", 132],
+            ["possessions", "!items!", 126],
+            ["esoteric", "!items!", 424],
+            ["system-help", "!journal!", 20]
+          ];
+
+          for (const [name, prefix, expected] of packs) {
+            const db = new ClassicLevel(`packs/${name}`, { valueEncoding: "utf8" });
+            await db.open();
+
+            let count = 0;
+            for await (const [key] of db.iterator()) {
+              if (String(key).startsWith(prefix)) count += 1;
+            }
+
+            await db.close();
+            console.log(`${name} compiled documents: ${count}`);
+
+            if (count !== expected) {
+              throw new Error(`${name} compiled document count ${count} did not match expected ${expected}`);
+            }
+          }
+          NODE
 
       - name: Stage release files
         shell: bash
@@ -59,6 +99,11 @@ jobs:
           test -d "$stage/module"
           test -d "$stage/templates"
           test -d "$stage/packs"
+
+          for pack in character possessions esoteric system-help; do
+            test -f "$stage/packs/${pack}/CURRENT"
+            test -n "$(find "$stage/packs/${pack}" -maxdepth 1 -type f \( -name '*.ldb' -o -name '*.log' \) -print -quit)"
+          done
 
       - name: Create release ZIP and manifest
         shell: bash
