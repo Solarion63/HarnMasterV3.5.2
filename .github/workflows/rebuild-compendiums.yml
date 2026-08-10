@@ -108,6 +108,15 @@ jobs:
           test "${esoteric_bytes}" -gt 10000
           test "${help_bytes}" -gt 5000
 
+      - name: Remove non-deterministic LevelDB diagnostic logs
+        shell: bash
+        run: |
+          # LevelDB LOG/LOG.old are human-readable diagnostic logs containing
+          # timestamps and thread IDs. They are not database state and cause
+          # otherwise-identical rebuilds to produce noisy bot commits.
+          rm -f packs/esoteric/LOG packs/esoteric/LOG.old
+          rm -f packs/system-help/LOG packs/system-help/LOG.old
+
       - name: Commit rebuilt pack databases
         shell: bash
         run: |
