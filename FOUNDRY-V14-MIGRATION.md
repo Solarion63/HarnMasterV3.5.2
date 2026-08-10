@@ -2,11 +2,11 @@
 
 ## Status
 
-The `feature/foundry-v14-master` branch targets Foundry VTT **14.365** and remains an alpha migration branch rather than a production release.
+The `feature/foundry-v14-master` branch targets Foundry VTT **14.365** and is now in release-candidate preparation rather than alpha development.
 
-Current development version: **2.0.0-alpha.1**
+Current development version: **2.0.0-rc.1**
 
-Always test with a copied world. Do not open the only copy of an established campaign world with an alpha build.
+Continue to test with a copied world until the release candidate is deliberately published and accepted.
 
 ## Migration Principles
 
@@ -69,8 +69,9 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Validate Invocation, Psionic Talent, and Healing workflows, including fast-forward, cancellation, Psionic improvement/SDR, and Esoterics description cards.
 - [x] Validate migration and continued use of a pre-existing Active Effect from a v13 world.
 - [x] Complete the final visual/UI sweep, including Actor/Item typography, Effects layout, rich-text editing, ProseMirror toolbar interaction, and Façade layout.
-- [x] Begin pre-RC repository/CI audit and remove non-deterministic compendium diagnostic-log churn.
-- [ ] Publish a release candidate after final packaging, version, CI, and release-note review.
+- [x] Complete the pre-RC repository/CI audit and remove non-deterministic compendium diagnostic-log churn.
+- [x] Prepare the `2.0.0-rc.1` manifest, changelog, and deterministic manual packaging workflow.
+- [ ] Publish the release candidate after final package artifact verification.
 
 ## ApplicationV2 and Runtime Architecture
 
@@ -136,7 +137,7 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 
 ## Required Regression Scenarios Before Release Candidate
 
-All explicit release-level regression scenarios in the current migration plan have been completed successfully. The remaining RC work is repository/CI cleanup, packaging review, versioning, and release documentation rather than additional planned gameplay regression coverage.
+All explicit release-level regression scenarios in the current migration plan have been completed successfully. The remaining RC work is final package artifact verification and deliberate publication rather than additional planned gameplay regression coverage.
 
 ## Deferred Work
 
