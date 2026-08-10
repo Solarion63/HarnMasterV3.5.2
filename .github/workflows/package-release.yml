@@ -1,6 +1,13 @@
 name: Package Release Candidate
 
 on:
+  push:
+    branches:
+      - feature/foundry-v14-master
+    paths:
+      - ".github/workflows/package-release.yml"
+      - "system.json"
+      - "CHANGELOG.md"
   workflow_dispatch:
 
 permissions:
