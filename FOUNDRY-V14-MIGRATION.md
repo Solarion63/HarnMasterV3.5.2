@@ -68,7 +68,9 @@ Always test with a copied world. Do not open the only copy of an established cam
 - [x] Validate longer combat progression and round-based Active Effect expiration for linked and unlinked Tokens.
 - [x] Validate Invocation, Psionic Talent, and Healing workflows, including fast-forward, cancellation, Psionic improvement/SDR, and Esoterics description cards.
 - [x] Validate migration and continued use of a pre-existing Active Effect from a v13 world.
-- [ ] Publish a release candidate after final packaging, version, and release-note review.
+- [x] Complete the final visual/UI sweep, including Actor/Item typography, Effects layout, rich-text editing, ProseMirror toolbar interaction, and Façade layout.
+- [x] Begin pre-RC repository/CI audit and remove non-deterministic compendium diagnostic-log churn.
+- [ ] Publish a release candidate after final packaging, version, CI, and release-note review.
 
 ## ApplicationV2 and Runtime Architecture
 
@@ -128,12 +130,13 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - A copied legacy campaign world migrates successfully to `2.0.0-alpha.1` with existing Actors, Items, Scenes, linked Tokens, unlinked Tokens/ActorDeltas, legacy Macros, and representative world data remaining usable after migration.
 - A pre-existing Active Effect created in a v13 world survives migration to v14 and remains visible, editable, and otherwise usable after migration.
 - The legacy-world migration completes without HM3 migration errors or legacy forced-deletion compatibility warnings and does not rerun after the migration version is recorded.
+- Character Façade and Profile/Biography rich-text fields render existing formatted HTML, support direct ProseMirror editing and toolbar actions, persist changes, and preserve the intended side-by-side Façade image/text layout.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
 ## Required Regression Scenarios Before Release Candidate
 
-All explicit release-level regression scenarios in the current migration plan have been completed successfully.
+All explicit release-level regression scenarios in the current migration plan have been completed successfully. The remaining RC work is repository/CI cleanup, packaging review, versioning, and release documentation rather than additional planned gameplay regression coverage.
 
 ## Deferred Work
 
