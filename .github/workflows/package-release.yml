@@ -46,8 +46,8 @@ jobs:
           import { ClassicLevel } from "classic-level";
 
           const packs = [
-            ["character", "!items!", 132],
-            ["possessions", "!items!", 126],
+            ["character", "!items!", 105],
+            ["possessions", "!items!", 125],
             ["esoteric", "!items!", 424],
             ["system-help", "!journal!", 20]
           ];
