@@ -63,7 +63,7 @@
         
         {{#if isBleeder}}
         <div class="card-content center">
-            <span class="note">NOTE: Injury is a bleeder<br/>(Bloodloss must be manually recorded)</span>
+            <span class="note">NOTE: Injury is a bleeder.<br/>Bloodloss is tracked automatically while bleeding continues.</span>
         </div>
         {{/if}}
 
@@ -115,6 +115,10 @@
         {{/if}}
         
         <div class="card-buttons">
+            {{#if bleedingEffectId}}
+            <button data-action="treat-bleeding" data-effect-id="{{bleedingEffectId}}" data-visible-actor-id="{{visibleActorId}}" {{#if tokenId}}data-token-id="{{tokenId}}"{{else}}data-actor-id="{{actorId}}"{{/if}}>Stop Bleeding</button>
+            {{/if}}
+
             {{#if isFumbleRoll}}
             <button data-action="fumble" data-visible-actor-id="{{visibleActorId}}" {{#if tokenId}}data-token-id="{{tokenId}}"{{else}}data-actor-id="{{actorId}}"{{/if}}>Fumble Roll</button>
             {{/if}}
