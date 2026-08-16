@@ -1,4 +1,5 @@
 import { DiceHM3 } from "./dice-hm3.js";
+import { CombatAudio } from "./combat-audio.js";
 import { meleeCombatResult, missileCombatResult } from "./combat-rules.js";
 
 const { DialogV2 } = foundry.applications.api;
@@ -197,6 +198,8 @@ async function performBlock(button, attacker, defender, attackRoll) {
   );
   if (!selection?.weapon) return null;
 
+  CombatAudio.play("block");
+
   let originalDML = Number(selection.weapon.system.defenseMasteryLevel) || 5;
   if (button.dataset.weaponType === "missile" && !isShield(selection.weapon)) {
     originalDML = Math.max(Math.round(originalDML / 2), 5);
@@ -254,6 +257,7 @@ export async function performDefense(button, defense) {
   let effectiveDML = 0;
   let defenseModifier = 0;
   if (defense === "Dodge") {
+    CombatAudio.play("dodge");
     defenseModifier = outnumberedModifier(defender.actor);
     effectiveDML = Number(defender.actor.system.dodge) + defenseModifier;
     defenseRoll = await DiceHM3.rollTest({
