@@ -55,7 +55,8 @@ DiceHM3.rollTest = async function rollTest(testData) {
   return {
     type: testData.type,
     ...classification,
-    rollObj: roll
+    rollObj: roll,
+    preData: testData
   };
 };
 
