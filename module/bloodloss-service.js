@@ -22,13 +22,35 @@ function statusConfigByName(name) {
   }) ?? null;
 }
 
+function effectsWithStatus(actor, statusId) {
+  return Array.from(actor.effects ?? []).filter(effect => {
+    const statuses = effect.statuses;
+    if (typeof statuses?.has === "function") return statuses.has(statusId);
+    if (Array.isArray(statuses)) return statuses.includes(statusId);
+    return false;
+  });
+}
+
 async function setStatus(actor, name, active) {
   const statusId = statusConfigByName(name)?.id ?? null;
   if (!statusId) {
     console.warn(`HM3 | Configured ${name} status effect could not be found.`);
     return null;
   }
-  return actor.toggleStatusEffect(statusId, { active });
+
+  const existing = effectsWithStatus(actor, statusId);
+  if (active) {
+    if (existing.length > 1) {
+      await actor.deleteEmbeddedDocuments("ActiveEffect", existing.slice(1).map(effect => effect.id));
+    }
+    if (existing.length) return existing[0];
+    return actor.toggleStatusEffect(statusId, { active: true });
+  }
+
+  if (existing.length) {
+    await actor.deleteEmbeddedDocuments("ActiveEffect", existing.map(effect => effect.id));
+  }
+  return null;
 }
 
 function bloodlossItem(actor) {
@@ -59,6 +81,27 @@ function actorsForBloodlossProcessing() {
   }
 
   return actors.values();
+}
+
+function removeGeneratedBleederNote(notes) {
+  return String(notes ?? "")
+    .split(";")
+    .map(note => note.trim())
+    .filter(note => note && note.toLowerCase() !== "bleeder")
+    .join("; ");
+}
+
+async function markSourceInjuryNotBleeding(actor, effect) {
+  const injuryId = effect?.getFlag?.("hm3", "sourceInjuryId");
+  if (!injuryId) return;
+
+  const injury = actor.items.get(injuryId);
+  if (!injury || injury.type !== "injury") return;
+
+  await injury.update({
+    "system.isBleeder": false,
+    "system.notes": removeGeneratedBleederNote(injury.system.notes)
+  });
 }
 
 async function ensureBloodlossItem(actor) {
@@ -139,7 +182,6 @@ export class BloodlossService {
     if (statusImage) effectData.img = statusImage;
 
     const created = await actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
-    await syncBleedingStatus(actor);
     return created[0] ?? null;
   }
 
@@ -150,6 +192,7 @@ export class BloodlossService {
       : effectOrId;
     if (!BloodlossService.isBleedingEffect(effect)) return false;
 
+    await markSourceInjuryNotBleeding(actor, effect);
     await actor.deleteEmbeddedDocuments("ActiveEffect", [effect.id]);
     await syncBleedingStatus(actor);
     return true;
