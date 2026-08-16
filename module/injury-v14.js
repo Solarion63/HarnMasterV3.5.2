@@ -1,5 +1,6 @@
 import { DiceHM3 } from "./dice-hm3.js";
 import { CombatAudio } from "./combat-audio.js";
+import { BloodlossService } from "./bloodloss-service.js";
 import { calculateInjury, getHitLocations, resolveHitLocation } from "./injury-rules.js";
 
 const { DialogV2 } = foundry.applications.api;
@@ -60,6 +61,8 @@ export async function createInjury(actor, result) {
   const locationName = description
     ? `${result.location} ${description}`
     : result.location;
+  const notes = [`Aspect: ${result.aspect}`];
+  if (result.isBleeder) notes.push("Bleeder");
 
   const created = await actor.createEmbeddedDocuments("Item", [{
     name: locationName,
@@ -68,11 +71,16 @@ export async function createInjury(actor, result) {
       severity,
       injuryLevel,
       healRate: 0,
-      notes: `Aspect: ${result.aspect}`
+      isBleeder: Boolean(result.isBleeder),
+      notes: notes.join("; ")
     }
   }]);
 
-  return created[0] ?? null;
+  const injury = created[0] ?? null;
+  if (injury && result.isBleeder) {
+    await BloodlossService.startBleeding(actor, injury);
+  }
+  return injury;
 }
 
 export async function injuryDialog(dialogOptions) {
