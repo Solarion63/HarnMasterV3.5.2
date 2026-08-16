@@ -3,6 +3,7 @@ import { bloodlossIsFatal, elapsedBleeding } from "./bloodloss-rules.js";
 const BLEEDING_EFFECT_FLAG = "bleedingInjury";
 const BLOODLOSS_ITEM_FLAG = "bloodloss";
 const DEFAULT_BLEED_RATE = 1;
+let worldTimeProcessing = Promise.resolve();
 
 function activeGmOwnsProcessing() {
   if (!game.user?.isGM) return false;
@@ -226,7 +227,11 @@ export class BloodlossService {
   }
 }
 
-Hooks.on("updateWorldTime", worldTime => BloodlossService.processWorldTime(worldTime));
+Hooks.on("updateWorldTime", worldTime => {
+  worldTimeProcessing = worldTimeProcessing
+    .then(() => BloodlossService.processWorldTime(worldTime))
+    .catch(error => console.error("HM3 | Bloodloss world-time processing failed.", error));
+});
 
 Hooks.on("createActiveEffect", effect => {
   if (!BloodlossService.isBleedingEffect(effect)) return;
