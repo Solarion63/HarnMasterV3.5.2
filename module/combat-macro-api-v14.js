@@ -1,5 +1,5 @@
-import { getItem } from "./combat.js";
-import { performAutomatedAttack } from "./actor/actor-combat-v2.js";
+import { getItem } from "./item-lookup.js";
+import { performAutomatedAttack } from "./combat-attack-v14.js";
 import { performDefense } from "./combat-defense-v14.js";
 import { performCounterstrike } from "./combat-counterstrike-v14.js";
 
