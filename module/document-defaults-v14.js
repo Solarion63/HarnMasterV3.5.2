@@ -1,3 +1,6 @@
+import { HarnMasterActor } from "./actor/actor.js";
+import { HarnMasterItem } from "./item/item.js";
+
 const ABILITY_NAMES = [
   "strength", "stamina", "dexterity", "agility", "intelligence", "aura",
   "will", "eyesight", "hearing", "smell", "voice", "comeliness", "morality"
@@ -160,30 +163,49 @@ const ITEM_DEFAULT_FACTORIES = {
   })
 };
 
-function mergedDefaults(factory, document) {
-  if (!factory) return null;
-  const defaults = factory();
-  const current = document._source?.system ?? document.system ?? {};
-  return foundry.utils.mergeObject(defaults, clone(current), {
+function sourceData(data) {
+  if (data?.toObject instanceof Function) return data.toObject();
+  return clone(data ?? {});
+}
+
+function withDefaults(data, factories) {
+  const prepared = sourceData(data);
+  const factory = factories[prepared.type];
+  if (!factory) return prepared;
+
+  prepared.system = foundry.utils.mergeObject(factory(), clone(prepared.system ?? {}), {
     inplace: false,
     overwrite: true,
     insertKeys: true,
     insertValues: true
   });
+  return prepared;
 }
 
-function applyActorDefaults(actor) {
-  const system = mergedDefaults(ACTOR_DEFAULT_FACTORIES[actor.type], actor);
-  if (system) actor.updateSource({ system });
+export function withActorDefaults(data) {
+  return withDefaults(data, ACTOR_DEFAULT_FACTORIES);
 }
 
-function applyItemDefaults(item) {
-  const system = mergedDefaults(ITEM_DEFAULT_FACTORIES[item.type], item);
-  if (system) item.updateSource({ system });
+export function withItemDefaults(data) {
+  return withDefaults(data, ITEM_DEFAULT_FACTORIES);
 }
 
-Hooks.on("preCreateActor", actor => applyActorDefaults(actor));
-Hooks.on("preCreateItem", item => applyItemDefaults(item));
+function installCreateDefaults(DocumentClass, prepare) {
+  const nativeCreateDocuments = DocumentClass.createDocuments;
+  DocumentClass.createDocuments = function hm3CreateDocumentsWithDefaults(data = [], context = {}) {
+    const prepared = Array.isArray(data)
+      ? data.map(entry => prepare(entry))
+      : prepare(data);
+    return nativeCreateDocuments.call(this, prepared, context);
+  };
+}
+
+// Foundry constructs Documents and runs data preparation before preCreate hooks.
+// Apply the legacy template.json defaults to source data before construction so
+// HM3 prepareBaseData/prepareData always receives the same shape it historically
+// received, while leaving arbitrary legacy/custom system keys unrestricted.
+installCreateDefaults(HarnMasterActor, withActorDefaults);
+installCreateDefaults(HarnMasterItem, withItemDefaults);
 
 export const HM3_DOCUMENT_DEFAULTS = Object.freeze({
   actorTypes: Object.freeze(Object.keys(ACTOR_DEFAULT_FACTORIES)),
