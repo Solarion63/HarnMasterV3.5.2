@@ -3,6 +3,7 @@ import * as utility from "../utility.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
+const { HTMLProseMirrorElement } = foundry.applications.elements;
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -151,18 +152,28 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
   }
 
   async #showDescriptionEditor(panel) {
-    panel.innerHTML = await renderTemplate(DESCRIPTION_EDIT_TEMPLATE, {
-      description: String(this.item.system.description ?? "")
+    panel.innerHTML = await renderTemplate(DESCRIPTION_EDIT_TEMPLATE, {});
+
+    const mount = panel.querySelector(".hm3-item-description-editor-mount");
+    if (!mount) {
+      ui.notifications.error("The Description editor mount point could not be found.");
+      return;
+    }
+
+    const editor = HTMLProseMirrorElement.create({
+      name: "system.description",
+      value: String(this.item.system.description ?? ""),
+      readonly: false,
+      disabled: false,
+      classes: "hm3-item-description-prosemirror",
+      collaborate: false,
+      documentUUID: this.item.uuid,
+      toggled: false
     });
+    mount.append(editor);
 
     panel.querySelector(".hm3-item-description-save")?.addEventListener("click", async event => {
       event.preventDefault();
-      const editor = panel.querySelector('prose-mirror[name="system.description"]');
-      if (!editor) {
-        ui.notifications.error("The Description editor could not be found.");
-        return;
-      }
-
       await this.item.update({ "system.description": editor.value ?? "" });
       const root = this.element;
       if (root) await this.#showDescriptionView(root);
