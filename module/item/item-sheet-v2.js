@@ -5,7 +5,10 @@ import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
-const { editor: renderEditor } = foundry.applications.handlebars;
+const { renderTemplate } = foundry.applications.handlebars;
+
+const DESCRIPTION_VIEW_TEMPLATE = "systems/hm3/templates/item/item-description-view-v14.html";
+const DESCRIPTION_EDIT_TEMPLATE = "systems/hm3/templates/item/item-description-editor-v14.html";
 
 /**
  * Shared Foundry VTT v14 Item sheet implementation.
@@ -70,9 +73,13 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     const form = root.querySelector("form");
     if (form && this.isEditable) {
-      this.#prepareRichTextEditors(root, form);
-      form.addEventListener("change", () => this.#persistForm(form));
+      form.addEventListener("change", event => {
+        if (event.target?.closest?.(".tab.description")) return;
+        this.#persistForm(form);
+      });
     }
+
+    void this.#showDescriptionView(root);
 
     if (!this.isEditable) return;
 
@@ -119,49 +126,53 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
   async #persistForm(form) {
     const formData = new FormDataExtended(form);
     const updateData = foundry.utils.expandObject(formData.object);
+    delete updateData.system?.description;
     await this.item.update(updateData);
   }
 
-  #prepareRichTextEditors(root, form) {
-    // HM3's legacy Item templates still render {{editor ... button=true}},
-    // whose activation button depended on the V1 sheet editor lifecycle.
-    // Generate the replacement through Foundry's v14 editor helper itself so
-    // the menu, editable surface, source mode, and save behavior are all owned
-    // by the supported ApplicationV2 ProseMirror component.
-    for (const container of Array.from(root.querySelectorAll(".editor"))) {
-      if (container.matches("prose-mirror")) continue;
+  async #showDescriptionView(root) {
+    const panel = root.querySelector('.tab.description[data-tab="description"]');
+    if (!panel) return;
 
-      const nested = container.querySelector("prose-mirror");
-      const content = container.querySelector(".editor-content");
-      const name = nested?.name
-        ?? content?.dataset.edit
-        ?? content?.getAttribute("data-edit");
-      if (!name) continue;
+    const description = await TextEditor.enrichHTML(String(this.item.system.description ?? ""), {
+      async: true,
+      secrets: this.item.isOwner,
+      relativeTo: this.item
+    });
+    panel.innerHTML = await renderTemplate(DESCRIPTION_VIEW_TEMPLATE, {
+      description,
+      editable: this.isEditable
+    });
 
-      const value = foundry.utils.getProperty(this.item, name)
-        ?? nested?.value
-        ?? content?.innerHTML
-        ?? "";
-      const rendered = renderEditor(String(value ?? ""), {
-        target: name,
-        button: false,
-        editable: true,
-        engine: "prosemirror",
-        collaborate: false,
-        class: "hm3-item-description-editor"
-      });
+    panel.querySelector(".hm3-item-description-edit-button")?.addEventListener("click", event => {
+      event.preventDefault();
+      void this.#showDescriptionEditor(panel);
+    });
+  }
 
-      const template = document.createElement("template");
-      template.innerHTML = String(rendered).trim();
-      const replacement = template.content.firstElementChild;
-      if (!replacement) continue;
-      container.replaceWith(replacement);
-    }
+  async #showDescriptionEditor(panel) {
+    panel.innerHTML = await renderTemplate(DESCRIPTION_EDIT_TEMPLATE, {
+      description: String(this.item.system.description ?? "")
+    });
 
-    for (const editor of root.querySelectorAll("prose-mirror")) {
-      editor.addEventListener("save", () => this.#persistForm(form));
-      editor.addEventListener("change", () => this.#persistForm(form));
-    }
+    panel.querySelector(".hm3-item-description-save")?.addEventListener("click", async event => {
+      event.preventDefault();
+      const editor = panel.querySelector('prose-mirror[name="system.description"]');
+      if (!editor) {
+        ui.notifications.error("The Description editor could not be found.");
+        return;
+      }
+
+      await this.item.update({ "system.description": editor.value ?? "" });
+      const root = this.element;
+      if (root) await this.#showDescriptionView(root);
+    });
+
+    panel.querySelector(".hm3-item-description-cancel")?.addEventListener("click", event => {
+      event.preventDefault();
+      const root = this.element;
+      if (root) void this.#showDescriptionView(root);
+    });
   }
 
   #prepareAssociatedSkills(context, actor) {
