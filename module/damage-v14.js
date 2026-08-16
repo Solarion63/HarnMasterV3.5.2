@@ -19,7 +19,7 @@ function activeDieValues(roll) {
     .map(result => result.result);
 }
 
-DiceHM3.damageDialog = async function damageDialog(dialogOptions) {
+export async function damageDialog(dialogOptions) {
   const content = await renderTemplate("systems/hm3/templates/dialog/damage-dialog.html", {
     weapon: dialogOptions.weapon,
     damageDice: 1,
@@ -51,12 +51,12 @@ DiceHM3.damageDialog = async function damageDialog(dialogOptions) {
     },
     rejectClose: false
   });
-};
+}
 
-DiceHM3.damageRoll = async function damageRoll(rollData) {
+export async function damageRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker();
   const weapon = weaponAspectData(rollData.weapon, rollData.data.items);
-  const roll = await DiceHM3.damageDialog({
+  const roll = await damageDialog({
     type: "damage",
     label: rollData.weapon ? `${rollData.weapon} Damage` : "Other Weapon Damage",
     weapon: rollData.weapon,
@@ -104,4 +104,9 @@ DiceHM3.damageRoll = async function damageRoll(rollData) {
   });
 
   return templateData;
-};
+}
+
+Object.assign(DiceHM3, {
+  damageDialog,
+  damageRoll
+});
