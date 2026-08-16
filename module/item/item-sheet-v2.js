@@ -3,6 +3,7 @@ import * as utility from "../utility.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
+const { HTMLProseMirrorElement } = foundry.applications.elements;
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
 
@@ -69,6 +70,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     const form = root.querySelector("form");
     if (form && this.isEditable) {
+      this.#prepareRichTextEditors(root, form);
       form.addEventListener("change", () => this.#persistForm(form));
     }
 
@@ -118,6 +120,25 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     const formData = new FormDataExtended(form);
     const updateData = foundry.utils.expandObject(formData.object);
     await this.item.update(updateData);
+  }
+
+  #prepareRichTextEditors(root, form) {
+    for (const editor of Array.from(root.querySelectorAll("prose-mirror"))) {
+      const replacement = HTMLProseMirrorElement.create({
+        name: editor.name,
+        value: editor.value,
+        readonly: false,
+        disabled: false,
+        classes: editor.className,
+        collaborate: false,
+        documentUUID: this.item.uuid,
+        toggled: false
+      });
+
+      editor.replaceWith(replacement);
+      replacement.addEventListener("save", () => this.#persistForm(form));
+      replacement.addEventListener("change", () => this.#persistForm(form));
+    }
   }
 
   #prepareAssociatedSkills(context, actor) {
