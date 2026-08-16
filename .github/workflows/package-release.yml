@@ -104,10 +104,19 @@ jobs:
           fi
 
           test -f "$stage/system.json"
-          test -f "$stage/template.json"
+          test ! -f "$stage/template.json"
+          test -f "$stage/module/document-defaults-v14.js"
           test -d "$stage/module"
           test -d "$stage/templates"
           test -d "$stage/packs"
+
+          node - "$stage/system.json" <<'NODE'
+          const fs = require("fs");
+          const manifest = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          if (!manifest.documentTypes?.Actor?.character || !manifest.documentTypes?.Item?.skill) {
+            throw new Error("Staged manifest is missing HM3 documentTypes.");
+          }
+          NODE
 
           for pack in character possessions esoteric system-help; do
             test -f "$stage/packs/${pack}/CURRENT"
