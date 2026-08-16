@@ -16,7 +16,6 @@
   "esmodules": [
     "module/dice-v14.js",
     "module/injury-v14.js",
-    "module/bloodloss-treatment-v14.js",
     "module/damage-v14.js",
     "module/missile-rolls-v14.js",
     "module/combat-defense-v14.js",
