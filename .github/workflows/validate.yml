@@ -42,8 +42,30 @@ jobs:
       - name: Verify required system files
         shell: bash
         run: |
+          set -euo pipefail
           test -f system.json
-          test -f template.json
+          test ! -f template.json
+          test -f module/document-defaults-v14.js
           test -f module/hm3.js
           test -d templates
           test -d packs
+          node <<'NODE'
+          const fs = require("fs");
+          const manifest = JSON.parse(fs.readFileSync("system.json", "utf8"));
+          const expectedActors = ["character", "container", "creature"];
+          const expectedItems = [
+            "armorlocation", "armorgear", "containergear", "injury", "invocation", "miscgear",
+            "missilegear", "psionic", "skill", "spell", "trait", "weapongear"
+          ];
+          const actualActors = Object.keys(manifest.documentTypes?.Actor ?? {}).sort();
+          const actualItems = Object.keys(manifest.documentTypes?.Item ?? {}).sort();
+          if (JSON.stringify(actualActors) !== JSON.stringify(expectedActors)) {
+            throw new Error(`Unexpected Actor documentTypes: ${actualActors.join(", ")}`);
+          }
+          if (JSON.stringify(actualItems) !== JSON.stringify(expectedItems)) {
+            throw new Error(`Unexpected Item documentTypes: ${actualItems.join(", ")}`);
+          }
+          if (!manifest.esmodules?.includes("module/document-defaults-v14.js")) {
+            throw new Error("document-defaults-v14.js is not loaded by system.json");
+          }
+          NODE
