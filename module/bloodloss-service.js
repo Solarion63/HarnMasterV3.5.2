@@ -44,6 +44,22 @@ function bleedingEffects(actor) {
   );
 }
 
+function actorsForBloodlossProcessing() {
+  const actors = new Map();
+  for (const actor of game.actors ?? []) {
+    if (actor?.uuid) actors.set(actor.uuid, actor);
+  }
+
+  for (const scene of game.scenes ?? []) {
+    for (const token of scene.tokens ?? []) {
+      const actor = token.actor;
+      if (actor?.uuid) actors.set(actor.uuid, actor);
+    }
+  }
+
+  return actors.values();
+}
+
 async function ensureBloodlossItem(actor) {
   const existing = bloodlossItem(actor);
   if (existing) return existing;
@@ -188,8 +204,10 @@ export class BloodlossService {
   }
 
   static async processWorldTime(worldTime) {
+    if (!game.settings.get("hm3", "bloodloss")) return;
     if (!activeGmOwnsProcessing()) return;
-    for (const actor of game.actors ?? []) {
+
+    for (const actor of actorsForBloodlossProcessing()) {
       if (!["character", "creature"].includes(actor.type)) continue;
       if (!bleedingEffects(actor).length) continue;
       try {
