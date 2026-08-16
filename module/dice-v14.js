@@ -40,7 +40,7 @@ async function createRollMessage({ speaker, content, roll }) {
   });
 }
 
-DiceHM3.rollTest = async function rollTest(testData) {
+export async function rollTest(testData) {
   const diceSides = Number(testData.diceSides) === 6 ? 6 : 100;
   const diceType = diceSides === 6 ? "d6" : "d100";
   const numDice = testData.diceNum > 0 ? testData.diceNum : 1;
@@ -58,7 +58,7 @@ DiceHM3.rollTest = async function rollTest(testData) {
     rollObj: roll,
     preData: testData
   };
-};
+}
 
 async function standardDialog(dialogOptions, diceSides, diceNum) {
   const template = dialogOptions.template ?? "systems/hm3/templates/dialog/standard-test-dialog.html";
@@ -74,7 +74,7 @@ async function standardDialog(dialogOptions, diceSides, diceNum) {
       label: "Roll",
       callback: (_event, _button, dialog) => {
         const modifier = dialog.element?.querySelector('[name="modifier"]')?.value ?? 0;
-        return DiceHM3.rollTest({
+        return rollTest({
           type: dialogOptions.type,
           target: dialogOptions.target,
           data: null,
@@ -88,15 +88,15 @@ async function standardDialog(dialogOptions, diceSides, diceNum) {
   });
 }
 
-DiceHM3.d100StdDialog = function d100StdDialog(dialogOptions) {
+export function d100StdDialog(dialogOptions) {
   return standardDialog(dialogOptions, 100, 1);
-};
+}
 
-DiceHM3.d6Dialog = function d6Dialog(dialogOptions) {
+export function d6Dialog(dialogOptions) {
   return standardDialog(dialogOptions, 6, Number(dialogOptions.numdice) || 1);
-};
+}
 
-DiceHM3.d100StdRoll = async function d100StdRoll(rollData) {
+export async function d100StdRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker();
   const dialogOptions = {
     type: rollData.type,
@@ -106,14 +106,14 @@ DiceHM3.d100StdRoll = async function d100StdRoll(rollData) {
   };
 
   const roll = rollData.fastforward
-    ? await DiceHM3.rollTest({
+    ? await rollTest({
       type: rollData.type,
       diceSides: 100,
       diceNum: 1,
       modifier: rollData.modifier ?? 0,
       target: rollData.target
     })
-    : await DiceHM3.d100StdDialog(dialogOptions);
+    : await d100StdDialog(dialogOptions);
 
   if (!roll) return null;
 
@@ -151,9 +151,9 @@ DiceHM3.d100StdRoll = async function d100StdRoll(rollData) {
   const content = await renderTemplate("systems/hm3/templates/chat/standard-test-card.html", templateData);
   await createRollMessage({ speaker, content, roll: roll.rollObj });
   return templateData;
-};
+}
 
-DiceHM3.d6Roll = async function d6Roll(rollData) {
+export async function d6Roll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker();
   const dialogOptions = {
     type: rollData.type,
@@ -165,14 +165,14 @@ DiceHM3.d6Roll = async function d6Roll(rollData) {
   };
 
   const roll = rollData.fastforward
-    ? await DiceHM3.rollTest({
+    ? await rollTest({
       type: rollData.type,
       diceSides: 6,
       diceNum: Number(rollData.numdice),
       modifier: rollData.modifier ?? 0,
       target: rollData.target
     })
-    : await DiceHM3.d6Dialog(dialogOptions);
+    : await d6Dialog(dialogOptions);
 
   if (!roll) return null;
 
@@ -205,9 +205,9 @@ DiceHM3.d6Roll = async function d6Roll(rollData) {
   const content = await renderTemplate("systems/hm3/templates/chat/standard-test-card.html", templateData);
   await createRollMessage({ speaker, content, roll: roll.rollObj });
   return templateData;
-};
+}
 
-DiceHM3.sdrRoll = async function sdrRoll(item) {
+export async function sdrRoll(item) {
   const speaker = ChatMessage.getSpeaker({ actor: item.actor });
   const skillBase = Number(item.system.skillBase?.value) || 0;
   const roll = await new Roll("1d100 + @sb", { sb: skillBase }).evaluate();
@@ -235,4 +235,13 @@ DiceHM3.sdrRoll = async function sdrRoll(item) {
   const content = await renderTemplate("systems/hm3/templates/chat/standard-test-card.html", templateData);
   await createRollMessage({ speaker, content, roll });
   return templateData;
-};
+}
+
+Object.assign(DiceHM3, {
+  rollTest,
+  d100StdDialog,
+  d6Dialog,
+  d100StdRoll,
+  d6Roll,
+  sdrRoll
+});
