@@ -135,12 +135,14 @@ export class MedicalService {
     rollValue,
     additionalModifier = 0
   }) {
-    if (!healer || !patient || !BloodlossService.isBleedingEffect(effect)) return false;
+    if (!healer || !patient || !BloodlossService.isBleedingEffect(effect)) {
+      return { status: "invalid", changed: false };
+    }
 
     const treatingSkill = skill ?? physicianSkill(healer);
     if (!treatingSkill) {
       ui.notifications.warn(`${healer.name} does not have the Physician skill.`);
-      return false;
+      return { status: "invalid", changed: false };
     }
 
     const evaluation = evaluateBleederTreatment({
@@ -149,16 +151,16 @@ export class MedicalService {
       patient,
       additionalModifier
     });
-    if (!evaluation.isSuccess) return false;
+    if (!evaluation.isSuccess) return { status: "failed", changed: false };
 
     if (patient.isOwner || game.user.isGM) {
-      await applyStopBleeding({ patient, effect });
-      return true;
+      const changed = await applyStopBleeding({ patient, effect });
+      return { status: changed ? "stopped" : "invalid", changed };
     }
 
     if (!hasActiveGm()) {
       ui.notifications.error(`An active GM is required for ${healer.name} to treat ${patient.name}, because you do not own the patient actor.`);
-      return false;
+      return { status: "unavailable", changed: false };
     }
 
     game.socket.emit(SOCKET_NAMESPACE, {
@@ -173,6 +175,6 @@ export class MedicalService {
       additionalModifier: Number(additionalModifier) || 0
     });
     ui.notifications.info(`Successful treatment roll sent to the GM to stop ${patient.name}'s bleeding.`);
-    return true;
+    return { status: "requested", changed: false };
   }
 }
