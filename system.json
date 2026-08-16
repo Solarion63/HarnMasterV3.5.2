@@ -14,6 +14,7 @@
   "flags": { "allowBugReporter": true },
   "compatibility": { "minimum": "14", "verified": "14.365" },
   "esmodules": [
+    "module/document-defaults-v14.js",
     "module/dice-v14.js",
     "module/injury-v14.js",
     "module/damage-v14.js",
@@ -43,6 +44,27 @@
   "languages": [
     { "lang": "en", "name": "English", "path": "lang/en.json", "flags": {} }
   ],
+  "documentTypes": {
+    "Actor": {
+      "character": {},
+      "creature": {},
+      "container": {}
+    },
+    "Item": {
+      "skill": {},
+      "spell": {},
+      "invocation": {},
+      "psionic": {},
+      "weapongear": {},
+      "containergear": {},
+      "missilegear": {},
+      "armorgear": {},
+      "miscgear": {},
+      "injury": {},
+      "armorlocation": {},
+      "trait": {}
+    }
+  },
   "packFolders": [
     {
       "name": "H\u00e2rnMaster 3 System",
