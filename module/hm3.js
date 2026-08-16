@@ -15,6 +15,8 @@ import * as migrations from "./migrations.js";
 import * as macros from "./macros.js";
 import * as combatApi from "./combat-api.js";
 import { DiceHM3 } from "./dice-hm3.js";
+import { MedicalService } from "./medical-service.js";
+import { physicianTreatment } from "./physician-workflow-v14.js";
 
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -33,6 +35,10 @@ Hooks.once("init", async function () {
         macros: {
             ...macros,
             ...combatApi
+        },
+        medical: {
+            physicianTreatment,
+            stopBleeding: options => MedicalService.stopBleeding(options)
         },
         migrations
     };
@@ -194,6 +200,8 @@ function bindHm3ChatButtons(message, html) {
 Hooks.on("renderChatMessageHTML", bindHm3ChatButtons);
 
 Hooks.once("ready", async function () {
+    MedicalService.registerSocket();
+
     const currentMigrationVersion = String(
         game.settings.get("hm3", "systemMigrationVersion") || "0"
     );
