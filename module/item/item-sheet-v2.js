@@ -3,9 +3,9 @@ import * as utility from "../utility.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
-const { HTMLProseMirrorElement } = foundry.applications.elements;
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
+const { editor: renderEditor } = foundry.applications.handlebars;
 
 /**
  * Shared Foundry VTT v14 Item sheet implementation.
@@ -122,27 +122,12 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     await this.item.update(updateData);
   }
 
-  #createRichTextEditor({ name, value, classes = "" }, form) {
-    const replacement = HTMLProseMirrorElement.create({
-      name,
-      value: String(value ?? ""),
-      readonly: false,
-      disabled: false,
-      classes,
-      collaborate: false,
-      documentUUID: this.item.uuid,
-      toggled: false
-    });
-
-    replacement.addEventListener("save", () => this.#persistForm(form));
-    replacement.addEventListener("change", () => this.#persistForm(form));
-    return replacement;
-  }
-
   #prepareRichTextEditors(root, form) {
-    // The legacy {{editor ... button=true}} helper can render a V1-style
-    // .editor wrapper whose pencil control has no ApplicationV2 lifecycle.
-    // Replace the complete wrapper with a native, always-active v14 editor.
+    // HM3's legacy Item templates still render {{editor ... button=true}},
+    // whose activation button depended on the V1 sheet editor lifecycle.
+    // Generate the replacement through Foundry's v14 editor helper itself so
+    // the menu, editable surface, source mode, and save behavior are all owned
+    // by the supported ApplicationV2 ProseMirror component.
     for (const container of Array.from(root.querySelectorAll(".editor"))) {
       if (container.matches("prose-mirror")) continue;
 
@@ -157,26 +142,25 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
         ?? nested?.value
         ?? content?.innerHTML
         ?? "";
-      const replacement = this.#createRichTextEditor({
-        name,
-        value,
-        classes: container.className
-      }, form);
+      const rendered = renderEditor(String(value ?? ""), {
+        target: name,
+        button: false,
+        editable: true,
+        engine: "prosemirror",
+        collaborate: false,
+        class: "hm3-item-description-editor"
+      });
+
+      const template = document.createElement("template");
+      template.innerHTML = String(rendered).trim();
+      const replacement = template.content.firstElementChild;
+      if (!replacement) continue;
       container.replaceWith(replacement);
     }
 
-    // Also normalize any helper output which is already a prose-mirror element.
-    for (const editor of Array.from(root.querySelectorAll("prose-mirror"))) {
-      const name = editor.name;
-      if (!name) continue;
-
-      const value = foundry.utils.getProperty(this.item, name) ?? editor.value ?? "";
-      const replacement = this.#createRichTextEditor({
-        name,
-        value,
-        classes: editor.className
-      }, form);
-      editor.replaceWith(replacement);
+    for (const editor of root.querySelectorAll("prose-mirror")) {
+      editor.addEventListener("save", () => this.#persistForm(form));
+      editor.addEventListener("change", () => this.#persistForm(form));
     }
   }
 
