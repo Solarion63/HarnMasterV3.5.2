@@ -2,6 +2,42 @@
 
 All notable changes to the HarnMaster 3 Foundry VTT system will be documented in this file.
 
+## 2.0.0-rc.2 — In Development
+
+### Bloodloss and Physician Automation
+
+- Implemented HârnMaster Bleeder/Bloodloss tracking for Grievous Blunt, Edge, and Point injuries.
+- Each bleeding wound is represented by a separate HM3 mechanical Active Effect while accumulated Bloodloss is recorded as a single Bloodloss Injury.
+- Bloodloss accrues from world-time advancement, supports multiple simultaneous bleeders, includes synthetic/unlinked Token Actors, and marks the Actor Dead when Bloodloss exceeds Endurance.
+- Bleeding status synchronization now uses one configured Foundry status and one authoritative client for follow-up mutations, preventing duplicate status effects and cross-owner permission errors.
+- Successful treatment stops only the selected bleeding wound, removes the generated `Bleeder` state from its source Injury, preserves unrelated Injury notes, and leaves accumulated Bloodloss unchanged.
+- Added the **Advanced Physician Automation** world setting so automated medical behavior can be disabled independently of Bloodloss tracking.
+- Added a small launcher macro to the canonical Physician Skill in the Character compendium. Ordinary Physician rolls remain ordinary when automation is disabled or no bleeding patient is targeted.
+- Physician Bleeder treatment reuses the Skill roll that was just made and applies the rules-derived Bleeder +50 modifier, Hemophilia -40 where applicable, and the roll's existing situational modifier.
+- Multiple bleeding wounds prompt the user to choose the specific wound being treated.
+- Added native `system.hm3` socket handling for cross-owner treatment without requiring Socketlib. The authoritative GM validates the requesting user, healer ownership, Physician Skill, patient, bleeding effect, roll, and result before changing the patient.
+- Cross-owner treatment with no active GM leaves the patient unchanged and reports that an active GM is unavailable.
+- Removed the injury-card **Stop Bleeding** action. Bleeding injuries now display an informational red **Bleeding** warning; the Physician Skill is the player-facing treatment workflow.
+- Removed the obsolete standalone `bloodloss-treatment-v14.js` workflow and stale `treat-bleeding` chat-action registration.
+
+### Validation
+
+Focused Foundry VTT 14.365 runtime testing completed for the implemented Physician/Bloodloss scope:
+
+- Advanced Physician Automation enabled and disabled behavior.
+- Successful and failed Bleeder treatment using the existing Physician roll.
+- Multiple simultaneous bleeding wounds and targeted treatment of one wound.
+- Hemophilia treatment modifier behavior.
+- Player-to-player treatment through the native HM3 socket with an active GM.
+- Cross-owner treatment with no active GM.
+- Bleeding Active Effect removal, source Injury cleanup, generic Bleeding status cleanup, and preservation of accumulated Bloodloss.
+- Player-to-player treatment completes without the earlier non-owner Active Effect permission/synchronization errors.
+
+### Deferred
+
+- Normal Physician wound treatment is deferred to later development and recorded in `DEVELOPMENT-BACKLOG.md`.
+- Blood Regeneration is deferred pending authoritative confirmation of the exact Bloodloss Healing Rate; known success effects and five-day cadence are recorded in `DEVELOPMENT-BACKLOG.md` without inventing the missing value.
+
 ## 2.0.0-rc.1 — Foundry VTT v14 Release Candidate
 
 ### Compatibility
