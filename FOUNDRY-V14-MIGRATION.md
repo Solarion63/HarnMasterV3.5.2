@@ -72,7 +72,8 @@ Continue to test with a copied world until the release candidate is deliberately
 - [x] Complete the pre-RC repository/CI audit and remove non-deterministic compendium diagnostic-log churn.
 - [x] Prepare the `2.0.0-rc.1` manifest, changelog, and deterministic manual packaging workflow.
 - [x] Correct the legacy unscoped sheet-tab CSS that clipped Foundry v14 native Token Configuration tabs, and complete focused Token Configuration regression testing.
-- [ ] Publish the release candidate after final package artifact verification.
+- [x] Verify the final corrected `2.0.0-rc.1` package artifact with a clean installation and smoke test.
+- [ ] Publish the release candidate deliberately.
 
 ## ApplicationV2 and Runtime Architecture
 
@@ -135,11 +136,12 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - Character Façade and Profile/Biography rich-text fields render existing formatted HTML, support direct ProseMirror editing and toolbar actions, persist changes, and preserve the intended side-by-side Façade image/text layout.
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Native Foundry v14 Token Configuration tabs render fully after isolating legacy HM3 sheet-tab styling; Identity, Appearance, Vision, Light, Resources, and other Token Configuration tabs remain usable without clipping.
+- The final corrected `2.0.0-rc.1` artifact built from head `93f6d61074d065069e8ed2f9437c5f172674f09b` passed a clean installation and short smoke test with no observed regressions.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
 ## Required Regression Scenarios Before Release Candidate
 
-All explicit release-level regression scenarios in the current migration plan have been completed successfully. The remaining RC work is final package artifact verification and deliberate publication rather than additional planned gameplay regression coverage.
+All explicit release-level regression scenarios and final package artifact verification have been completed successfully. The remaining RC step is deliberate publication.
 
 ## Deferred Work
 
