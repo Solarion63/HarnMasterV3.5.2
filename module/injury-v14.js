@@ -1,4 +1,5 @@
 import { DiceHM3 } from "./dice-hm3.js";
+import { calculateInjury, getHitLocations, resolveHitLocation } from "./injury-rules.js";
 
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -6,6 +7,18 @@ const { renderTemplate } = foundry.applications.handlebars;
 function currentMessageMode() {
   const mode = game.settings.get("core", "messageMode") ?? "public";
   return mode in CONFIG.ChatMessage.modes ? mode : "public";
+}
+
+function injuryRuleSettings() {
+  return {
+    amputation: game.settings.get("hm3", "amputation"),
+    bloodloss: game.settings.get("hm3", "bloodloss"),
+    limbInjuries: game.settings.get("hm3", "limbInjuries")
+  };
+}
+
+function injuryRandom() {
+  return foundry.dice.MersenneTwister.random();
 }
 
 async function playInjuryAudio() {
@@ -28,28 +41,26 @@ async function playInjuryAudio() {
   }
 }
 
+DiceHM3._getHitLocations = function getLegacyHitLocations(items) {
+  return getHitLocations(items);
+};
+
 DiceHM3._calcLocation = function calcLocation(location, aim, items) {
-  const normalizedAim = String(aim ?? "mid").toLowerCase();
-  const armorLocations = items.filter(item => item.type === "armorlocation");
-  if (!armorLocations.length) return null;
+  return resolveHitLocation(location, aim, items, injuryRandom);
+};
 
-  if (String(location).toLowerCase() !== "random") {
-    return armorLocations.find(item => item.name === location) ?? null;
-  }
-
-  const totalWeight = armorLocations.reduce(
-    (total, item) => total + (Number(item.system.probWeight?.[normalizedAim]) || 0),
-    0
-  );
-  if (totalWeight <= 0) return armorLocations[0];
-
-  let rollWeight = Math.floor(foundry.dice.MersenneTwister.random() * totalWeight) + 1;
-  for (const item of armorLocations) {
-    rollWeight -= Number(item.system.probWeight?.[normalizedAim]) || 0;
-    if (rollWeight <= 0) return item;
-  }
-
-  return armorLocations.at(-1) ?? null;
+DiceHM3._calcInjury = function calcInjury(location, impact, aspect, addToCharSheet, aim, dialogOptions) {
+  return calculateInjury({
+    location,
+    impact,
+    aspect,
+    addToCharSheet,
+    aim,
+    name: dialogOptions.name,
+    items: dialogOptions.items,
+    rules: injuryRuleSettings(),
+    random: injuryRandom
+  });
 };
 
 DiceHM3.createInjury = async function createInjury(actor, result) {
@@ -110,14 +121,17 @@ DiceHM3.injuryDialog = async function injuryDialog(dialogOptions) {
           ? Boolean(root?.querySelector('[name="addToCharSheet"]')?.checked)
           : recordInjury === "enable";
 
-        return DiceHM3._calcInjury(
+        return calculateInjury({
           location,
           impact,
           aspect,
           addToCharSheet,
           aim,
-          dialogOptions
-        );
+          name: dialogOptions.name,
+          items: dialogOptions.items,
+          rules: injuryRuleSettings(),
+          random: injuryRandom
+        });
       }
     },
     rejectClose: false
@@ -130,21 +144,24 @@ DiceHM3.injuryRoll = async function injuryRoll(rollData) {
   let result;
   if (typeof rollData.impact === "undefined") {
     const dialogOptions = {
-      hitLocations: DiceHM3._getHitLocations(rollData.actor.items),
+      hitLocations: getHitLocations(rollData.actor.items),
       data: rollData.actor.system,
       items: rollData.actor.items,
       name: rollData.actor.token ? rollData.actor.token.name : rollData.actor.name
     };
     result = await DiceHM3.injuryDialog(dialogOptions);
   } else {
-    result = DiceHM3._calcInjury(
-      "Random",
-      rollData.impact,
-      rollData.aspect,
-      game.settings.get("hm3", "addInjuryToActorSheet") !== "disable",
-      rollData.aim,
-      rollData
-    );
+    result = calculateInjury({
+      location: "Random",
+      impact: rollData.impact,
+      aspect: rollData.aspect,
+      addToCharSheet: game.settings.get("hm3", "addInjuryToActorSheet") !== "disable",
+      aim: rollData.aim,
+      name: rollData.actor.token ? rollData.actor.token.name : rollData.actor.name,
+      items: rollData.actor.items,
+      rules: injuryRuleSettings(),
+      random: injuryRandom
+    });
   }
 
   if (!result) return null;
