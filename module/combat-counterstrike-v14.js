@@ -1,5 +1,5 @@
 import { DiceHM3 } from "./dice-hm3.js";
-import { meleeCombatResult } from "./combat.js";
+import { meleeCombatResult } from "./combat-rules.js";
 
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
