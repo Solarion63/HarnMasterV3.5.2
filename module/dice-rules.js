@@ -1,17 +1,13 @@
-const MIN_D100_TARGET = 5;
-const MAX_D100_TARGET = 95;
+const MIN_TARGET = 5;
+const MAX_TARGET = 95;
 
 /**
- * Apply an HM3 modifier to a target and enforce the standard d100 limits.
- * d6 tests intentionally do not use the d100 5/95 cap.
+ * Apply an HM3 modifier to a target and enforce the legacy 5–95 limits.
+ * The original DiceHM3.rollTest applied this cap to both d100 and d6 tests.
  */
-export function modifiedTarget(target, modifier = 0, diceSides = 100) {
+export function modifiedTarget(target, modifier = 0) {
   const rawTarget = Number(target) + (Number(modifier) || 0);
-  if (Number(diceSides) !== 100) {
-    return { target: rawTarget, isCapped: false };
-  }
-
-  const targetValue = Math.max(Math.min(rawTarget, MAX_D100_TARGET), MIN_D100_TARGET);
+  const targetValue = Math.max(Math.min(rawTarget, MAX_TARGET), MIN_TARGET);
   return {
     target: targetValue,
     isCapped: rawTarget !== targetValue
@@ -22,7 +18,7 @@ export function modifiedTarget(target, modifier = 0, diceSides = 100) {
  * Classify an evaluated HM3 test roll without any Foundry presentation logic.
  */
 export function classifyTestRoll({ total, target, modifier = 0, diceSides = 100 }) {
-  const resolved = modifiedTarget(target, modifier, diceSides);
+  const resolved = modifiedTarget(target, modifier);
   const d100 = Number(diceSides) === 100;
   const isCritical = d100 && Number(total) % 5 === 0;
   const isSuccess = Number(total) <= resolved.target;
