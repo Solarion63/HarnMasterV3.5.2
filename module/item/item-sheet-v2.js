@@ -3,7 +3,7 @@ import * as utility from "../utility.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 
 const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
-const { HTMLProseMirrorElement } = foundry.applications.elements;
+const { createEditorInput } = foundry.applications.fields;
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended, TextEditor } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -136,7 +136,6 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
   async #editDescriptionDialog() {
     // DialogV2 requires the root content element itself to have no attributes.
-    // Keep it completely bare and place all styling/structure on a child wrapper.
     const content = document.createElement("div");
 
     const wrapper = document.createElement("div");
@@ -146,21 +145,26 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     wrapper.style.flexDirection = "column";
     content.append(wrapper);
 
-    const editor = HTMLProseMirrorElement.create({
+    // Use Foundry's supported editor field factory rather than mounting the
+    // prose-mirror custom element directly. The factory supplies the editor
+    // wrapper/layout expected by the v14 ProseMirror menu and editing surface.
+    const editorInput = createEditorInput({
       name: "system.description",
       value: String(this.item.system.description ?? ""),
       readonly: false,
       disabled: false,
-      classes: "hm3-item-description-dialog-prosemirror",
+      editable: true,
+      button: false,
+      engine: "prosemirror",
       collaborate: false,
-      documentUUID: this.item.uuid,
-      toggled: false
+      height: 360,
+      classes: "hm3-item-description-dialog-editor"
     });
-    editor.style.display = "block";
-    editor.style.width = "100%";
-    editor.style.height = "360px";
-    editor.style.minHeight = "360px";
-    wrapper.append(editor);
+    wrapper.append(editorInput);
+
+    const editor = editorInput.querySelector('prose-mirror[name="system.description"]')
+      ?? editorInput.querySelector("prose-mirror");
+    if (!editor) throw new Error("Foundry did not create the Description ProseMirror input.");
 
     const result = await DialogV2.wait({
       window: {
