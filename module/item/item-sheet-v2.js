@@ -3,9 +3,8 @@ import * as utility from "../utility.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 
 const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
-const { createEditorInput } = foundry.applications.fields;
 const { ItemSheetV2 } = foundry.applications.sheets;
-const { FormDataExtended, TextEditor } = foundry.applications.ux;
+const { FormDataExtended, ProseMirrorEditor, TextEditor } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
 
 const DESCRIPTION_VIEW_TEMPLATE = "systems/hm3/templates/item/item-description-view-v14.html";
@@ -145,22 +144,13 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     wrapper.style.flexDirection = "column";
     content.append(wrapper);
 
-    // Use Foundry's supported editor field factory rather than mounting the
-    // prose-mirror custom element directly. The factory supplies the editor
-    // wrapper/layout expected by the v14 ProseMirror menu and editing surface.
-    const editorInput = createEditorInput({
-      name: "system.description",
-      value: String(this.item.system.description ?? ""),
-      readonly: false,
-      disabled: false,
-      editable: true,
-      button: false,
-      engine: "prosemirror",
-      collaborate: false,
-      height: 360,
-      classes: "hm3-item-description-dialog-editor"
-    });
-    wrapper.append(editorInput);
+    const mount = document.createElement("div");
+    mount.className = "hm3-item-description-dialog-mount";
+    mount.style.minHeight = "360px";
+    mount.style.flex = "1 1 auto";
+    wrapper.append(mount);
+
+    let editorInstance = null;
 
     const result = await DialogV2.wait({
       window: {
@@ -169,6 +159,21 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       },
       position: { width: 680, height: 520 },
       content,
+      render: async (_event, dialog) => {
+        const target = dialog.element?.querySelector(".hm3-item-description-dialog-mount");
+        if (!target || target.querySelector(".ProseMirror")) return;
+
+        editorInstance = await ProseMirrorEditor.create(
+          target,
+          String(this.item.system.description ?? ""),
+          {
+            collaborate: false,
+            document: this.item,
+            fieldName: "system.description",
+            relativeLinks: true
+          }
+        );
+      },
       buttons: [
         {
           action: "save",
@@ -176,11 +181,9 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
           icon: "fa-solid fa-floppy-disk",
           default: true,
           callback: async (_event, _button, dialog) => {
-            const editor = dialog.element?.querySelector('prose-mirror[name="system.description"]')
-              ?? dialog.element?.querySelector("prose-mirror");
-            if (!editor) throw new Error("The rendered Description ProseMirror input could not be found.");
-            await editor.save();
-            return { save: true, value: String(editor.value ?? "") };
+            const editorBody = dialog.element?.querySelector(".hm3-item-description-dialog-mount .ProseMirror");
+            if (!editorBody) throw new Error("The mounted Description ProseMirror editor could not be found.");
+            return { save: true, value: editorBody.innerHTML };
           }
         },
         {
@@ -193,6 +196,8 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       rejectClose: false,
       modal: false
     });
+
+    editorInstance?.destroy?.();
 
     if (!result?.save) return;
     itemTabState.set(this, "description");
