@@ -97,15 +97,27 @@
 .application.hm3.sheet.item .hm3-item-description-controls {
   display: flex;
   justify-content: flex-end;
-  gap: 6px;
-  margin: 0 0 8px;
+  gap: 4px;
+  min-height: 24px;
+  margin: 0 0 4px;
 }
 
-.application.hm3.sheet.item .hm3-item-description-controls button {
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 96px;
-  padding: 2px 8px;
+.application.hm3.sheet.item .hm3-item-description-controls-view {
+  justify-content: flex-start;
+}
+
+.application.hm3.sheet.item .hm3-item-description-icon-button {
+  flex: 0 0 24px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  line-height: 20px;
+}
+
+.application.hm3.sheet.item .hm3-item-description-icon-button i {
+  margin: 0;
 }
 
 .application.hm3.sheet.item .hm3-item-description-content {
@@ -113,9 +125,16 @@
   overflow-wrap: anywhere;
 }
 
-.application.hm3.sheet.item .hm3-item-description-edit prose-mirror {
+.application.hm3.sheet.item .hm3-item-description-editor-mount {
+  min-height: 320px;
+}
+
+.application.hm3.sheet.item .hm3-item-description-editor-mount > prose-mirror,
+.application.hm3.sheet.item prose-mirror.hm3-item-description-prosemirror {
   display: block;
-  min-height: 300px;
+  width: 100%;
+  height: 320px;
+  min-height: 320px;
 }
 
 @media (max-width: 520px) {
