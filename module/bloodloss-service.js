@@ -12,18 +12,17 @@ function activeGmOwnsProcessing() {
   return activeGms[0]?.id === game.user.id;
 }
 
-function statusIdByName(name) {
+function statusConfigByName(name) {
   const wanted = String(name).trim().toLowerCase();
-  const status = (CONFIG.statusEffects ?? []).find(entry => {
+  return (CONFIG.statusEffects ?? []).find(entry => {
     const id = String(entry.id ?? "").toLowerCase();
     const label = String(entry.name ?? entry.label ?? "").toLowerCase();
     return id === wanted || label === wanted;
-  });
-  return status?.id ?? null;
+  }) ?? null;
 }
 
 async function setStatus(actor, name, active) {
-  const statusId = statusIdByName(name);
+  const statusId = statusConfigByName(name)?.id ?? null;
   if (!statusId) {
     console.warn(`HM3 | Configured ${name} status effect could not be found.`);
     return null;
@@ -34,6 +33,7 @@ async function setStatus(actor, name, active) {
 function bloodlossItem(actor) {
   return actor.itemTypes?.injury?.find(item =>
     item.getFlag("hm3", BLOODLOSS_ITEM_FLAG) === true
+    || item.system.isBloodloss === true
     || item.name.toLowerCase() === "bloodloss"
   ) ?? null;
 }
@@ -102,9 +102,9 @@ export class BloodlossService {
     }
 
     const worldTime = Number(game.time.worldTime) || 0;
-    const created = await actor.createEmbeddedDocuments("ActiveEffect", [{
+    const bleedingStatus = statusConfigByName("Bleeding");
+    const effectData = {
       name: `Bleeding Injury — ${injury.name}`,
-      img: "icons/svg/blood.svg",
       disabled: false,
       duration: {
         startTime: worldTime
@@ -117,8 +117,11 @@ export class BloodlossService {
           lastProcessedWorldTime: worldTime
         }
       }
-    }]);
+    };
+    const statusImage = bleedingStatus?.img ?? bleedingStatus?.icon;
+    if (statusImage) effectData.img = statusImage;
 
+    const created = await actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
     await syncBleedingStatus(actor);
     return created[0] ?? null;
   }
