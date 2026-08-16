@@ -10,6 +10,12 @@ on:
       - "CHANGELOG.md"
       - "packs/**"
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Exact branch or commit to package
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -21,6 +27,8 @@ jobs:
     steps:
       - name: Check out selected ref
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -46,26 +54,27 @@ jobs:
           import { ClassicLevel } from "classic-level";
 
           const packs = [
-            ["character", "!items!", 105],
-            ["possessions", "!items!", 125],
-            ["esoteric", "!items!", 424],
-            ["system-help", "!journal!", 20]
+            ["character", ["!items!", "!folders!"], 105],
+            ["possessions", ["!items!", "!folders!"], 125],
+            ["esoteric", ["!items!", "!folders!"], 424],
+            ["system-help", ["!journal!", "!folders!"], 20]
           ];
 
-          for (const [name, prefix, expected] of packs) {
+          for (const [name, prefixes, expected] of packs) {
             const db = new ClassicLevel(`packs/${name}`, { valueEncoding: "utf8" });
             await db.open();
 
             let count = 0;
             for await (const [key] of db.iterator()) {
-              if (String(key).startsWith(prefix)) count += 1;
+              const keyText = String(key);
+              if (prefixes.some((prefix) => keyText.startsWith(prefix))) count += 1;
             }
 
             await db.close();
-            console.log(`${name} compiled documents: ${count}`);
+            console.log(`${name} compiled top-level documents: ${count}`);
 
             if (count !== expected) {
-              throw new Error(`${name} compiled document count ${count} did not match expected ${expected}`);
+              throw new Error(`${name} compiled top-level document count ${count} did not match expected ${expected}`);
             }
           }
           NODE
