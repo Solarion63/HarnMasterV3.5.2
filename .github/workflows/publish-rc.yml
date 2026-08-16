@@ -1,0 +1,89 @@
+name: Publish Release Candidate
+
+on:
+  push:
+    branches:
+      - feature/foundry-v14-master
+    paths:
+      - ".github/workflows/publish-rc.yml"
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      TAG: v2.0.0-rc.1
+      VERSION: 2.0.0-rc.1
+      TESTED_SHA: 93f6d61074d065069e8ed2f9437c5f172674f09b
+      SOURCE_RUN: 31949016780
+      ARTIFACT_NAME: hm3-2.0.0-rc.1
+      ARTIFACT_DIGEST: sha256:953be9eedb29d40d9d35a53c4758a5debc3169d9891bd74a1de80ef99114fc50
+
+    steps:
+      - name: Verify release does not already exist
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; refusing to overwrite it." >&2
+            exit 1
+          fi
+
+      - name: Download validated package artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh run download "$SOURCE_RUN" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$ARTIFACT_NAME" \
+            --dir dist
+
+          test -f "dist/hm3-${VERSION}.zip"
+          test -f "dist/hm3-${VERSION}.json"
+          unzip -t "dist/hm3-${VERSION}.zip"
+
+      - name: Publish prerelease from tested runtime SHA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > release-notes.md <<EOF
+          HarnMaster 3 ${VERSION} is the Foundry VTT 14.365 release candidate.
+
+          This prerelease contains the ApplicationV2 migration, Foundry v14-compatible roll/combat/effect workflows, migrated legacy-world support, rebuilt Character/Possessions/Esoterics/System Help compendiums, and the Token Configuration tab-style isolation fix.
+
+          Validation completed successfully in Foundry VTT 14.365, including copied-world migration, permissions, Actor/Item sheets, combat and effects, macros, all four compendiums, native Token Configuration tabs, and a final clean-install smoke test of the exact packaged artifact.
+
+          Tested runtime commit: ${TESTED_SHA}
+          Source packaging run: ${SOURCE_RUN}
+          Validated Actions artifact: ${ARTIFACT_NAME}
+          Actions artifact digest: ${ARTIFACT_DIGEST}
+
+          This is a release candidate, not the final 2.0.0 release. Formal Foundry DataModel classes remain intentionally deferred.
+          EOF
+
+          gh release create "$TAG" \
+            "dist/hm3-${VERSION}.zip#HarnMaster 3 ${VERSION} system package" \
+            "dist/hm3-${VERSION}.json#HarnMaster 3 ${VERSION} manifest" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$TESTED_SHA" \
+            --title "HarnMaster 3 ${VERSION}" \
+            --notes-file release-notes.md \
+            --prerelease
+
+      - name: Verify published release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isPrerelease,targetCommitish,assets,url
