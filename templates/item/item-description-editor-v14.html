@@ -1,11 +1,11 @@
 <div class="hm3-item-description-edit">
     <div class="hm3-item-description-controls">
-        <button type="button" class="hm3-item-description-save">
-            <i class="fas fa-save"></i> Save
+        <button type="button" class="hm3-item-description-icon-button hm3-item-description-save" title="Save Description" aria-label="Save Description">
+            <i class="fas fa-save"></i>
         </button>
-        <button type="button" class="hm3-item-description-cancel">
-            <i class="fas fa-times"></i> Cancel
+        <button type="button" class="hm3-item-description-icon-button hm3-item-description-cancel" title="Cancel Description Edit" aria-label="Cancel Description Edit">
+            <i class="fas fa-times"></i>
         </button>
     </div>
-    {{editor description target="system.description" button=false editable=true engine="prosemirror" collaborate=false class="hm3-item-description-prosemirror"}}
+    <div class="hm3-item-description-editor-mount"></div>
 </div>
