@@ -14,7 +14,7 @@
     "source": "HM3 Skills 17",
     "macros": {
       "type": "script",
-      "command": ""
+      "command": "return await game.hm3.medical.physicianTreatment({ healer: actor, physicianSkill: item, rollResult, token });"
     },
     "type": "Craft",
     "skillBase": {
