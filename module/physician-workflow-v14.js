@@ -50,7 +50,21 @@ async function chooseBleedingEffect(patient, effects) {
   return effectId ? effects.find(effect => effect.id === effectId) ?? null : null;
 }
 
-async function treatmentChatMessage({ healer, patient, effect, evaluation, stopped }) {
+function treatmentOutcome(evaluation, treatment) {
+  if (!evaluation.isSuccess) return "Bleeding continues.";
+  switch (treatment?.status) {
+    case "stopped":
+      return "Bleeding stopped.";
+    case "requested":
+      return "Successful treatment; patient update requested from the GM.";
+    case "unavailable":
+      return "Successful treatment roll, but the patient could not be updated because no active GM is available.";
+    default:
+      return "Successful treatment roll, but the bleeding condition was not changed.";
+  }
+}
+
+async function treatmentChatMessage({ healer, patient, effect, evaluation, treatment }) {
   const woundName = effect.name.replace(/^Bleeding Injury — /, "");
   const modifierParts = [
     `Bleeder +${evaluation.treatmentModifier}`,
@@ -60,9 +74,7 @@ async function treatmentChatMessage({ healer, patient, effect, evaluation, stopp
       : null
   ].filter(Boolean).join(", ");
 
-  const outcome = evaluation.isSuccess
-    ? (stopped ? "Bleeding stopped." : "Successful treatment; patient update requested from the GM.")
-    : "Bleeding continues.";
+  const outcome = treatmentOutcome(evaluation, treatment);
 
   return ChatMessage.create({
     user: game.user.id,
@@ -112,9 +124,9 @@ export async function physicianTreatment({ healer, physicianSkill, rollResult, t
     additionalModifier
   });
 
-  let stopped = false;
+  let treatment = { status: "failed", changed: false };
   if (evaluation.isSuccess) {
-    stopped = await MedicalService.stopBleeding({
+    treatment = await MedicalService.stopBleeding({
       healer,
       patient,
       effect,
@@ -124,6 +136,6 @@ export async function physicianTreatment({ healer, physicianSkill, rollResult, t
     });
   }
 
-  await treatmentChatMessage({ healer, patient, effect, evaluation, stopped });
-  return { healer, patient, effect, evaluation, stopped, token };
+  await treatmentChatMessage({ healer, patient, effect, evaluation, treatment });
+  return { healer, patient, effect, evaluation, treatment, stopped: treatment.changed, token };
 }
