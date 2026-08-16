@@ -55,10 +55,19 @@ export const registerSystemSettings = function () {
 
     game.settings.register("hm3", "bloodloss", {
         name: "Bloodloss",
-        hint: "Enable optional combat rule that tracks bloodloss as an injury (Combat 14) (partially implemented)",
+        hint: "Enable optional combat rule that tracks bleeding wounds and accumulated Bloodloss (Combat 14)",
         scope: "world",
         config: true,
         default: false,
+        type: Boolean
+    });
+
+    game.settings.register("hm3", "advancedPhysicianAutomation", {
+        name: "Advanced Physician Automation",
+        hint: "Enable context-sensitive Physician treatment automation from the Physician skill, including treatment of bleeding wounds and cross-owner patient updates through the HM3 system socket.",
+        scope: "world",
+        config: true,
+        default: true,
         type: Boolean
     });
 
