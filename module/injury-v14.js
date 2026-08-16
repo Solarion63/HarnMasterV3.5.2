@@ -41,15 +41,15 @@ async function playInjuryAudio() {
   }
 }
 
-DiceHM3._getHitLocations = function getLegacyHitLocations(items) {
+export function _getHitLocations(items) {
   return getHitLocations(items);
-};
+}
 
-DiceHM3._calcLocation = function calcLocation(location, aim, items) {
+export function _calcLocation(location, aim, items) {
   return resolveHitLocation(location, aim, items, injuryRandom);
-};
+}
 
-DiceHM3._calcInjury = function calcInjury(location, impact, aspect, addToCharSheet, aim, dialogOptions) {
+export function _calcInjury(location, impact, aspect, addToCharSheet, aim, dialogOptions) {
   return calculateInjury({
     location,
     impact,
@@ -61,9 +61,9 @@ DiceHM3._calcInjury = function calcInjury(location, impact, aspect, addToCharShe
     rules: injuryRuleSettings(),
     random: injuryRandom
   });
-};
+}
 
-DiceHM3.createInjury = async function createInjury(actor, result) {
+export async function createInjury(actor, result) {
   if (!actor || Number(result.injuryLevel) === 0) return null;
 
   const injuryDesc = {
@@ -92,9 +92,9 @@ DiceHM3.createInjury = async function createInjury(actor, result) {
   }]);
 
   return created[0] ?? null;
-};
+}
 
-DiceHM3.injuryDialog = async function injuryDialog(dialogOptions) {
+export async function injuryDialog(dialogOptions) {
   const recordInjury = game.settings.get("hm3", "addInjuryToActorSheet");
   const askRecordInjury = recordInjury === "ask";
   const content = await renderTemplate("systems/hm3/templates/dialog/injury-dialog.html", {
@@ -136,9 +136,9 @@ DiceHM3.injuryDialog = async function injuryDialog(dialogOptions) {
     },
     rejectClose: false
   });
-};
+}
 
-DiceHM3.injuryRoll = async function injuryRoll(rollData) {
+export async function injuryRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker({ actor: rollData.actor });
 
   let result;
@@ -149,7 +149,7 @@ DiceHM3.injuryRoll = async function injuryRoll(rollData) {
       items: rollData.actor.items,
       name: rollData.actor.token ? rollData.actor.token.name : rollData.actor.name
     };
-    result = await DiceHM3.injuryDialog(dialogOptions);
+    result = await injuryDialog(dialogOptions);
   } else {
     result = calculateInjury({
       location: "Random",
@@ -171,7 +171,7 @@ DiceHM3.injuryRoll = async function injuryRoll(rollData) {
   if (tokenId) result.tokenId = tokenId;
 
   if (result.addToCharSheet) {
-    await DiceHM3.createInjury(rollData.actor, result);
+    await createInjury(rollData.actor, result);
   }
 
   const templateData = foundry.utils.mergeObject({
@@ -194,4 +194,13 @@ DiceHM3.injuryRoll = async function injuryRoll(rollData) {
 
   await playInjuryAudio();
   return templateData;
-};
+}
+
+Object.assign(DiceHM3, {
+  _getHitLocations,
+  _calcLocation,
+  _calcInjury,
+  createInjury,
+  injuryDialog,
+  injuryRoll
+});
