@@ -17,6 +17,7 @@ All notable changes to the HarnMaster 3 Foundry VTT system will be documented in
 - Restored v13-style sheet typography and layout across Skills, Esoterics, Effects, Gear, traits, Item tabs, and combat presentation.
 - Restored editable formatted Façade and Profile/Biography content using Foundry v14 ProseMirror, including functional formatting toolbars and persisted edits.
 - Preserved the intended side-by-side Façade portrait and public-description layout.
+- Scoped legacy HM3 sheet-tab styling so native Foundry v14 configuration sheets retain their standard tab dimensions and are not clipped.
 
 ### Rolls, Combat, and Macros
 
@@ -63,6 +64,7 @@ Focused Foundry 14.365 regression coverage completed for:
 - Migrated pre-existing Active Effects.
 - Final visual/UI sweep of Actor and Item sheets.
 - Clean installation of the packaged `2.0.0-rc.1` artifact, with all four compendiums visible, populated, and individually openable without observed errors.
+- Focused Token Configuration regression testing after the sheet-tab CSS isolation fix; the full native tab row renders correctly and tested tabs remain usable without clipping or errors.
 
 ### Deferred
 
