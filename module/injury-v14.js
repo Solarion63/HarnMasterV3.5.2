@@ -78,7 +78,8 @@ export async function createInjury(actor, result) {
 
   const injury = created[0] ?? null;
   if (injury && result.isBleeder) {
-    await BloodlossService.startBleeding(actor, injury);
+    const effect = await BloodlossService.startBleeding(actor, injury);
+    if (effect) result.bleedingEffectId = effect.id;
   }
   return injury;
 }
