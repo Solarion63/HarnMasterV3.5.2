@@ -1,3 +1,19 @@
+function registerCombatSoundSetting(key, name, hint) {
+    game.settings.register("hm3", key, {
+        name,
+        hint,
+        scope: "world",
+        config: true,
+        default: "",
+        type: new foundry.data.fields.FilePathField({
+            categories: ["AUDIO"],
+            nullable: false,
+            blank: true,
+            initial: ""
+        })
+    });
+}
+
 export const registerSystemSettings = function () {
     // Track the system version which a migration was last applied
 
@@ -95,6 +111,27 @@ export const registerSystemSettings = function () {
         default: true,
         type: Boolean
     });
+
+    registerCombatSoundSetting(
+        "combatSoundAttack",
+        "Combat Sound: Attack",
+        "Optional custom attack sound. Leave blank to use a Foundry core sound."
+    );
+    registerCombatSoundSetting(
+        "combatSoundDodge",
+        "Combat Sound: Dodge",
+        "Optional custom dodge sound. Leave blank to use a Foundry core sound."
+    );
+    registerCombatSoundSetting(
+        "combatSoundBlock",
+        "Combat Sound: Block",
+        "Optional custom block sound. Leave blank to use a Foundry core sound."
+    );
+    registerCombatSoundSetting(
+        "combatSoundInjury",
+        "Combat Sound: Injury",
+        "Optional custom injury sound. Leave blank to use a Foundry core sound."
+    );
 
     game.settings.register("hm3", "distanceUnits", {
         name: "Distance Units",
