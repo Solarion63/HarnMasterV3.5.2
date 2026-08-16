@@ -122,22 +122,61 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     await this.item.update(updateData);
   }
 
-  #prepareRichTextEditors(root, form) {
-    for (const editor of Array.from(root.querySelectorAll("prose-mirror"))) {
-      const replacement = HTMLProseMirrorElement.create({
-        name: editor.name,
-        value: editor.value,
-        readonly: false,
-        disabled: false,
-        classes: editor.className,
-        collaborate: false,
-        documentUUID: this.item.uuid,
-        toggled: false
-      });
+  #createRichTextEditor({ name, value, classes = "" }, form) {
+    const replacement = HTMLProseMirrorElement.create({
+      name,
+      value: String(value ?? ""),
+      readonly: false,
+      disabled: false,
+      classes,
+      collaborate: false,
+      documentUUID: this.item.uuid,
+      toggled: false
+    });
 
+    replacement.addEventListener("save", () => this.#persistForm(form));
+    replacement.addEventListener("change", () => this.#persistForm(form));
+    return replacement;
+  }
+
+  #prepareRichTextEditors(root, form) {
+    // The legacy {{editor ... button=true}} helper can render a V1-style
+    // .editor wrapper whose pencil control has no ApplicationV2 lifecycle.
+    // Replace the complete wrapper with a native, always-active v14 editor.
+    for (const container of Array.from(root.querySelectorAll(".editor"))) {
+      if (container.matches("prose-mirror")) continue;
+
+      const nested = container.querySelector("prose-mirror");
+      const content = container.querySelector(".editor-content");
+      const name = nested?.name
+        ?? content?.dataset.edit
+        ?? content?.getAttribute("data-edit");
+      if (!name) continue;
+
+      const value = foundry.utils.getProperty(this.item, name)
+        ?? nested?.value
+        ?? content?.innerHTML
+        ?? "";
+      const replacement = this.#createRichTextEditor({
+        name,
+        value,
+        classes: container.className
+      }, form);
+      container.replaceWith(replacement);
+    }
+
+    // Also normalize any helper output which is already a prose-mirror element.
+    for (const editor of Array.from(root.querySelectorAll("prose-mirror"))) {
+      const name = editor.name;
+      if (!name) continue;
+
+      const value = foundry.utils.getProperty(this.item, name) ?? editor.value ?? "";
+      const replacement = this.#createRichTextEditor({
+        name,
+        value,
+        classes: editor.className
+      }, form);
       editor.replaceWith(replacement);
-      replacement.addEventListener("save", () => this.#persistForm(form));
-      replacement.addEventListener("change", () => this.#persistForm(form));
     }
   }
 
