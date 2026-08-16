@@ -1,3 +1,5 @@
+import { CombatAudio } from "./combat-audio.js";
+
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
 
@@ -161,6 +163,7 @@ async function createAttackCard(attacker, defender, item, result, distance = nul
     content: content.trim(),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER
   });
+  CombatAudio.play("attack");
   return templateData;
 }
 
