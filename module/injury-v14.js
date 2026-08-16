@@ -1,4 +1,5 @@
 import { DiceHM3 } from "./dice-hm3.js";
+import { CombatAudio } from "./combat-audio.js";
 import { calculateInjury, getHitLocations, resolveHitLocation } from "./injury-rules.js";
 
 const { DialogV2 } = foundry.applications.api;
@@ -19,26 +20,6 @@ function injuryRuleSettings() {
 
 function injuryRandom() {
   return foundry.dice.MersenneTwister.random();
-}
-
-async function playInjuryAudio() {
-  if (!game.settings.get("hm3", "combatAudio")) return;
-
-  const audioHelper = foundry.audio?.AudioHelper;
-  if (typeof audioHelper?.play !== "function") {
-    console.warn("HM3 | Foundry audio helper is unavailable; injury audio was skipped.");
-    return;
-  }
-
-  try {
-    await audioHelper.play({
-      src: "systems/hm3/audio/grunt1.ogg",
-      autoplay: true,
-      loop: false
-    }, true);
-  } catch (error) {
-    console.warn("HM3 | Injury audio playback failed; injury processing completed normally.", error);
-  }
 }
 
 export function _getHitLocations(items) {
@@ -192,7 +173,7 @@ export async function injuryRoll(rollData) {
     messageMode: currentMessageMode()
   });
 
-  await playInjuryAudio();
+  CombatAudio.play("injury");
   return templateData;
 }
 
