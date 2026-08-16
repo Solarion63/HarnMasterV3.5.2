@@ -23,6 +23,26 @@ function injuryRandom() {
   return foundry.dice.MersenneTwister.random();
 }
 
+function injuryDescription(result) {
+  const injuryDesc = {
+    Blunt: { M: "Bruise", S: "Fracture", G: "Crush" },
+    Edged: { M: "Cut", S: "Slash", G: "Gash" },
+    Piercing: { M: "Poke", S: "Stab", G: "Impale" },
+    Fire: { M: "Singe", S: "Burn", G: "Scorch" }
+  };
+  const injuryLevel = Number(result.injuryLevel) || 0;
+  const severity = injuryLevel === 1 ? "M" : injuryLevel <= 3 ? "S" : "G";
+  return {
+    severity,
+    description: injuryDesc[result.aspect]?.[severity]
+  };
+}
+
+function injuryName(result) {
+  const { description } = injuryDescription(result);
+  return description ? `${result.location} ${description}` : result.location;
+}
+
 export function _getHitLocations(items) {
   return getHitLocations(items);
 }
@@ -48,19 +68,9 @@ export function _calcInjury(location, impact, aspect, addToCharSheet, aim, dialo
 export async function createInjury(actor, result) {
   if (!actor || Number(result.injuryLevel) === 0) return null;
 
-  const injuryDesc = {
-    Blunt: { M: "Bruise", S: "Fracture", G: "Crush" },
-    Edged: { M: "Cut", S: "Slash", G: "Gash" },
-    Piercing: { M: "Poke", S: "Stab", G: "Impale" },
-    Fire: { M: "Singe", S: "Burn", G: "Scorch" }
-  };
-
   const injuryLevel = Number(result.injuryLevel) || 0;
-  const severity = injuryLevel === 1 ? "M" : injuryLevel <= 3 ? "S" : "G";
-  const description = injuryDesc[result.aspect]?.[severity];
-  const locationName = description
-    ? `${result.location} ${description}`
-    : result.location;
+  const { severity } = injuryDescription(result);
+  const locationName = injuryName(result);
   const notes = [`Aspect: ${result.aspect}`];
   if (result.isBleeder) notes.push("Bleeder");
 
@@ -82,6 +92,17 @@ export async function createInjury(actor, result) {
     if (effect) result.bleedingEffectId = effect.id;
   }
   return injury;
+}
+
+async function createUnrecordedBleedingEffect(actor, result) {
+  if (!result.isBleeder) return null;
+  const source = {
+    id: `unrecorded-${foundry.utils.randomID()}`,
+    name: injuryName(result)
+  };
+  const effect = await BloodlossService.startBleeding(actor, source);
+  if (effect) result.bleedingEffectId = effect.id;
+  return effect;
 }
 
 export async function injuryDialog(dialogOptions) {
@@ -162,6 +183,8 @@ export async function injuryRoll(rollData) {
 
   if (result.addToCharSheet) {
     await createInjury(rollData.actor, result);
+  } else if (result.isBleeder) {
+    await createUnrecordedBleedingEffect(rollData.actor, result);
   }
 
   const templateData = foundry.utils.mergeObject({
