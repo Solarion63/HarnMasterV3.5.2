@@ -19,6 +19,10 @@ function activeDieValues(roll) {
     .map(result => result.result);
 }
 
+export function calcWeaponAspect(weapon, items) {
+  return weaponAspectData(weapon, items);
+}
+
 export async function damageDialog(dialogOptions) {
   const content = await renderTemplate("systems/hm3/templates/dialog/damage-dialog.html", {
     weapon: dialogOptions.weapon,
@@ -55,7 +59,7 @@ export async function damageDialog(dialogOptions) {
 
 export async function damageRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker();
-  const weapon = weaponAspectData(rollData.weapon, rollData.data.items);
+  const weapon = calcWeaponAspect(rollData.weapon, rollData.data.items);
   const roll = await damageDialog({
     type: "damage",
     label: rollData.weapon ? `${rollData.weapon} Damage` : "Other Weapon Damage",
@@ -107,6 +111,7 @@ export async function damageRoll(rollData) {
 }
 
 Object.assign(DiceHM3, {
+  calcWeaponAspect,
   damageDialog,
   damageRoll
 });
