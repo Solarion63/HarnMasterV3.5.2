@@ -1,5 +1,6 @@
 import { DiceHM3 } from "./dice-hm3.js";
 import * as utility from "./utility.js";
+import { classifyTestRoll } from "./dice-rules.js";
 
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -40,36 +41,21 @@ async function createRollMessage({ speaker, content, roll }) {
 }
 
 DiceHM3.rollTest = async function rollTest(testData) {
-  const diceType = testData.diceSides === 6 ? "d6" : "d100";
+  const diceSides = Number(testData.diceSides) === 6 ? 6 : 100;
+  const diceType = diceSides === 6 ? "d6" : "d100";
   const numDice = testData.diceNum > 0 ? testData.diceNum : 1;
-  const diceSpec = `${numDice}${diceType}`;
-  const roll = await new Roll(diceSpec, testData.data).evaluate();
-
-  const modifier = Number(testData.modifier) || 0;
-  const baseTargetNum = Number(testData.target) + modifier;
-  const targetNum = Math.max(Math.min(baseTargetNum, 95), 5);
-  let isCritical = roll.total % 5 === 0;
-  let isSuccess;
-  let description;
-
-  if (diceType === "d100") {
-    isSuccess = roll.total <= targetNum;
-    description = `${isCritical ? "Critical" : "Marginal"} ${isSuccess ? "Success" : "Failure"}`;
-  } else {
-    isCritical = false;
-    isSuccess = roll.total <= targetNum;
-    description = isSuccess ? "Success" : "Failure";
-  }
+  const roll = await new Roll(`${numDice}${diceType}`, testData.data).evaluate();
+  const classification = classifyTestRoll({
+    total: roll.total,
+    target: testData.target,
+    modifier: testData.modifier,
+    diceSides
+  });
 
   return {
     type: testData.type,
-    target: targetNum,
-    isCapped: baseTargetNum !== targetNum,
-    modifier,
-    rollObj: roll,
-    isSuccess,
-    isCritical,
-    description
+    ...classification,
+    rollObj: roll
   };
 };
 
