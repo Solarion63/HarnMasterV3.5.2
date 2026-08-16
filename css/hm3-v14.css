@@ -5,6 +5,14 @@
  * and Actor sheets without changing the existing templates.
  */
 
+/* Prevent legacy HM3 sheet-tab sizing in hm3.css from constraining native
+ * Foundry v14 ApplicationV2 configuration sheets such as TokenConfig. */
+.application.sheet:not(.hm3) nav.sheet-tabs {
+  height: auto;
+  flex: 0 0 auto;
+  line-height: normal;
+}
+
 .application.hm3.sheet.item {
   min-width: 420px;
   min-height: 360px;
