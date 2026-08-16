@@ -45,7 +45,7 @@ function activeDieValues(roll) {
     .map(result => result.result);
 }
 
-DiceHM3.missileAttackDialog = async function missileAttackDialog(dialogOptions) {
+export async function missileAttackDialog(dialogOptions) {
   const rangeLabels = {
     [`Short (${dialogOptions.rangeShort})`]: "Short",
     [`Medium (${dialogOptions.rangeMedium})`]: "Medium",
@@ -96,11 +96,11 @@ DiceHM3.missileAttackDialog = async function missileAttackDialog(dialogOptions) 
     },
     rejectClose: false
   });
-};
+}
 
-DiceHM3.missileAttackRoll = async function missileAttackRoll(rollData) {
+export async function missileAttackRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker();
-  const roll = await DiceHM3.missileAttackDialog(rollData);
+  const roll = await missileAttackDialog(rollData);
   if (!roll) return null;
 
   const notesData = foundry.utils.mergeObject(rollData.notesData ?? {}, {
@@ -150,9 +150,9 @@ DiceHM3.missileAttackRoll = async function missileAttackRoll(rollData) {
   });
 
   return templateData;
-};
+}
 
-DiceHM3.missileDamageDialog = async function missileDamageDialog(dialogOptions) {
+export async function missileDamageDialog(dialogOptions) {
   const content = await renderTemplate("systems/hm3/templates/dialog/missile-damage-dialog.html", {
     name: dialogOptions.name,
     ranges: dialogOptions.ranges,
@@ -178,9 +178,9 @@ DiceHM3.missileDamageDialog = async function missileDamageDialog(dialogOptions) 
     },
     rejectClose: false
   });
-};
+}
 
-DiceHM3.missileDamageRoll = async function missileDamageRoll(rollData) {
+export async function missileDamageRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker();
   const ranges = {
     Short: Number(rollData.impactShort) || 0,
@@ -188,7 +188,7 @@ DiceHM3.missileDamageRoll = async function missileDamageRoll(rollData) {
     Long: Number(rollData.impactLong) || 0,
     Extreme: Number(rollData.impactExtreme) || 0
   };
-  const roll = await DiceHM3.missileDamageDialog({
+  const roll = await missileDamageDialog({
     name: rollData.name,
     ranges,
     defaultRange: rollData.defaultRange ?? "Extreme",
@@ -237,4 +237,11 @@ DiceHM3.missileDamageRoll = async function missileDamageRoll(rollData) {
   });
 
   return templateData;
-};
+}
+
+Object.assign(DiceHM3, {
+  missileAttackDialog,
+  missileAttackRoll,
+  missileDamageDialog,
+  missileDamageRoll
+});
