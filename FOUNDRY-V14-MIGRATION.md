@@ -2,11 +2,11 @@
 
 ## Status
 
-The `feature/foundry-v14-master` branch targets Foundry VTT **14.365** and is now in release-candidate preparation rather than alpha development.
+The `feature/foundry-v14-master` branch targets Foundry VTT **14.365** and has published release candidate **2.0.0-rc.1** for evaluation.
 
 Current development version: **2.0.0-rc.1**
 
-Continue to test with a copied world until the release candidate is deliberately published and accepted.
+The validated release candidate is published as GitHub prerelease tag `v2.0.0-rc.1`. Continue evaluation before promoting the migration to the final 2.0.0 release.
 
 ## Migration Principles
 
@@ -73,7 +73,7 @@ Continue to test with a copied world until the release candidate is deliberately
 - [x] Prepare the `2.0.0-rc.1` manifest, changelog, and deterministic manual packaging workflow.
 - [x] Correct the legacy unscoped sheet-tab CSS that clipped Foundry v14 native Token Configuration tabs, and complete focused Token Configuration regression testing.
 - [x] Verify the final corrected `2.0.0-rc.1` package artifact with a clean installation and smoke test.
-- [ ] Publish the release candidate deliberately.
+- [x] Publish the validated release candidate as prerelease tag `v2.0.0-rc.1` from tested runtime SHA `93f6d61074d065069e8ed2f9437c5f172674f09b`.
 
 ## ApplicationV2 and Runtime Architecture
 
@@ -137,11 +137,12 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - The v14 native chat-message path no longer depends on the removed jQuery `.find` compatibility shim.
 - Native Foundry v14 Token Configuration tabs render fully after isolating legacy HM3 sheet-tab styling; Identity, Appearance, Vision, Light, Resources, and other Token Configuration tabs remain usable without clipping.
 - The final corrected `2.0.0-rc.1` artifact built from head `93f6d61074d065069e8ed2f9437c5f172674f09b` passed a clean installation and short smoke test with no observed regressions.
+- The validated release candidate was published as GitHub prerelease `v2.0.0-rc.1` with the tested system package and manifest attached.
 - Automated repository validation passes JSON and JavaScript syntax checks.
 
 ## Required Regression Scenarios Before Release Candidate
 
-All explicit release-level regression scenarios and final package artifact verification have been completed successfully. The remaining RC step is deliberate publication.
+All explicit release-level regression scenarios, final package artifact verification, and RC publication have been completed successfully. The release candidate is now available for evaluation before promotion to final 2.0.0.
 
 ## Deferred Work
 
