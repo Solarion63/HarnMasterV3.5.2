@@ -29,7 +29,6 @@
     "module/actor/actor-create-dialog-v14.js",
     "module/actor/actor-interactions-v14.js",
     "module/hm3.js",
-    "module/combat-macro-api-v14.js",
     "module/macro-create-v14.js"
   ],
   "styles": [
