@@ -292,7 +292,8 @@ Hooks.on("updateActiveEffect", effect => {
 
 Hooks.on("deleteActiveEffect", effect => {
   if (!BloodlossService.isBleedingEffect(effect)) return;
-  BloodlossService.synchronizeActor(effect.parent).catch(error =>
-    console.error("HM3 | Failed to synchronize bleeding status after effect deletion.", error)
-  );
+  const actor = effect.parent;
+  markSourceInjuryNotBleeding(actor, effect)
+    .then(() => BloodlossService.synchronizeActor(actor))
+    .catch(error => console.error("HM3 | Failed to synchronize bleeding state after effect deletion.", error));
 });
