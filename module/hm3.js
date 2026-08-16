@@ -13,6 +13,7 @@ import { HM3 } from "./config.js";
 import { registerSystemSettings } from "./settings.js";
 import * as migrations from "./migrations.js";
 import * as macros from "./macros.js";
+import * as combatApi from "./combat-api.js";
 import { DiceHM3 } from "./dice-hm3.js";
 
 const { DialogV2 } = foundry.applications.api;
@@ -29,7 +30,10 @@ Hooks.once("init", async function () {
         HarnMasterItem,
         DiceHM3,
         config: HM3,
-        macros,
+        macros: {
+            ...macros,
+            ...combatApi
+        },
         migrations
     };
 
