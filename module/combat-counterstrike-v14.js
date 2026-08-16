@@ -37,6 +37,10 @@ function outnumberedModifier(actor) {
     : 0;
 }
 
+function aimedAttackModifier(aim) {
+  return aim && aim !== "Mid" ? -10 : 0;
+}
+
 function weaponAspects(item) {
   const aspects = {};
   if (Number(item.system.blunt) >= 0) aspects.Blunt = Number(item.system.blunt);
@@ -108,11 +112,13 @@ async function configureCounterstrike(attacker, defender, weapon) {
         const form = dialog.element?.querySelector("form");
         if (!form) throw new Error("HM3 | Counterstrike attack form was not found.");
         const aspect = form.elements.weaponAspect?.value ?? dialogData.defaultAspect;
-        const modifier = Number(form.elements.addlModifier?.value) || 0;
+        const aim = form.elements.aim?.value ?? "Mid";
+        const manualModifier = Number(form.elements.addlModifier?.value) || 0;
+        const modifier = manualModifier + aimedAttackModifier(aim);
         return {
           weapon,
           aspect,
-          aim: form.elements.aim?.value ?? "Mid",
+          aim,
           modifier,
           impactMod: Number(dialogData.aspects[aspect]) || 0
         };
@@ -197,8 +203,8 @@ async function createCounterstrikeCard({
 
 /**
  * Resolve Counterstrike from the dataset used by HM3 attack-card buttons.
- * Exported so the public macro API can route legacy resume calls through the
- * same v14 implementation used by chat-card buttons.
+ * Exported so the public macro API can route resume calls through the same v14
+ * implementation used by chat-card buttons.
  */
 export async function performCounterstrike(button) {
   const attacker = tokenFromId(button.dataset.atkTokenId, "Attacker");
