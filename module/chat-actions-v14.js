@@ -6,7 +6,8 @@ const NATIVE_COMBAT_ACTIONS = new Set([
   "shock",
   "stumble",
   "fumble",
-  "dta-attack"
+  "dta-attack",
+  "treat-bleeding"
 ]);
 
 function rootsFromRender(html) {
