@@ -26,6 +26,10 @@ All notable changes to the HarnMaster 3 Foundry VTT system will be documented in
 - Preserved fast-forward modifier behavior for supported rolls.
 - Restored hotbar macro creation and execution for Skills, automated melee, and automated missile attacks.
 - Preserved chooser cancellation without overwriting the target hotbar slot.
+- Extracted pure HârnMaster combat-table resolution into `combat-rules.js` and removed the legacy `combat.js` workflow implementation.
+- Preserved the public `game.hm3.macros` combat API while routing it directly to native v14 attack, defense, and Counterstrike implementations.
+- Moved shared Item resolution into `item-lookup.js` and removed the obsolete runtime combat-macro override layer.
+- Restored the -10 aimed-attack modifier for High/Low automated melee, missile, and Counterstrike attacks; Mid remains unmodified and the penalty stacks with other modifiers.
 
 ### Active Effects
 
@@ -65,8 +69,10 @@ Focused Foundry 14.365 regression coverage completed for:
 - Final visual/UI sweep of Actor and Item sheets.
 - Clean installation of the packaged `2.0.0-rc.1` artifact, with all four compendiums visible, populated, and individually openable without observed errors.
 - Focused Token Configuration regression testing after the sheet-tab CSS isolation fix; the full native tab row renders correctly and tested tabs remain usable without clipping or errors.
+- Clean installation of combat-refactor artifact `9265458224` from exact runtime SHA `d114d2587f63241b3d8728abc919c81a98b0f6b9`; HM3 loaded without console errors, all Game Settings registered, and Actor sheets rendered normally.
+- Automated melee, automated missile, and Counterstrike aim testing: Mid applies no penalty, High/Low apply exactly -10, and the aim penalty stacks correctly with other modifiers.
 
 ### Deferred
 
 - Formal Foundry DataModel classes remain deferred to a later architectural phase.
-- Dormant legacy implementations in older dice/combat/macro modules are retained for compatibility until broader third-party macro and legacy-world coverage supports safe removal.
+- The remaining major legacy-runtime cleanup target is `dice-hm3.js`; required rules calculations will be extracted before obsolete Foundry-facing implementations and runtime patching are removed.
