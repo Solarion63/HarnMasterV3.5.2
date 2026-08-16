@@ -13,6 +13,19 @@ function activeGmOwnsProcessing() {
   return activeGms[0]?.id === game.user.id;
 }
 
+function authoritativeEffectHookClient(actor) {
+  const activeGms = game.users
+    ?.filter(user => user.active && user.isGM)
+    ?.sort((left, right) => String(left.id).localeCompare(String(right.id))) ?? [];
+  if (activeGms.length) return activeGms[0].id === game.user?.id;
+
+  if (!actor || !game.user || typeof actor.testUserPermission !== "function") return false;
+  const activeOwners = game.users
+    ?.filter(user => user.active && !user.isGM && actor.testUserPermission(user, "OWNER"))
+    ?.sort((left, right) => String(left.id).localeCompare(String(right.id))) ?? [];
+  return activeOwners[0]?.id === game.user.id;
+}
+
 function statusConfigByName(name) {
   const wanted = String(name).trim().toLowerCase();
   return (CONFIG.statusEffects ?? []).find(entry => {
@@ -279,6 +292,7 @@ Hooks.on("updateWorldTime", worldTime => {
 
 Hooks.on("createActiveEffect", effect => {
   if (!BloodlossService.isBleedingEffect(effect)) return;
+  if (!authoritativeEffectHookClient(effect.parent)) return;
   BloodlossService.synchronizeActor(effect.parent).catch(error =>
     console.error("HM3 | Failed to synchronize bleeding status after effect creation.", error)
   );
@@ -286,6 +300,7 @@ Hooks.on("createActiveEffect", effect => {
 
 Hooks.on("updateActiveEffect", effect => {
   if (!BloodlossService.isBleedingEffect(effect)) return;
+  if (!authoritativeEffectHookClient(effect.parent)) return;
   BloodlossService.synchronizeActor(effect.parent).catch(error =>
     console.error("HM3 | Failed to synchronize bleeding status after effect update.", error)
   );
@@ -294,6 +309,7 @@ Hooks.on("updateActiveEffect", effect => {
 Hooks.on("deleteActiveEffect", effect => {
   if (!BloodlossService.isBleedingEffect(effect)) return;
   const actor = effect.parent;
+  if (!authoritativeEffectHookClient(actor)) return;
   markSourceInjuryNotBleeding(actor, effect)
     .then(() => BloodlossService.synchronizeActor(actor))
     .catch(error => console.error("HM3 | Failed to synchronize bleeding state after effect deletion.", error));
