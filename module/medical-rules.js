@@ -14,8 +14,14 @@ export function bleederTreatmentModifier(patient) {
     + (hasHemophilia(patient) ? HEMOPHILIA_BLEEDING_MODIFIER : 0);
 }
 
-export function evaluateBleederTreatment({ rollValue, physicianEML, patient }) {
-  const modifier = bleederTreatmentModifier(patient);
+export function evaluateBleederTreatment({
+  rollValue,
+  physicianEML,
+  patient,
+  additionalModifier = 0
+}) {
+  const situationalModifier = Number(additionalModifier) || 0;
+  const modifier = bleederTreatmentModifier(patient) + situationalModifier;
   const result = classifyTestRoll({
     total: Number(rollValue),
     target: Number(physicianEML) || 0,
@@ -27,6 +33,7 @@ export function evaluateBleederTreatment({ rollValue, physicianEML, patient }) {
     ...result,
     rollValue: Number(rollValue),
     physicianEML: Number(physicianEML) || 0,
+    situationalModifier,
     treatmentModifier: BLEEDER_TREATMENT_MODIFIER,
     hemophiliaModifier: hasHemophilia(patient) ? HEMOPHILIA_BLEEDING_MODIFIER : 0,
     resultCode: result.isSuccess
