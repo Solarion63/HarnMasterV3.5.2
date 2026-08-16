@@ -54,7 +54,7 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync("system.json", "utf8"));
           const expectedActors = ["character", "container", "creature"];
           const expectedItems = [
-            "armorlocation", "armorgear", "containergear", "injury", "invocation", "miscgear",
+            "armorgear", "armorlocation", "containergear", "injury", "invocation", "miscgear",
             "missilegear", "psionic", "skill", "spell", "trait", "weapongear"
           ];
           const actualActors = Object.keys(manifest.documentTypes?.Actor ?? {}).sort();
