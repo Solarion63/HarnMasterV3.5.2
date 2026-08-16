@@ -136,12 +136,12 @@ export function calculateInjury({
 
   if (armorLocationData.isFumble) {
     result.isFumble = enableLimbInjuries && result.injuryLevel >= 4;
-    result.isFumbleRoll = enableLimbInjuries || (!result.isFumble && result.injuryLevel >= 2);
+    result.isFumbleRoll = !result.isFumble && result.injuryLevel >= 2;
   }
 
   if (armorLocationData.isStumble) {
     result.isStumble = enableLimbInjuries && result.injuryLevel >= 4;
-    result.isStumbleRoll = enableLimbInjuries || (!result.isStumble && result.injuryLevel >= 2);
+    result.isStumbleRoll = !result.isStumble && result.injuryLevel >= 2;
   }
 
   return result;
