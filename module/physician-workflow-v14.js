@@ -54,9 +54,8 @@ function treatmentOutcome(evaluation, treatment) {
   if (!evaluation.isSuccess) return "Bleeding continues.";
   switch (treatment?.status) {
     case "stopped":
-      return "Bleeding stopped.";
     case "requested":
-      return "Successful treatment; patient update requested from the GM.";
+      return "Bleeding stopped.";
     case "unavailable":
       return "Successful treatment roll, but the patient could not be updated because no active GM is available.";
     default:
