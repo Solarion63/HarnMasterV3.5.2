@@ -2,14 +2,13 @@ import { onManageActiveEffect } from "../effect.js";
 import * as utility from "../utility.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 
-const { HandlebarsApplicationMixin } = foundry.applications.api;
+const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { HTMLProseMirrorElement } = foundry.applications.elements;
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
 
 const DESCRIPTION_VIEW_TEMPLATE = "systems/hm3/templates/item/item-description-view-v14.html";
-const DESCRIPTION_EDIT_TEMPLATE = "systems/hm3/templates/item/item-description-editor-v14.html";
 const itemTabState = new WeakMap();
 
 /**
@@ -148,51 +147,90 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     panel.querySelector(".hm3-item-description-edit-button")?.addEventListener("click", event => {
       event.preventDefault();
-      void this.#showDescriptionEditor(panel);
+      void this.#editDescriptionDialog();
     });
   }
 
-  async #showDescriptionEditor(panel) {
-    panel.innerHTML = await renderTemplate(DESCRIPTION_EDIT_TEMPLATE, {});
+  async #editDescriptionDialog() {
+    const content = document.createElement("div");
+    content.className = "hm3-item-description-dialog";
+    content.style.minHeight = "380px";
+    content.style.display = "flex";
+    content.style.flexDirection = "column";
 
-    const mount = panel.querySelector(".hm3-item-description-editor-mount");
-    if (!mount) {
-      ui.notifications.error("The Description editor mount point could not be found.");
-      return;
+    const mount = document.createElement("div");
+    mount.className = "hm3-item-description-dialog-editor";
+    mount.style.flex = "1 1 auto";
+    mount.style.minHeight = "360px";
+    content.append(mount);
+
+    const result = await DialogV2.wait({
+      window: {
+        title: `Edit Description: ${this.item.name}`,
+        resizable: true
+      },
+      position: {
+        width: 680,
+        height: 520
+      },
+      content,
+      buttons: [
+        {
+          action: "save",
+          label: "Save",
+          icon: "fa-solid fa-floppy-disk",
+          default: true,
+          callback: async (_event, _button, dialog) => {
+            const editor = dialog.element?.querySelector('prose-mirror[name="system.description"]');
+            if (!editor) {
+              ui.notifications.error("The Description editor could not be found.");
+              return { save: false };
+            }
+            editor.save();
+            return { save: true, value: String(editor.value ?? "") };
+          }
+        },
+        {
+          action: "cancel",
+          label: "Cancel",
+          icon: "fa-solid fa-xmark",
+          callback: async () => ({ save: false })
+        }
+      ],
+      render: (_event, dialog) => {
+        const target = dialog.element?.querySelector(".hm3-item-description-dialog-editor");
+        if (!target || target.querySelector("prose-mirror")) return;
+
+        const editor = HTMLProseMirrorElement.create({
+          name: "system.description",
+          value: String(this.item.system.description ?? ""),
+          readonly: false,
+          disabled: false,
+          classes: "hm3-item-description-dialog-prosemirror",
+          collaborate: false,
+          documentUUID: this.item.uuid,
+          toggled: false
+        });
+        editor.style.display = "block";
+        editor.style.width = "100%";
+        editor.style.height = "360px";
+        editor.style.minHeight = "360px";
+        target.append(editor);
+      },
+      rejectClose: false,
+      modal: false
+    });
+
+    if (!result?.save) return;
+
+    itemTabState.set(this, "description");
+    await this.item.update({ "system.description": result.value });
+
+    const root = this.element;
+    if (root) {
+      this.#activateTabs(root);
+      await this.#showDescriptionView(root);
     }
-
-    const editor = HTMLProseMirrorElement.create({
-      name: "system.description",
-      value: String(this.item.system.description ?? ""),
-      readonly: false,
-      disabled: false,
-      classes: "hm3-item-description-prosemirror",
-      collaborate: false,
-      documentUUID: this.item.uuid,
-      toggled: false
-    });
-    mount.append(editor);
-
-    panel.querySelector(".hm3-item-description-save")?.addEventListener("click", async event => {
-      event.preventDefault();
-      itemTabState.set(this, "description");
-      await this.item.update({ "system.description": editor.value ?? "" });
-      const root = this.element;
-      if (root) {
-        this.#activateTabs(root);
-        await this.#showDescriptionView(root);
-      }
-    });
-
-    panel.querySelector(".hm3-item-description-cancel")?.addEventListener("click", event => {
-      event.preventDefault();
-      itemTabState.set(this, "description");
-      const root = this.element;
-      if (root) {
-        this.#activateTabs(root);
-        void this.#showDescriptionView(root);
-      }
-    });
   }
 
   #prepareAssociatedSkills(context, actor) {
