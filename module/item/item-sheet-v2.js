@@ -139,16 +139,26 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     const wrapper = document.createElement("div");
     wrapper.className = "hm3-item-description-dialog";
-    wrapper.style.minHeight = "380px";
+    wrapper.style.height = "390px";
+    wrapper.style.minHeight = "0";
     wrapper.style.display = "flex";
     wrapper.style.flexDirection = "column";
     content.append(wrapper);
 
+    // Foundry's default ProseMirror plugins require the target to be an
+    // .editor-content element nested inside an .editor wrapper.
+    const editorShell = document.createElement("div");
+    editorShell.className = "editor";
+    editorShell.style.height = "360px";
+    editorShell.style.minHeight = "0";
+    editorShell.style.flex = "0 0 360px";
+    wrapper.append(editorShell);
+
     const mount = document.createElement("div");
-    mount.className = "hm3-item-description-dialog-mount";
-    mount.style.minHeight = "360px";
-    mount.style.flex = "1 1 auto";
-    wrapper.append(mount);
+    mount.className = "editor-content hm3-item-description-dialog-mount";
+    mount.style.height = "100%";
+    mount.style.minHeight = "0";
+    editorShell.append(mount);
 
     let editorInstance = null;
 
