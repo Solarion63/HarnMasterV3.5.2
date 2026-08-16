@@ -162,10 +162,6 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     });
     wrapper.append(editorInput);
 
-    const editor = editorInput.querySelector('prose-mirror[name="system.description"]')
-      ?? editorInput.querySelector("prose-mirror");
-    if (!editor) throw new Error("Foundry did not create the Description ProseMirror input.");
-
     const result = await DialogV2.wait({
       window: {
         title: `Edit Description: ${this.item.name}`,
@@ -179,7 +175,10 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
           label: "Save",
           icon: "fa-solid fa-floppy-disk",
           default: true,
-          callback: async () => {
+          callback: async (_event, _button, dialog) => {
+            const editor = dialog.element?.querySelector('prose-mirror[name="system.description"]')
+              ?? dialog.element?.querySelector("prose-mirror");
+            if (!editor) throw new Error("The rendered Description ProseMirror input could not be found.");
             await editor.save();
             return { save: true, value: String(editor.value ?? "") };
           }
