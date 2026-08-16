@@ -1,5 +1,6 @@
 import { DiceHM3 } from "./dice-hm3.js";
 import * as utility from "./utility.js";
+import { weaponAspectData } from "./dice-rules.js";
 
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -54,7 +55,7 @@ DiceHM3.damageDialog = async function damageDialog(dialogOptions) {
 
 DiceHM3.damageRoll = async function damageRoll(rollData) {
   const speaker = rollData.speaker ?? ChatMessage.getSpeaker();
-  const weapon = DiceHM3.calcWeaponAspect(rollData.weapon, rollData.data.items);
+  const weapon = weaponAspectData(rollData.weapon, rollData.data.items);
   const roll = await DiceHM3.damageDialog({
     type: "damage",
     label: rollData.weapon ? `${rollData.weapon} Damage` : "Other Weapon Damage",
