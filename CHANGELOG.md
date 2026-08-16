@@ -4,6 +4,13 @@ All notable changes to the HarnMaster 3 Foundry VTT system will be documented in
 
 ## 2.0.0-rc.2 — In Development
 
+### Foundry v14 Compatibility
+
+- Registered all HM3 Actor and Item subtypes through the Foundry v14 `documentTypes` manifest configuration.
+- Removed deprecated system `template.json`, which Foundry has scheduled for removal in v16.
+- Added a lightweight creation-time compatibility-default layer that preserves the existing HM3 Actor/Item default field shapes without imposing strict TypeDataModel schemas on legacy documents.
+- Formal Foundry TypeDataModel classes remain deferred so legacy and custom `system` fields continue to be accepted during RC2 development.
+
 ### Bloodloss and Physician Automation
 
 - Implemented HârnMaster Bleeder/Bloodloss tracking for Grievous Blunt, Edge, and Point injuries.
