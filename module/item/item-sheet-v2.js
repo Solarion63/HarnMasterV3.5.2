@@ -135,11 +135,16 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
   }
 
   async #editDescriptionDialog() {
+    // DialogV2 requires the root content element itself to have no attributes.
+    // Keep it completely bare and place all styling/structure on a child wrapper.
     const content = document.createElement("div");
-    content.className = "hm3-item-description-dialog";
-    content.style.minHeight = "380px";
-    content.style.display = "flex";
-    content.style.flexDirection = "column";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "hm3-item-description-dialog";
+    wrapper.style.minHeight = "380px";
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    content.append(wrapper);
 
     const editor = HTMLProseMirrorElement.create({
       name: "system.description",
@@ -155,7 +160,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     editor.style.width = "100%";
     editor.style.height = "360px";
     editor.style.minHeight = "360px";
-    content.append(editor);
+    wrapper.append(editor);
 
     const result = await DialogV2.wait({
       window: {
@@ -171,7 +176,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
           icon: "fa-solid fa-floppy-disk",
           default: true,
           callback: async () => {
-            editor.save();
+            await editor.save();
             return { save: true, value: String(editor.value ?? "") };
           }
         },
