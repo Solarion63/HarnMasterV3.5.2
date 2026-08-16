@@ -36,10 +36,11 @@ All notable changes to the HarnMaster 3 Foundry VTT system will be documented in
 
 ### Compendiums and System Help
 
-- Rebuilt Esoterics and System Help as populated v14 LevelDB packs.
+- Rebuilt Character, Possessions, Esoterics, and System Help as populated v14 LevelDB packs.
 - Converted legacy System Help Journal content to native v14 Journal pages.
 - Converted internal System Help references to working UUID-based compendium links.
-- Added automated pack source-count, size, and compiled-link verification.
+- Added automated source and compiled-document verification for all four packs, including folder documents where present.
+- Added RC package verification that refuses to package empty or incomplete compiled packs.
 - Removed non-deterministic LevelDB diagnostic logs from committed generated pack output.
 
 ### Legacy World Migration
@@ -61,6 +62,7 @@ Focused Foundry 14.365 regression coverage completed for:
 - Invocation, Psionic, Healing, and Esoterics description-card workflows.
 - Migrated pre-existing Active Effects.
 - Final visual/UI sweep of Actor and Item sheets.
+- Clean installation of the packaged `2.0.0-rc.1` artifact, with all four compendiums visible, populated, and individually openable without observed errors.
 
 ### Deferred
 
