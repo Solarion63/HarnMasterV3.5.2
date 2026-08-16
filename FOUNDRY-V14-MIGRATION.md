@@ -74,6 +74,9 @@ The validated release candidate is published as GitHub prerelease tag `v2.0.0-rc
 - [x] Correct the legacy unscoped sheet-tab CSS that clipped Foundry v14 native Token Configuration tabs, and complete focused Token Configuration regression testing.
 - [x] Verify the final corrected `2.0.0-rc.1` package artifact with a clean installation and smoke test.
 - [x] Publish the validated release candidate as prerelease tag `v2.0.0-rc.1` from tested runtime SHA `93f6d61074d065069e8ed2f9437c5f172674f09b`.
+- [x] Extract authoritative combat-table rules into `combat-rules.js`, remove the legacy `combat.js` workflow, and preserve `game.hm3.macros` as an explicit public API backed by native v14 combat modules.
+- [x] Restore the HârnMaster -10 aimed-attack modifier for High/Low automated melee, missile, and Counterstrike attacks.
+- [x] Validate the combat-architecture cleanup and aimed-attack repair through a clean-install artifact and focused runtime regression testing.
 
 ## ApplicationV2 and Runtime Architecture
 
@@ -83,7 +86,9 @@ The base Actor sheet directly owns intrinsic sheet behavior such as persistence,
 
 The Item sheet uses one lightweight ApplicationV2 subclass per HM3 Item subtype so the existing subtype-specific Handlebars templates remain available without combining them into a monolithic template.
 
-Dedicated v14 modules remain for rules-heavy behavior including standard dice rolls, combat rolls, injury, damage, missile rolls, defense, counterstrike, weapon breakage, combat consequences, DTA, chat actions, and macro compatibility.
+Combat now has explicit v14 ownership rather than retaining the old mixed workflow layer. `combat-rules.js` contains pure HârnMaster combat-table resolution, `combat-api.js` supplies the public `game.hm3.macros` combat entry points, `combat-attack-v14.js` owns attack declaration/range/ammunition flow, `combat-defense-v14.js` owns Dodge/Block/Ignore, and `combat-counterstrike-v14.js` owns Counterstrike. Weapon breakage, combat consequences, DTA, and chat actions remain in their focused v14 modules. Shared Item resolution lives in `item-lookup.js`.
+
+The public `game.hm3.macros` API remains intentionally stable for existing world macros, but its combat calls now route directly to native v14 implementations rather than being installed through a later compatibility override.
 
 The Actor creation adapter remains separate because it overrides the Foundry document-creation workflow and preserves HM3's option to initialize default skills and armor locations.
 
@@ -139,6 +144,10 @@ Testing in Foundry VTT 14.365 has confirmed the following on the migration branc
 - The final corrected `2.0.0-rc.1` artifact built from head `93f6d61074d065069e8ed2f9437c5f172674f09b` passed a clean installation and short smoke test with no observed regressions.
 - The validated release candidate was published as GitHub prerelease `v2.0.0-rc.1` with the tested system package and manifest attached.
 - Automated repository validation passes JSON and JavaScript syntax checks.
+- After the combat clean-break refactor, clean-install artifact `9265458224` built from exact runtime SHA `d114d2587f63241b3d8728abc919c81a98b0f6b9` loaded without console errors, registered all HM3 Game Settings, and rendered normal Actor sheets.
+- Automated melee and missile attacks apply no aim modifier at Mid and exactly -10 at High or Low.
+- Counterstrike applies no aim modifier at Mid and exactly -10 at High or Low.
+- The aimed-attack -10 penalty stacks correctly with other manual, range, and outnumbering modifiers rather than replacing them.
 
 ## Required Regression Scenarios Before Release Candidate
 
@@ -148,4 +157,4 @@ All explicit release-level regression scenarios, final package artifact verifica
 
 Formal Foundry DataModel classes are intentionally deferred until the v14 user-interface and document compatibility work is stable. Combining both architectural migrations would make regressions harder to isolate.
 
-The legacy `dice-hm3.js`, `combat.js`, and portions of `macros.js` still contain older implementations. The normal v14 runtime routes live supported workflows through the native v14 modules and macro bridges. Removing or rewriting dormant legacy implementations is deferred until broader legacy-world and third-party macro compatibility testing provides enough coverage to do so safely.
+The remaining major legacy-runtime cleanup target is `dice-hm3.js`. Required rules calculations will be extracted into focused v14-era modules before obsolete Foundry-facing implementations and runtime patching are removed. Existing public macro names will remain stable where world compatibility requires them.
