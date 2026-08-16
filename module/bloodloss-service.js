@@ -194,7 +194,8 @@ export class BloodlossService {
 
     await markSourceInjuryNotBleeding(actor, effect);
     await actor.deleteEmbeddedDocuments("ActiveEffect", [effect.id]);
-    await syncBleedingStatus(actor);
+    // The deleteActiveEffect hook is the single authoritative post-deletion
+    // synchronization path. Avoid competing status deletion from this method.
     return true;
   }
 
