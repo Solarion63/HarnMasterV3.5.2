@@ -43,9 +43,3 @@ Future implementation should reuse the existing single Bloodloss Injury and syst
 **Status:** Deferred
 
 Introduce formal Foundry DataModel classes only after the v14 user-interface and legacy document compatibility work is stable. This remains intentionally separate from the current migration to reduce regression risk.
-
-### Remaining Legacy Dice Runtime Cleanup
-
-**Status:** Deferred
-
-Continue extracting required rules calculations from `dice-hm3.js` into focused v14-era modules before removing obsolete Foundry-facing implementations or runtime compatibility behavior. Preserve public macro names where world compatibility requires them.
