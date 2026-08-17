@@ -145,25 +145,23 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     const panel = root.querySelector('.tab.description[data-tab="description"]');
     if (!panel) return;
 
-    const editor = panel.querySelector("prose-mirror");
-    if (!editor) {
-      console.error("HM3 | Item Description editor control was not rendered during full sheet render.");
-      ui.notifications.error("The Description editor could not be activated. See the console for details.");
-      itemDescriptionEditState.set(this, false);
-      return;
-    }
-
+    const renderedEditor = panel.querySelector("prose-mirror");
     const replacement = HTMLProseMirrorElement.create({
-      name: editor.name,
-      value: editor.value,
+      name: renderedEditor?.name ?? "system.description",
+      value: renderedEditor?.value ?? String(this.item.system.description ?? ""),
       readonly: false,
       disabled: false,
-      classes: editor.className,
+      ...(renderedEditor?.className ? { classes: renderedEditor.className } : {}),
       collaborate: false,
       documentUUID: this.item.uuid,
       toggled: false
     });
-    editor.replaceWith(replacement);
+
+    if (renderedEditor) {
+      renderedEditor.replaceWith(replacement);
+    } else {
+      panel.replaceChildren(replacement);
+    }
 
     const controls = document.createElement("div");
     controls.className = "hm3-item-description-controls";
