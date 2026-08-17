@@ -146,9 +146,10 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     if (!panel) return;
 
     const renderedEditor = panel.querySelector("prose-mirror");
+    const descriptionValue = renderedEditor?.value ?? String(this.item.system.description ?? "");
     const replacement = HTMLProseMirrorElement.create({
       name: renderedEditor?.name ?? "system.description",
-      value: renderedEditor?.value ?? String(this.item.system.description ?? ""),
+      value: descriptionValue,
       readonly: false,
       disabled: false,
       classes: renderedEditor?.className || "editor",
@@ -157,6 +158,10 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       toggled: false,
       height: 320
     });
+
+    replacement.addEventListener("open", () => {
+      replacement.value = descriptionValue;
+    }, { once: true });
 
     if (renderedEditor) {
       renderedEditor.replaceWith(replacement);
