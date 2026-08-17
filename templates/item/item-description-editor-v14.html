@@ -1,13 +1,13 @@
-<div class="hm3-item-description-editor-window">
-    <div class="hm3-item-description-editor-body">
-        {{editor description target="system.description" button=true editable=true engine="prosemirror" collaborate=false}}
+<div class="hm3-item-description-edit">
+    <div class="hm3-item-description-controls">
+        <button type="button" class="hm3-item-description-icon-button hm3-item-description-save" title="Save Description" aria-label="Save Description">
+            <i class="fas fa-save"></i>
+        </button>
+        <button type="button" class="hm3-item-description-icon-button hm3-item-description-cancel" title="Cancel Description Edit" aria-label="Cancel Description Edit">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
-    <footer class="hm3-item-description-editor-actions">
-        <button type="button" data-action="save-description">
-            <i class="fas fa-save"></i> Save
-        </button>
-        <button type="button" data-action="cancel-description">
-            <i class="fas fa-times"></i> Cancel
-        </button>
-    </footer>
+    <div class="hm3-item-description-editor-body">
+        {{editor idata.description target="system.description" button=true owner=owner editable=editable}}
+    </div>
 </div>
