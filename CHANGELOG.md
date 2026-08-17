@@ -10,6 +10,15 @@ All notable changes to the HarnMaster 3 Foundry VTT system will be documented in
 - Removed deprecated system `template.json`, which Foundry has scheduled for removal in v16.
 - Added a lightweight creation-time compatibility-default layer that preserves the existing HM3 Actor/Item default field shapes without imposing strict TypeDataModel schemas on legacy documents.
 - Formal Foundry TypeDataModel classes remain deferred so legacy and custom `system` fields continue to be accepted during RC2 development.
+- New Character and Creature Actors now include the canonical Condition Skill by default, matching the Character compendium and expected HM3 starting Skill set.
+
+### Item Description Editing
+
+- Replaced the nonfunctional legacy Item Description editor activation path with native Foundry v14 ProseMirror editing owned by the shared ApplicationV2 Item sheet.
+- Item descriptions remain read-only during normal use and expose a compact pencil control for deliberate editing.
+- Editing supports the native ProseMirror toolbar, direct formatted-text changes, explicit Save/Cancel controls, persisted Item updates, and return to the Description tab after saving.
+- Removed legacy `{{editor}}` construction from every active Item subtype template and the generic fallback template so Item rendering no longer creates obsolete editor instances before the shared v14 sheet replaces the Description content.
+- Removed the abandoned dedicated Item Description editor module/template and experiment-only CSS while retaining the validated read-only and live ProseMirror presentation rules.
 
 ### Bloodloss and Physician Automation
 
@@ -29,7 +38,7 @@ All notable changes to the HarnMaster 3 Foundry VTT system will be documented in
 
 ### Validation
 
-Focused Foundry VTT 14.365 runtime testing completed for the implemented Physician/Bloodloss scope:
+Focused Foundry VTT 14.365 runtime testing completed for the implemented RC2 scope:
 
 - Advanced Physician Automation enabled and disabled behavior.
 - Successful and failed Bleeder treatment using the existing Physician roll.
@@ -39,6 +48,10 @@ Focused Foundry VTT 14.365 runtime testing completed for the implemented Physici
 - Cross-owner treatment with no active GM.
 - Bleeding Active Effect removal, source Injury cleanup, generic Bleeding status cleanup, and preservation of accumulated Bloodloss.
 - Player-to-player treatment completes without the earlier non-owner Active Effect permission/synchronization errors.
+- Actor and representative Item creation after removal of deprecated `template.json`, including preservation of HM3 compatibility defaults.
+- New Actor Condition Skill default behavior.
+- Item Description read-only display, pencil activation, native ProseMirror editing, Save, Cancel, persistence, tab return, and representative Skill/Spell/Gear regression after removal of legacy Item-template editor helpers.
+- Exact Item Description cleanup head `8a3177c31b6a50cc780b0491d94b52ec2f8589ea` passed focused Foundry VTT 14.365 runtime regression testing.
 
 ### Deferred
 
@@ -118,4 +131,3 @@ Focused Foundry 14.365 regression coverage completed for:
 ### Deferred
 
 - Formal Foundry DataModel classes remain deferred to a later architectural phase.
-- The remaining major legacy-runtime cleanup target is `dice-hm3.js`; required rules calculations will be extracted before obsolete Foundry-facing implementations and runtime patching are removed.
