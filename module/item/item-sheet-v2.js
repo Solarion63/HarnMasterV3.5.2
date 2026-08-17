@@ -165,22 +165,18 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       panel.replaceChildren(replacement);
     }
 
+    replacement.addEventListener("save", () => {
+      void this.#saveDescription(replacement);
+    });
+
     const controls = document.createElement("div");
     controls.className = "hm3-item-description-controls";
     controls.innerHTML = `
-      <button type="button" class="hm3-item-description-icon-button hm3-item-description-save" title="Save Description" aria-label="Save Description">
-        <i class="fas fa-save"></i>
-      </button>
       <button type="button" class="hm3-item-description-icon-button hm3-item-description-cancel" title="Cancel Description Edit" aria-label="Cancel Description Edit">
         <i class="fas fa-times"></i>
       </button>
     `;
     panel.prepend(controls);
-
-    controls.querySelector(".hm3-item-description-save")?.addEventListener("click", event => {
-      event.preventDefault();
-      void this.#saveDescription(replacement);
-    });
 
     controls.querySelector(".hm3-item-description-cancel")?.addEventListener("click", event => {
       event.preventDefault();
