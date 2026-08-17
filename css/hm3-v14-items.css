@@ -134,6 +134,19 @@
 }
 
 .application.hm3.sheet.item .tab.description > prose-mirror .menu-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  margin-bottom: 4px;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror .editor-menu {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror .hm3-item-description-toolbar-cancel {
   flex: 0 0 auto;
 }
 
@@ -151,6 +164,7 @@
   height: 100%;
   min-height: 100%;
   overflow-y: auto;
+  padding-top: 2px;
 }
 
 .application.hm3.sheet.item .hm3-item-description-editor-mount {
