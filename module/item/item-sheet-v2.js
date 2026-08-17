@@ -4,8 +4,8 @@ import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 
 const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ItemSheetV2 } = foundry.applications.sheets;
-const { FormDataExtended, ProseMirrorEditor, TextEditor } = foundry.applications.ux;
-const { renderTemplate } = foundry.applications.handlebars;
+const { FormDataExtended, TextEditor } = foundry.applications.ux;
+const { editor: editorHelper, renderTemplate } = foundry.applications.handlebars;
 
 const DESCRIPTION_VIEW_TEMPLATE = "systems/hm3/templates/item/item-description-view-v14.html";
 const itemTabState = new WeakMap();
@@ -134,33 +134,24 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
   }
 
   async #editDescriptionDialog() {
-    // DialogV2 requires the root content element itself to have no attributes.
+    // Use Foundry's v14 editor helper to construct the complete ProseMirror
+    // field, including the standard wrapper, toolbar, and activation state.
     const content = document.createElement("div");
-
     const wrapper = document.createElement("div");
     wrapper.className = "hm3-item-description-dialog";
     wrapper.style.height = "390px";
     wrapper.style.minHeight = "0";
-    wrapper.style.display = "flex";
-    wrapper.style.flexDirection = "column";
     content.append(wrapper);
 
-    // Foundry's default ProseMirror plugins require the target to be an
-    // .editor-content element nested inside an .editor wrapper.
-    const editorShell = document.createElement("div");
-    editorShell.className = "editor";
-    editorShell.style.height = "360px";
-    editorShell.style.minHeight = "0";
-    editorShell.style.flex = "0 0 360px";
-    wrapper.append(editorShell);
-
-    const mount = document.createElement("div");
-    mount.className = "editor-content hm3-item-description-dialog-mount";
-    mount.style.height = "100%";
-    mount.style.minHeight = "0";
-    editorShell.append(mount);
-
-    let editorInstance = null;
+    const markup = editorHelper(String(this.item.system.description ?? ""), {
+      target: "system.description",
+      button: false,
+      editable: true,
+      engine: "prosemirror",
+      collaborate: false,
+      class: "hm3-item-description-dialog-editor"
+    });
+    wrapper.innerHTML = String(markup);
 
     const result = await DialogV2.wait({
       window: {
@@ -169,21 +160,6 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       },
       position: { width: 680, height: 520 },
       content,
-      render: async (_event, dialog) => {
-        const target = dialog.element?.querySelector(".hm3-item-description-dialog-mount");
-        if (!target || target.querySelector(".ProseMirror")) return;
-
-        editorInstance = await ProseMirrorEditor.create(
-          target,
-          String(this.item.system.description ?? ""),
-          {
-            collaborate: false,
-            document: this.item,
-            fieldName: "system.description",
-            relativeLinks: true
-          }
-        );
-      },
       buttons: [
         {
           action: "save",
@@ -191,9 +167,11 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
           icon: "fa-solid fa-floppy-disk",
           default: true,
           callback: async (_event, _button, dialog) => {
-            const editorBody = dialog.element?.querySelector(".hm3-item-description-dialog-mount .ProseMirror");
-            if (!editorBody) throw new Error("The mounted Description ProseMirror editor could not be found.");
-            return { save: true, value: editorBody.innerHTML };
+            const editor = dialog.element?.querySelector('prose-mirror[name="system.description"]')
+              ?? dialog.element?.querySelector("prose-mirror");
+            if (!editor) throw new Error("The rendered Description ProseMirror input could not be found.");
+            await editor.save();
+            return { save: true, value: String(editor.value ?? "") };
           }
         },
         {
@@ -206,8 +184,6 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       rejectClose: false,
       modal: false
     });
-
-    editorInstance?.destroy?.();
 
     if (!result?.save) return;
     itemTabState.set(this, "description");
