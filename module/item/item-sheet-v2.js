@@ -1,11 +1,12 @@
 import { onManageActiveEffect } from "../effect.js";
 import * as utility from "../utility.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
+import { ItemDescriptionEditorV14 } from "./item-description-editor-v14.js";
 
-const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended, TextEditor } = foundry.applications.ux;
-const { editor: editorHelper, renderTemplate } = foundry.applications.handlebars;
+const { renderTemplate } = foundry.applications.handlebars;
 
 const DESCRIPTION_VIEW_TEMPLATE = "systems/hm3/templates/item/item-description-view-v14.html";
 const itemTabState = new WeakMap();
@@ -126,74 +127,26 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     panel.querySelector(".hm3-item-description-edit-button")?.addEventListener("click", event => {
       event.preventDefault();
-      void this.#editDescriptionDialog().catch(error => {
+      try {
+        this.#openDescriptionEditor();
+      } catch (error) {
         console.error("HM3 | Failed to open Item Description editor", error);
         ui.notifications.error("The Description editor could not be opened. See the console for details.");
-      });
+      }
     });
   }
 
-  async #editDescriptionDialog() {
-    // Use Foundry's v14 editor helper to construct the complete ProseMirror
-    // field, including the standard wrapper, toolbar, and activation state.
-    const content = document.createElement("div");
-    const wrapper = document.createElement("div");
-    wrapper.className = "hm3-item-description-dialog";
-    wrapper.style.height = "390px";
-    wrapper.style.minHeight = "0";
-    content.append(wrapper);
-
-    const markup = editorHelper(String(this.item.system.description ?? ""), {
-      target: "system.description",
-      button: false,
-      editable: true,
-      engine: "prosemirror",
-      collaborate: false,
-      class: "hm3-item-description-dialog-editor"
+  #openDescriptionEditor() {
+    const editor = new ItemDescriptionEditorV14(this.item, {
+      onSave: async () => {
+        itemTabState.set(this, "description");
+        const root = this.element;
+        if (!root) return;
+        this.#activateTabs(root);
+        await this.#showDescriptionView(root);
+      }
     });
-    wrapper.innerHTML = String(markup);
-
-    const result = await DialogV2.wait({
-      window: {
-        title: `Edit Description: ${this.item.name}`,
-        resizable: true
-      },
-      position: { width: 680, height: 520 },
-      content,
-      buttons: [
-        {
-          action: "save",
-          label: "Save",
-          icon: "fa-solid fa-floppy-disk",
-          default: true,
-          callback: async (_event, _button, dialog) => {
-            const editor = dialog.element?.querySelector('prose-mirror[name="system.description"]')
-              ?? dialog.element?.querySelector("prose-mirror");
-            if (!editor) throw new Error("The rendered Description ProseMirror input could not be found.");
-            await editor.save();
-            return { save: true, value: String(editor.value ?? "") };
-          }
-        },
-        {
-          action: "cancel",
-          label: "Cancel",
-          icon: "fa-solid fa-xmark",
-          callback: async () => ({ save: false })
-        }
-      ],
-      rejectClose: false,
-      modal: false
-    });
-
-    if (!result?.save) return;
-    itemTabState.set(this, "description");
-    await this.item.update({ "system.description": result.value });
-
-    const root = this.element;
-    if (root) {
-      this.#activateTabs(root);
-      await this.#showDescriptionView(root);
-    }
+    editor.render(true);
   }
 
   #prepareAssociatedSkills(context, actor) {
