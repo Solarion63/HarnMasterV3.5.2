@@ -73,7 +73,7 @@ export class ItemDescriptionEditorV14 extends HandlebarsApplicationMixin(Applica
     const editor = this.element?.querySelector("prose-mirror");
     if (!editor) throw new Error("HM3 | Item Description ProseMirror editor was not found.");
 
-    editor.save();
+    await editor.save();
     const value = String(editor.value ?? "");
     await this.item.update({ "system.description": value });
     this.saved = true;
