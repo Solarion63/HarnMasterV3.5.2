@@ -151,7 +151,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       value: renderedEditor?.value ?? String(this.item.system.description ?? ""),
       readonly: false,
       disabled: false,
-      ...(renderedEditor?.className ? { classes: renderedEditor.className } : {}),
+      classes: renderedEditor?.className || "editor",
       collaborate: false,
       documentUUID: this.item.uuid,
       toggled: false,
