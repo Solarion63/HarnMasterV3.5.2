@@ -160,8 +160,8 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     });
 
     replacement.addEventListener("open", () => {
-      const menu = replacement.querySelector(".editor-menu");
-      if (!menu || menu.querySelector(".hm3-item-description-toolbar-cancel")) return;
+      const menuContainer = replacement.querySelector(".menu-container");
+      if (!menuContainer || menuContainer.querySelector(".hm3-item-description-toolbar-cancel")) return;
 
       const cancel = document.createElement("button");
       cancel.type = "button";
@@ -176,7 +176,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
         itemTabState.set(this, "description");
         void this.render({ force: true });
       });
-      menu.append(cancel);
+      menuContainer.append(cancel);
     }, { once: true });
 
     if (renderedEditor) {
