@@ -161,6 +161,26 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     replacement.addEventListener("open", () => {
       replacement.value = descriptionValue;
+      const surface = replacement.querySelector(".ProseMirror, [contenteditable='true']");
+      const style = surface ? getComputedStyle(surface) : null;
+      console.log("HM3 | Item Description ProseMirror diagnostic", {
+        item: this.item.name,
+        descriptionValue,
+        elementValue: replacement.value,
+        elementInnerHTML: replacement.innerHTML,
+        surfaceFound: Boolean(surface),
+        surfaceInnerHTML: surface?.innerHTML ?? null,
+        surfaceText: surface?.textContent ?? null,
+        surfaceClientWidth: surface?.clientWidth ?? null,
+        surfaceClientHeight: surface?.clientHeight ?? null,
+        surfaceScrollHeight: surface?.scrollHeight ?? null,
+        display: style?.display ?? null,
+        visibility: style?.visibility ?? null,
+        opacity: style?.opacity ?? null,
+        color: style?.color ?? null,
+        fontSize: style?.fontSize ?? null,
+        lineHeight: style?.lineHeight ?? null
+      });
     }, { once: true });
 
     if (renderedEditor) {
