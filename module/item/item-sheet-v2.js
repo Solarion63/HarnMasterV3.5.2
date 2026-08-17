@@ -9,7 +9,6 @@ const { FormDataExtended, TextEditor } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
 
 const DESCRIPTION_VIEW_TEMPLATE = "systems/hm3/templates/item/item-description-view-v14.html";
-const DESCRIPTION_EDIT_TEMPLATE = "systems/hm3/templates/item/item-description-editor-v14.html";
 const itemTabState = new WeakMap();
 const itemDescriptionEditState = new WeakMap();
 
@@ -36,6 +35,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       hasCombatSkills: false,
       hasRitualSkills: false,
       hasMagicSkills: false,
+      descriptionEditing: Boolean(itemDescriptionEditState.get(this)),
       macroTypes: foundry.utils.deepClone(game.system.documentTypes.Macro ?? []),
       containers: { "On Person": "on-person" },
       effects: {}
@@ -66,7 +66,12 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       });
     }
 
-    void this.#renderDescription(root);
+    if (itemDescriptionEditState.get(this)) {
+      this.#activateRenderedDescriptionEditor(root);
+    } else {
+      void this.#showDescriptionView(root);
+    }
+
     if (!this.isEditable) return;
 
     root.querySelectorAll("input[type='text']").forEach(input => {
@@ -112,18 +117,10 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     await this.item.update(updateData);
   }
 
-  async #renderDescription(root) {
+  async #showDescriptionView(root) {
     const panel = root.querySelector('.tab.description[data-tab="description"]');
     if (!panel) return;
 
-    if (itemDescriptionEditState.get(this)) {
-      await this.#showDescriptionEditor(panel);
-    } else {
-      await this.#showDescriptionView(panel);
-    }
-  }
-
-  async #showDescriptionView(panel) {
     const implementation = TextEditor.implementation;
     const description = await implementation.enrichHTML(String(this.item.system.description ?? ""), {
       async: true,
@@ -140,23 +137,25 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       event.preventDefault();
       itemDescriptionEditState.set(this, true);
       itemTabState.set(this, "description");
-      void this.#renderDescription(this.element);
+      void this.render({ force: true });
     });
   }
 
-  async #showDescriptionEditor(panel) {
-    panel.innerHTML = await renderTemplate(DESCRIPTION_EDIT_TEMPLATE, {
-      owner: this.item.isOwner,
-      editable: this.isEditable,
-      idata: this.item.system
-    });
+  #activateRenderedDescriptionEditor(root) {
+    const panel = root.querySelector('.tab.description[data-tab="description"]');
+    if (!panel) return;
 
     const editor = panel.querySelector("prose-mirror");
-    if (!editor) throw new Error("HM3 | Item Description editor control was not rendered.");
+    if (!editor) {
+      console.error("HM3 | Item Description editor control was not rendered during full sheet render.");
+      ui.notifications.error("The Description editor could not be activated. See the console for details.");
+      itemDescriptionEditState.set(this, false);
+      return;
+    }
 
     const replacement = HTMLProseMirrorElement.create({
-      name: editor.name || "system.description",
-      value: String(this.item.system.description ?? ""),
+      name: editor.name,
+      value: editor.value,
       readonly: false,
       disabled: false,
       classes: editor.className,
@@ -166,16 +165,28 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     });
     editor.replaceWith(replacement);
 
-    panel.querySelector(".hm3-item-description-save")?.addEventListener("click", event => {
+    const controls = document.createElement("div");
+    controls.className = "hm3-item-description-controls";
+    controls.innerHTML = `
+      <button type="button" class="hm3-item-description-icon-button hm3-item-description-save" title="Save Description" aria-label="Save Description">
+        <i class="fas fa-save"></i>
+      </button>
+      <button type="button" class="hm3-item-description-icon-button hm3-item-description-cancel" title="Cancel Description Edit" aria-label="Cancel Description Edit">
+        <i class="fas fa-times"></i>
+      </button>
+    `;
+    panel.prepend(controls);
+
+    controls.querySelector(".hm3-item-description-save")?.addEventListener("click", event => {
       event.preventDefault();
       void this.#saveDescription(replacement);
     });
 
-    panel.querySelector(".hm3-item-description-cancel")?.addEventListener("click", event => {
+    controls.querySelector(".hm3-item-description-cancel")?.addEventListener("click", event => {
       event.preventDefault();
       itemDescriptionEditState.set(this, false);
       itemTabState.set(this, "description");
-      void this.#renderDescription(this.element);
+      void this.render({ force: true });
     });
   }
 
@@ -184,8 +195,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     await this.item.update({ "system.description": String(editor.value ?? "") });
     itemDescriptionEditState.set(this, false);
     itemTabState.set(this, "description");
-    const root = this.element;
-    if (root) await this.#renderDescription(root);
+    await this.render({ force: true });
   }
 
   #prepareAssociatedSkills(context, actor) {
