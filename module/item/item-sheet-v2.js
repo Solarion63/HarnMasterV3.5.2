@@ -159,6 +159,26 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       height: 320
     });
 
+    replacement.addEventListener("open", () => {
+      const menu = replacement.querySelector(".editor-menu");
+      if (!menu || menu.querySelector(".hm3-item-description-toolbar-cancel")) return;
+
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "hm3-item-description-toolbar-cancel";
+      cancel.title = "Cancel Description Edit";
+      cancel.setAttribute("aria-label", "Cancel Description Edit");
+      cancel.innerHTML = '<i class="fas fa-times"></i>';
+      cancel.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        itemDescriptionEditState.set(this, false);
+        itemTabState.set(this, "description");
+        void this.render({ force: true });
+      });
+      menu.append(cancel);
+    }, { once: true });
+
     if (renderedEditor) {
       renderedEditor.replaceWith(replacement);
     } else {
@@ -167,22 +187,6 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     replacement.addEventListener("save", () => {
       void this.#commitDescription(replacement);
-    });
-
-    const controls = document.createElement("div");
-    controls.className = "hm3-item-description-controls";
-    controls.innerHTML = `
-      <button type="button" class="hm3-item-description-icon-button hm3-item-description-cancel" title="Cancel Description Edit" aria-label="Cancel Description Edit">
-        <i class="fas fa-times"></i>
-      </button>
-    `;
-    panel.prepend(controls);
-
-    controls.querySelector(".hm3-item-description-cancel")?.addEventListener("click", event => {
-      event.preventDefault();
-      itemDescriptionEditState.set(this, false);
-      itemTabState.set(this, "description");
-      void this.render({ force: true });
     });
   }
 
