@@ -154,7 +154,8 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       ...(renderedEditor?.className ? { classes: renderedEditor.className } : {}),
       collaborate: false,
       documentUUID: this.item.uuid,
-      toggled: false
+      toggled: false,
+      height: 320
     });
 
     if (renderedEditor) {
