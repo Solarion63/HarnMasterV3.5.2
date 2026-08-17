@@ -134,20 +134,28 @@
 }
 
 .application.hm3.sheet.item .tab.description > prose-mirror .menu-container {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  position: relative;
+  display: block;
   flex: 0 0 auto;
   margin-bottom: 4px;
 }
 
 .application.hm3.sheet.item .tab.description > prose-mirror .editor-menu {
-  flex: 1 1 auto;
-  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
+  padding-right: 42px;
 }
 
 .application.hm3.sheet.item .tab.description > prose-mirror .hm3-item-description-toolbar-cancel {
-  flex: 0 0 auto;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 38px;
+  min-width: 38px;
+  height: 26px;
+  min-height: 26px;
+  margin: 0;
+  padding: 0;
 }
 
 .application.hm3.sheet.item .tab.description > prose-mirror .editor-container {
