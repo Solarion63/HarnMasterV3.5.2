@@ -132,6 +132,12 @@
   min-height: 320px;
 }
 
+.application.hm3.sheet.item .tab.description > prose-mirror .editor-container {
+  flex: 0 0 260px;
+  height: 260px;
+  min-height: 260px;
+}
+
 .application.hm3.sheet.item .tab.description > prose-mirror .ProseMirror,
 .application.hm3.sheet.item .tab.description > prose-mirror [contenteditable="true"] {
   box-sizing: border-box;
