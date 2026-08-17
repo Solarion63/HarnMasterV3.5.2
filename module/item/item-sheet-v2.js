@@ -1,15 +1,17 @@
 import { onManageActiveEffect } from "../effect.js";
 import * as utility from "../utility.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
-import { ItemDescriptionEditorV14 } from "./item-description-editor-v14.js";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
+const { HTMLProseMirrorElement } = foundry.applications.elements;
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { FormDataExtended, TextEditor } = foundry.applications.ux;
 const { renderTemplate } = foundry.applications.handlebars;
 
 const DESCRIPTION_VIEW_TEMPLATE = "systems/hm3/templates/item/item-description-view-v14.html";
+const DESCRIPTION_EDIT_TEMPLATE = "systems/hm3/templates/item/item-description-editor-v14.html";
 const itemTabState = new WeakMap();
+const itemDescriptionEditState = new WeakMap();
 
 export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV2) {
   static DEFAULT_OPTIONS = {
@@ -64,7 +66,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
       });
     }
 
-    void this.#showDescriptionView(root);
+    void this.#renderDescription(root);
     if (!this.isEditable) return;
 
     root.querySelectorAll("input[type='text']").forEach(input => {
@@ -97,6 +99,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
   }
 
   async _preClose(options) {
+    itemDescriptionEditState.delete(this);
     const form = this.element?.querySelector("form");
     if (form && this.isEditable) await this.#persistForm(form);
     return super._preClose(options);
@@ -109,10 +112,18 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     await this.item.update(updateData);
   }
 
-  async #showDescriptionView(root) {
+  async #renderDescription(root) {
     const panel = root.querySelector('.tab.description[data-tab="description"]');
     if (!panel) return;
 
+    if (itemDescriptionEditState.get(this)) {
+      await this.#showDescriptionEditor(panel);
+    } else {
+      await this.#showDescriptionView(panel);
+    }
+  }
+
+  async #showDescriptionView(panel) {
     const implementation = TextEditor.implementation;
     const description = await implementation.enrichHTML(String(this.item.system.description ?? ""), {
       async: true,
@@ -127,26 +138,54 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
     panel.querySelector(".hm3-item-description-edit-button")?.addEventListener("click", event => {
       event.preventDefault();
-      try {
-        this.#openDescriptionEditor();
-      } catch (error) {
-        console.error("HM3 | Failed to open Item Description editor", error);
-        ui.notifications.error("The Description editor could not be opened. See the console for details.");
-      }
+      itemDescriptionEditState.set(this, true);
+      itemTabState.set(this, "description");
+      void this.#renderDescription(this.element);
     });
   }
 
-  #openDescriptionEditor() {
-    const editor = new ItemDescriptionEditorV14(this.item, {
-      onSave: async () => {
-        itemTabState.set(this, "description");
-        const root = this.element;
-        if (!root) return;
-        this.#activateTabs(root);
-        await this.#showDescriptionView(root);
-      }
+  async #showDescriptionEditor(panel) {
+    panel.innerHTML = await renderTemplate(DESCRIPTION_EDIT_TEMPLATE, {
+      owner: this.item.isOwner,
+      editable: this.isEditable,
+      idata: this.item.system
     });
-    editor.render(true);
+
+    const editor = panel.querySelector("prose-mirror");
+    if (!editor) throw new Error("HM3 | Item Description editor control was not rendered.");
+
+    const replacement = HTMLProseMirrorElement.create({
+      name: editor.name || "system.description",
+      value: String(this.item.system.description ?? ""),
+      readonly: false,
+      disabled: false,
+      classes: editor.className,
+      collaborate: false,
+      documentUUID: this.item.uuid,
+      toggled: false
+    });
+    editor.replaceWith(replacement);
+
+    panel.querySelector(".hm3-item-description-save")?.addEventListener("click", event => {
+      event.preventDefault();
+      void this.#saveDescription(replacement);
+    });
+
+    panel.querySelector(".hm3-item-description-cancel")?.addEventListener("click", event => {
+      event.preventDefault();
+      itemDescriptionEditState.set(this, false);
+      itemTabState.set(this, "description");
+      void this.#renderDescription(this.element);
+    });
+  }
+
+  async #saveDescription(editor) {
+    await editor.save();
+    await this.item.update({ "system.description": String(editor.value ?? "") });
+    itemDescriptionEditState.set(this, false);
+    itemTabState.set(this, "description");
+    const root = this.element;
+    if (root) await this.#renderDescription(root);
   }
 
   #prepareAssociatedSkills(context, actor) {
