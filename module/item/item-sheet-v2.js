@@ -166,7 +166,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     }
 
     replacement.addEventListener("save", () => {
-      void this.#saveDescription(replacement);
+      void this.#commitDescription(replacement);
     });
 
     const controls = document.createElement("div");
@@ -186,8 +186,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     });
   }
 
-  async #saveDescription(editor) {
-    await editor.save();
+  async #commitDescription(editor) {
     await this.item.update({ "system.description": String(editor.value ?? "") });
     itemDescriptionEditState.set(this, false);
     itemTabState.set(this, "description");
