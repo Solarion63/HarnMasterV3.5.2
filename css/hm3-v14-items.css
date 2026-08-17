@@ -125,6 +125,21 @@
   overflow-wrap: anywhere;
 }
 
+.application.hm3.sheet.item .tab.description > prose-mirror {
+  display: block;
+  width: 100%;
+  height: 320px;
+  min-height: 320px;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror .ProseMirror,
+.application.hm3.sheet.item .tab.description > prose-mirror [contenteditable="true"] {
+  box-sizing: border-box;
+  min-height: 260px;
+  height: 260px;
+  overflow-y: auto;
+}
+
 .application.hm3.sheet.item .hm3-item-description-editor-mount {
   min-height: 320px;
 }
