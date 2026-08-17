@@ -11,6 +11,7 @@ const { renderTemplate } = foundry.applications.handlebars;
 const DESCRIPTION_VIEW_TEMPLATE = "systems/hm3/templates/item/item-description-view-v14.html";
 const itemTabState = new WeakMap();
 const itemDescriptionEditState = new WeakMap();
+const itemSheetClosingState = new WeakSet();
 
 export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV2) {
   static DEFAULT_OPTIONS = {
@@ -52,6 +53,8 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
 
   _onRender(context, options) {
     super._onRender(context, options);
+    itemSheetClosingState.delete(this);
+
     const root = this.element;
     if (!root) return;
 
@@ -104,6 +107,16 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
   }
 
   async _preClose(options) {
+    itemSheetClosingState.add(this);
+
+    if (itemDescriptionEditState.get(this) && this.isEditable) {
+      const editor = this.element?.querySelector('.tab.description[data-tab="description"] prose-mirror');
+      if (editor) {
+        await editor.save();
+        await this.item.update({ "system.description": String(editor.value ?? "") });
+      }
+    }
+
     itemDescriptionEditState.delete(this);
     const form = this.element?.querySelector("form");
     if (form && this.isEditable) await this.#persistForm(form);
@@ -189,7 +202,7 @@ export class HarnMasterItemSheetV2 extends HandlebarsApplicationMixin(ItemSheetV
     }
 
     replacement.addEventListener("save", () => {
-      if (canceling) return;
+      if (canceling || itemSheetClosingState.has(this)) return;
       void this.#commitDescription(replacement);
     });
   }
