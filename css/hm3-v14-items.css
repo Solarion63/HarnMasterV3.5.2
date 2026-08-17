@@ -148,7 +148,7 @@
 
 .application.hm3.sheet.item .tab.description > prose-mirror .hm3-item-description-toolbar-cancel {
   position: absolute;
-  top: calc(50% + 1px);
+  top: calc(50% + 8px);
   right: 0;
   transform: translateY(-50%);
   width: 38px;
