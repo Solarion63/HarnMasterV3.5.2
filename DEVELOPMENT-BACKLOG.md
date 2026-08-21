@@ -21,6 +21,35 @@ Planned scope:
 - Enforce the Physician rule that active bleeding must be stopped before normal wound treatment proceeds.
 - Avoid duplicating treatment state mutations in Skill-item macros; the compendium Physician macro should remain a small launcher into system-owned services.
 
+### Bloodloss Death Chat Notification
+
+**Status:** Post-release improvement
+
+When an Actor dies from Bloodloss, create a GM-only chat notification in addition to the existing console logging.
+
+Planned scope:
+
+- Trigger the notification only when the Bloodloss workflow determines that the Actor has died.
+- Identify the affected Actor clearly in the message.
+- Restrict visibility to GMs so player-facing information does not change unintentionally.
+- Keep the existing console logging for diagnostic value.
+- Avoid duplicate death notifications if the same Bloodloss state is processed more than once.
+
+### Physician Treatment Range Enforcement
+
+**Status:** Post-release improvement
+
+Require the healer to be within one hex of the targeted patient when using the automated Physician treatment workflow.
+
+Planned scope:
+
+- Apply the range requirement when a patient is targeted for treatment.
+- Measure token-to-token distance using Foundry v14-supported grid measurement APIs.
+- Permit treatment only when the healer and patient are within one hex of each other.
+- Provide a clear user-facing warning when the patient is out of range.
+- Preserve the existing no-target Physician skill-roll behavior; ordinary Physician rolls without a treatment target should continue to work normally.
+- Preserve the existing ownership/socket authority model for treatment updates.
+
 ### Blood Regeneration
 
 **Status:** Deferred pending exact rules sourcing
