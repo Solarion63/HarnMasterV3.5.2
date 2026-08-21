@@ -69,7 +69,7 @@ async function attackDialog(attacker, defender, item, distance = null) {
     data.aspects = { [item.system.weaponAspect]: -1 };
     data.defaultAspect = item.system.weaponAspect;
     data.ranges = ranges;
-    data.distance = distance;
+    data.distance = Number.isFinite(distance) ? Math.round(distance) : distance;
     data.rangeExceedsExtreme = distance > Number(item.system.range.extreme);
 
     if (distance <= Number(item.system.range.short)) data.defaultRange = Object.keys(ranges)[0];
@@ -141,7 +141,7 @@ async function createAttackCard(attacker, defender, item, result, distance = nul
     rangeExceedsExtreme: result.rangeExceedsExtreme,
     rangeModSign: result.rangeMod < 0 ? "-" : "+",
     rangeModifierAbs: Math.abs(result.rangeMod ?? 0),
-    rangeDist: distance,
+    rangeDist: Number.isFinite(distance) ? Math.round(distance) : distance,
     aim: result.aim,
     aspect: result.aspect,
     addlModifierAbs: Math.abs(result.addlModifier),
