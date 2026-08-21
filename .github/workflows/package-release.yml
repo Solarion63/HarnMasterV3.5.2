@@ -105,16 +105,36 @@ jobs:
 
           test -f "$stage/system.json"
           test ! -f "$stage/template.json"
+          test -f "$stage/module/config.js"
+          test -f "$stage/module/config-v14-overrides.js"
           test -f "$stage/module/document-defaults-v14.js"
           test -d "$stage/module"
           test -d "$stage/templates"
           test -d "$stage/packs"
 
-          node - "$stage/system.json" <<'NODE'
+          node - "$stage/system.json" "$stage/module/config.js" <<'NODE'
           const fs = require("fs");
           const manifest = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
           if (!manifest.documentTypes?.Actor?.character || !manifest.documentTypes?.Item?.skill) {
             throw new Error("Staged manifest is missing HM3 documentTypes.");
+          }
+          if (!manifest.esmodules?.includes("module/config-v14-overrides.js")) {
+            throw new Error("Staged manifest does not load config-v14-overrides.js.");
+          }
+
+          const config = fs.readFileSync(process.argv[3], "utf8");
+          const requiredConfigSections = [
+            "HM3.injuryLevels =",
+            "HM3.activeEffectKey =",
+            "HM3.meleeCombatTable =",
+            "HM3.missileCombatTable =",
+            "HM3.actorLabels =",
+            "HM3.itemLabels ="
+          ];
+          for (const marker of requiredConfigSections) {
+            if (!config.includes(marker)) {
+              throw new Error(`Staged module/config.js is missing required section: ${marker}`);
+            }
           }
           NODE
 
