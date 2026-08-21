@@ -16,6 +16,7 @@
   "flags": { "allowBugReporter": true },
   "compatibility": { "minimum": "14", "verified": "14.365" },
   "esmodules": [
+    "module/config-v14-overrides.js",
     "module/document-defaults-v14.js",
     "module/dice-v14.js",
     "module/injury-v14.js",
