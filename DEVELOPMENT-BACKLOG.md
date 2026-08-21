@@ -36,6 +36,42 @@ The exact Bloodloss Healing Rate value has not yet been sourced from the authori
 
 Future implementation should reuse the existing single Bloodloss Injury and system-owned Bloodloss service.
 
+## Combat Improvements
+
+### Unified Counterstrike Result Presentation
+
+**Status:** Post-release improvement
+
+Improve Counterstrike result presentation without changing HârnMaster combat resolution rules.
+
+Current historical behavior, preserved from the pre-v14 system, creates separate Attack Result and Counterstrike Result cards and leaves the defender column blank on each card. A post-release improvement should present the exchange more clearly as one opposed combat result.
+
+Planned scope:
+
+- Display both the original attacker and counterstriker on the same result card.
+- Show each combatant's weapon.
+- Show the effective AML/EML used for each roll.
+- Show both d100 rolls.
+- Show each roll's Critical/Marginal Success/Failure classification.
+- Clearly show the resulting combat-table outcome and any impact rolls.
+- Preserve the existing melee combat table, counterstrike modifiers, stumble/fumble consequences, DTA behavior, weapon-break behavior, and injury workflow.
+- Treat this as a presentation improvement rather than a rules change.
+
+### Unequip Dropped Weapon After Failed Fumble Roll
+
+**Status:** Post-release improvement
+
+When a Fumble Roll indicates that the weapon or other item used in the attack or defense has been fumbled and dropped, automatically mark that item as unequipped.
+
+Planned scope:
+
+- Carry the originating attack/defense item identity into the Fumble Roll workflow.
+- Determine from the HârnMaster fumble result whether the item was actually dropped before mutating equipment state.
+- When the result indicates a dropped item, set that Item's equipped state to false.
+- Apply this consistently whether the fumble originated from an attack, block, counterstrike, or other weapon-using combat path where the rules call for the item to be dropped.
+- Preserve ownership/socket authority requirements for Actor/Item updates.
+- Do not unequip the item for fumble results that do not actually cause it to be dropped.
+
 ## Architecture
 
 ### Formal Foundry DataModel Classes
