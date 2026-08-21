@@ -187,16 +187,16 @@ async function createCounterstrikeCard({
   };
 
   const content = await renderTemplate("systems/hm3/templates/chat/attack-result-card.html", chatData);
+  const rolls = [attackRoll.rollObj];
+  if (impactRoll) rolls.push(impactRoll);
   const messageData = {
     user: game.user.id,
     speaker: ChatMessage.getSpeaker({ token: attacker.document }),
     content: content.trim(),
-    style: hit ? CONST.CHAT_MESSAGE_STYLES.ROLL : CONST.CHAT_MESSAGE_STYLES.OTHER
+    style: CONST.CHAT_MESSAGE_STYLES.ROLL,
+    sound: CONFIG.sounds.dice,
+    rolls
   };
-  if (impactRoll) {
-    messageData.sound = CONFIG.sounds.dice;
-    messageData.rolls = [impactRoll];
-  }
   await ChatMessage.create(messageData);
   return chatData;
 }
