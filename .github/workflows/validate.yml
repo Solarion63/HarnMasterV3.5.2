@@ -45,6 +45,8 @@ jobs:
           set -euo pipefail
           test -f system.json
           test ! -f template.json
+          test -f module/config.js
+          test -f module/config-v14-overrides.js
           test -f module/document-defaults-v14.js
           test -f module/hm3.js
           test -d templates
@@ -65,7 +67,25 @@ jobs:
           if (JSON.stringify(actualItems) !== JSON.stringify(expectedItems)) {
             throw new Error(`Unexpected Item documentTypes: ${actualItems.join(", ")}`);
           }
+          if (!manifest.esmodules?.includes("module/config-v14-overrides.js")) {
+            throw new Error("config-v14-overrides.js is not loaded by system.json");
+          }
           if (!manifest.esmodules?.includes("module/document-defaults-v14.js")) {
             throw new Error("document-defaults-v14.js is not loaded by system.json");
+          }
+
+          const config = fs.readFileSync("module/config.js", "utf8");
+          const requiredConfigSections = [
+            "HM3.injuryLevels =",
+            "HM3.activeEffectKey =",
+            "HM3.meleeCombatTable =",
+            "HM3.missileCombatTable =",
+            "HM3.actorLabels =",
+            "HM3.itemLabels ="
+          ];
+          for (const marker of requiredConfigSections) {
+            if (!config.includes(marker)) {
+              throw new Error(`module/config.js is missing required section: ${marker}`);
+            }
           }
           NODE
