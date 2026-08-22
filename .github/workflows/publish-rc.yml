@@ -19,6 +19,24 @@ on:
         description: Expected GitHub Actions artifact digest (sha256:...)
         required: true
         type: string
+  workflow_call:
+    inputs:
+      version:
+        description: Release candidate version, for example 2.0.0-rc.2
+        required: true
+        type: string
+      tested_sha:
+        description: Exact runtime-tested commit SHA
+        required: true
+        type: string
+      source_run:
+        description: Dispatch RC Package Build workflow run ID
+        required: true
+        type: string
+      artifact_digest:
+        description: Expected GitHub Actions artifact digest (sha256:...)
+        required: true
+        type: string
 
 permissions:
   actions: read
@@ -117,7 +135,6 @@ jobs:
             exit 1
           fi
 
-          git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" "$TESTED_SHA" >/dev/null 2>&1 || true
           echo "Verified packaged source SHA: $packaged_sha"
 
       - name: Verify prerelease distribution metadata
