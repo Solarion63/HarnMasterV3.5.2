@@ -1,0 +1,19 @@
+name: Dispatch RC Package Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Exact branch, tag, or commit SHA to package
+        required: true
+        default: feature/foundry-v14-master
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    uses: Solarion63/HarnMasterV3.5.2/.github/workflows/package-release.yml@feature/foundry-v14-master
+    with:
+      ref: ${{ inputs.ref }}
