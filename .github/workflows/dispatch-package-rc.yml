@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: Exact branch, tag, or commit SHA to package
+        description: Exact tested commit SHA to package
         required: true
-        default: feature/foundry-v14-master
+        default: b7e44e977de0e6c2913e2ff90e987ff78c29827f
         type: string
 
 permissions:
