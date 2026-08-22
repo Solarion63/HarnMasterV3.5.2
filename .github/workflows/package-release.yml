@@ -30,6 +30,15 @@ jobs:
         with:
           ref: ${{ inputs.ref || github.sha }}
 
+      - name: Record packaged source SHA
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha=$(git rev-parse HEAD)
+          echo "sha=${source_sha}" >> "$GITHUB_OUTPUT"
+          echo "Packaging source commit ${source_sha}"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -143,10 +152,11 @@ jobs:
             test -n "$(find "$stage/packs/${pack}" -maxdepth 1 -type f \( -name '*.ldb' -o -name '*.log' \) -print -quit)"
           done
 
-      - name: Create release ZIP and manifest
+      - name: Create release ZIP, manifest, and provenance
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
         run: |
           set -euo pipefail
           stage="$RUNNER_TEMP/hm3-release"
@@ -154,6 +164,7 @@ jobs:
 
           (cd "$stage" && zip -qr "$GITHUB_WORKSPACE/dist/hm3-${VERSION}.zip" .)
           cp "$stage/system.json" "dist/hm3-${VERSION}.json"
+          printf '%s\n' "$SOURCE_SHA" > "dist/hm3-${VERSION}.source-sha.txt"
 
           unzip -t "dist/hm3-${VERSION}.zip"
           unzip -l "dist/hm3-${VERSION}.zip" | grep -q 'system.json'
@@ -169,4 +180,5 @@ jobs:
           path: |
             dist/hm3-${{ steps.version.outputs.version }}.zip
             dist/hm3-${{ steps.version.outputs.version }}.json
+            dist/hm3-${{ steps.version.outputs.version }}.source-sha.txt
           if-no-files-found: error
