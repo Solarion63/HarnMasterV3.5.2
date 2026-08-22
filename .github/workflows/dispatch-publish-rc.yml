@@ -1,0 +1,38 @@
+name: Dispatch RC Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release candidate version
+        required: true
+        default: 2.0.0-rc.2
+        type: string
+      tested_sha:
+        description: Exact runtime-tested commit SHA
+        required: true
+        default: b7e44e977de0e6c2913e2ff90e987ff78c29827f
+        type: string
+      source_run:
+        description: Dispatch RC Package Build workflow run ID
+        required: true
+        default: "32575367278"
+        type: string
+      artifact_digest:
+        description: Expected GitHub Actions artifact digest
+        required: true
+        default: sha256:44a0da5dece37d777e2a63adbec0f941d601b50b248fac6fda6cb414d88f86a8
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    uses: Solarion63/HarnMasterV3.5.2/.github/workflows/publish-rc.yml@feature/foundry-v14-master
+    with:
+      version: ${{ inputs.version }}
+      tested_sha: ${{ inputs.tested_sha }}
+      source_run: ${{ inputs.source_run }}
+      artifact_digest: ${{ inputs.artifact_digest }}
