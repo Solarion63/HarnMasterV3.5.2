@@ -2,6 +2,32 @@
 
 This backlog records work intentionally deferred from the current Foundry VTT v14 release-candidate development. Items listed here are not part of the currently validated feature scope unless explicitly promoted into active development.
 
+## Character and Derived-Stat Corrections
+
+### Condition Skill with ML 0 Collapses Endurance and Physical Abilities
+
+**Status:** Known RC2 defect / correction required
+
+An Actor that has a `Condition` skill with `masteryLevel` 0 can have its derived Endurance forced to 1, causing Encumbrance to become abnormally large and effective Strength, Stamina, Dexterity, and Agility to display as 0 even though their stored base values are valid and nonzero.
+
+Observed failure chain:
+
+- Character base physical ability values remain correctly stored in Actor data.
+- Normal Endurance is initially derived from Strength, Stamina, and Will.
+- If a `Condition` skill exists, the current preparation logic replaces the normal Endurance calculation with `Condition masteryLevel / 5`.
+- A newly added or otherwise uninitialized Condition skill with ML 0 therefore produces Endurance 0, which is then clamped to 1.
+- Encumbrance is divided by this Endurance value, producing an excessive physical penalty.
+- Effective Strength, Stamina, Dexterity, and Agility are then reduced to 0 by that penalty.
+
+Planned correction:
+
+- Preserve the normal Strength/Stamina/Will-derived Endurance when Condition is absent or not meaningfully initialized.
+- Do not allow the mere presence of a Condition skill with ML 0 to overwrite a valid derived Endurance value.
+- Define explicitly when Condition-derived Endurance becomes authoritative, consistent with the HârnMaster rules and existing skill-opening behavior.
+- Preserve existing behavior for Actors with a valid/opened Condition mastery level.
+- Add regression coverage for Actors with no Condition skill, Condition ML 0, and a valid nonzero Condition ML.
+- Verify that Encumbrance and effective Strength, Stamina, Dexterity, and Agility remain correct after the change.
+
 ## Medical Automation
 
 ### Normal Physician Wound Treatment
