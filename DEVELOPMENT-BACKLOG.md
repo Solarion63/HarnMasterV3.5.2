@@ -4,6 +4,24 @@ This backlog records work intentionally deferred from the current Foundry VTT v1
 
 ## Character and Derived-Stat Corrections
 
+### Initialize Newly Added Skills to Opening Mastery Level
+
+**Status:** Deferred improvement / rules-correct initialization
+
+When a Skill is added to an Actor for the first time, initialize its Mastery Level from its calculated Skill Base and the Skill's proper Opening Mastery Level rule instead of leaving `masteryLevel` at 0.
+
+Planned scope:
+
+- Perform initialization when the Skill Item is first created as an embedded Item on an Actor.
+- Calculate the Skill Base from the Skill formula and the Actor's current attributes.
+- Apply the Skill's proper Opening Mastery Level multiplier or opening rule rather than assuming every Skill opens at exactly its Skill Base.
+- Example: Condition should open at `SB × 5`, so a Condition Skill Base of 17 should initialize to ML 85.
+- Do not recalculate or overwrite Mastery Level during normal Actor data preparation after initialization.
+- Preserve manually assigned or previously established Mastery Levels.
+- Ensure later changes to attributes or Skill Base do not silently reset an improved Skill's Mastery Level.
+- Add regression coverage for newly added Skills, already-opened Skills, manually assigned ML values, and Skills with different opening multipliers.
+- Keep the implementation generic so Condition and other Skills use the same initialization architecture rather than introducing Skill-specific creation hacks.
+
 ### Condition Skill with ML 0 Collapses Endurance and Physical Abilities
 
 **Status:** Known RC2 defect / correction required
