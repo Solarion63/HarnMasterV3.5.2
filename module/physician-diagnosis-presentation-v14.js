@@ -142,12 +142,8 @@ function addDiagnosisBlockToInjurySheet(app, element) {
   notes.insertAdjacentElement("afterend", block);
 }
 
-Hooks.on("renderActorSheetV2", (app, element) => {
+Hooks.on("renderApplicationV2", (app, element) => {
   if (game.system?.id !== "hm3") return;
-  appendDiagnosisToActorInjuryNotes(app, element);
-});
-
-Hooks.on("renderItemSheetV2", (app, element) => {
-  if (game.system?.id !== "hm3") return;
-  addDiagnosisBlockToInjurySheet(app, element);
+  if (app?.actor) appendDiagnosisToActorInjuryNotes(app, element);
+  if (app?.item) addDiagnosisBlockToInjurySheet(app, element);
 });
