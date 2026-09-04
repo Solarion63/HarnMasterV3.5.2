@@ -2,7 +2,7 @@
   "id": "hm3",
   "title": "HarnMaster 3",
   "description": "The HarnMaster 3 game system for Foundry Virtual Tabletop.",
-  "version": "2.0.0-rc.2",
+  "version": "2.0.0-rc.3",
   "authors": [
     { "name": "Toasty", "flags": {} },
     { "name": "Valcorin", "flags": {} }
@@ -12,7 +12,7 @@
   "readme": "README.md",
   "bugs": "https://github.com/Solarion63/HarnMasterV3.5.2/issues",
   "manifest": "https://github.com/Solarion63/HarnMasterV3.5.2/releases/download/hm3-prerelease-channel/system.json",
-  "download": "https://github.com/Solarion63/HarnMasterV3.5.2/releases/download/v2.0.0-rc.2/hm3-2.0.0-rc.2.zip",
+  "download": "https://github.com/Solarion63/HarnMasterV3.5.2/releases/download/v2.0.0-rc.3/hm3-2.0.0-rc.3.zip",
   "flags": { "allowBugReporter": true },
   "compatibility": { "minimum": "14", "verified": "14.365" },
   "esmodules": [
