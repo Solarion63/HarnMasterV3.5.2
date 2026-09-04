@@ -48,6 +48,26 @@ Planned correction:
 
 ## Medical Automation
 
+### Physician Diagnosis Automation
+
+**Status:** Deferred
+
+Add a system-owned Physician diagnosis workflow distinct from treatment so a Physician skill roll can identify or assess a targeted patient's medical condition without immediately changing injury state.
+
+Planned scope:
+
+- Use the Physician Skill on the healer Actor as the player-facing entry point.
+- Use a targeted Character or Creature Actor as the patient when diagnosis is being attempted.
+- Implement diagnosis rules and modifiers from authoritative HârnMaster sources rather than inferring or inventing medical mechanics.
+- Determine which injuries, diseases, infections, complications, or other supported medical conditions are eligible for diagnosis once those condition types are represented by the system.
+- Keep diagnosis separate from treatment so a successful diagnosis does not itself alter wounds, bleeding, healing rates, or other patient state.
+- Define what information is revealed on Marginal Success, Critical Success, Marginal Failure, and Critical Failure according to the rules.
+- Respect Foundry ownership and information visibility so diagnosis does not expose hidden GM-only medical information to unauthorized users.
+- Preserve ordinary no-target Physician skill rolls when the user is making a general Physician test rather than diagnosing a patient.
+- Reuse the Advanced Physician Automation world setting unless a later design review establishes a need for separate diagnosis and treatment controls.
+- Integrate cleanly with Bleeder treatment and future normal wound treatment so diagnosis, stabilization, and treatment remain distinct stages of one maintainable medical architecture.
+- Add regression coverage for no target, one valid target, multiple targets, ownership differences, successful and failed diagnosis outcomes, and patients with no diagnosable condition.
+
 ### Normal Physician Wound Treatment
 
 **Status:** Deferred
