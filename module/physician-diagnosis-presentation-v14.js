@@ -38,7 +38,7 @@ export function physicianDiagnosisPresentation(injury) {
   if (!diagnosis) return null;
 
   const resultCode = String(diagnosis.resultCode ?? "").toUpperCase();
-  const resultLabel = RESULT_LABELS[resultCode] ?? resultCode || "Unknown";
+  const resultLabel = RESULT_LABELS[resultCode] ?? (resultCode || "Unknown");
   const healerName = String(diagnosis.healerName ?? "Unknown physician");
   const isSuccess = ["CS", "MS"].includes(resultCode);
 
