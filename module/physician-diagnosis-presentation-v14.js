@@ -5,6 +5,11 @@ const RESULT_LABELS = Object.freeze({
   CF: "Critical Failure"
 });
 
+const PHYSICIAN_DIALOG_WIDTHS = Object.freeze({
+  injurySelection: 440,
+  treatmentConfiguration: 500
+});
+
 function diagnosisData(injury) {
   if (!injury) return null;
   if (typeof injury.getFlag === "function") {
@@ -245,8 +250,29 @@ function addMedicalBlocksToInjurySheet(app, element) {
   diagnosisBlock.insertAdjacentElement("afterend", treatmentBlock);
 }
 
+/**
+ * Keep the two data-entry-heavy Physician dialogs compact without changing
+ * global Foundry dialog sizing. The field names are owned by the Physician
+ * workflow, so unrelated DialogV2 instances are unaffected.
+ */
+function compactPhysicianDialog(app, element) {
+  if (!(app instanceof foundry.applications.api.DialogV2)) return;
+  const root = element?.querySelector ? element : app.element;
+  if (!root) return;
+
+  let width = null;
+  if (root.querySelector('[name="medicalInjury"]')) {
+    width = PHYSICIAN_DIALOG_WIDTHS.injurySelection;
+  } else if (root.querySelector('[name="treatmentKey"]')) {
+    width = PHYSICIAN_DIALOG_WIDTHS.treatmentConfiguration;
+  }
+  if (!width || Math.round(Number(app.position?.width)) === width) return;
+  app.setPosition({ width });
+}
+
 Hooks.on("renderApplicationV2", (app, element) => {
   if (game.system?.id !== "hm3") return;
+  compactPhysicianDialog(app, element);
   if (app?.actor) appendMedicalStatusToActorInjuryNotes(app, element);
   if (app?.item) addMedicalBlocksToInjurySheet(app, element);
 });
