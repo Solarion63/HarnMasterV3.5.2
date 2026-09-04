@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Release candidate version, for example 2.0.0-rc.2
+        description: Release candidate version, for example 2.0.0-rc.3
         required: true
         type: string
       tested_sha:
@@ -22,7 +22,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: Release candidate version, for example 2.0.0-rc.2
+        description: Release candidate version, for example 2.0.0-rc.3
         required: true
         type: string
       tested_sha:
@@ -181,7 +181,7 @@ jobs:
           Validated Actions artifact: ${ARTIFACT_NAME}
           Actions artifact digest: ${ARTIFACT_DIGEST}
 
-          See CHANGELOG.md for the detailed RC2 changes and validation scope.
+          See CHANGELOG.md for the detailed ${VERSION} changes and validation scope.
           EOF
 
           gh release create "$TAG" \
