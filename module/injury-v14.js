@@ -83,6 +83,12 @@ export async function createInjury(actor, result) {
       healRate: 0,
       isBleeder: Boolean(result.isBleeder),
       notes: notes.join("; ")
+    },
+    flags: {
+      hm3: {
+        injuryAspect: result.aspect,
+        injuryCreatedAt: Number(game.time?.worldTime) || 0
+      }
     }
   }]);
 

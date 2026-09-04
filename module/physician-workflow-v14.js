@@ -1,20 +1,20 @@
 import { BloodlossService } from "./bloodloss-service.js";
-import { evaluateBleederTreatment, evaluatePhysicianDiagnosis } from "./medical-rules.js";
+import {
+  PHYSICIAN_TREATMENT_TABLE,
+  bleederTreatmentModifier,
+  defaultPhysicianTreatmentKey,
+  evaluateBleederTreatment,
+  evaluatePhysicianDiagnosis,
+  evaluatePhysicianTreatment,
+  physicianTreatmentEntry
+} from "./medical-rules.js";
 import { MedicalService } from "./medical-service.js";
-import { physicianDiagnosisChooserLabel } from "./physician-diagnosis-presentation-v14.js";
+import {
+  physicianDiagnosisPresentation,
+  physicianWoundChooserLabel
+} from "./physician-diagnosis-presentation-v14.js";
 
 const { DialogV2 } = foundry.applications.api;
-
-/**
- * Tracks the system-owned Physician workflow across the generic Skill-roll hooks.
- *
- * HM3's historical Skill macro runs after the dice have already been rolled. For
- * Physician automation we need to know the patient and wound first. The pre-roll
- * hook therefore cancels the first generic roll request, prepares the medical
- * action asynchronously, then re-enters the ordinary Skill roller with a ready
- * action. The normal HM3 roll dialog/card remains authoritative for the actual
- * Physician test.
- */
 const physicianRollStates = new Map();
 
 function escapeHtml(value) {
@@ -24,6 +24,11 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function signed(value) {
+  const number = Number(value) || 0;
+  return `${number >= 0 ? "+" : ""}${number}`;
 }
 
 function isPhysicianSkill(item) {
@@ -53,7 +58,16 @@ function isBloodlossInjury(injury) {
 }
 
 function recordedInjuries(patient) {
-  return Array.from(patient?.itemTypes?.injury ?? []).filter(injury => !isBloodlossInjury(injury));
+  return Array.from(patient?.itemTypes?.injury ?? []).filter(injury =>
+    !isBloodlossInjury(injury) && Number(injury.system?.injuryLevel) > 0
+  );
+}
+
+function hasPhysicianTreatment(injury) {
+  if (!injury) return false;
+  if (injury.getFlag("hm3", "physicianTreatment") != null) return true;
+  const legacy = injury.getFlag("hm3", "treated");
+  return legacy === true || String(legacy).toLowerCase() === "treated";
 }
 
 function signedRollModifier(rollResult) {
@@ -63,12 +77,24 @@ function signedRollModifier(rollResult) {
   return modifier;
 }
 
-/**
- * Always confirm which bleeding wound will receive the Physician roll.
- *
- * Even a single eligible wound is presented explicitly so the user can see what
- * is about to be treated and can cancel before any dice are rolled.
- */
+function diagnosisModifierForPreparedTreatment(injury, failedDiagnosisPenalty = null) {
+  const diagnosis = injury?.getFlag("hm3", "physicianDiagnosis") ?? null;
+  if (!diagnosis) return 0;
+  const code = String(diagnosis.resultCode ?? "").toUpperCase();
+  if (["MS", "CS"].includes(code)) return Number(diagnosis.treatmentModifier) || 0;
+  if (["MF", "CF"].includes(code)) return Number(failedDiagnosisPenalty) || 0;
+  return 0;
+}
+
+function suggestedLateDays(injury) {
+  const createdAt = Number(injury?.getFlag("hm3", "injuryCreatedAt"));
+  const now = Number(game.time?.worldTime);
+  if (!Number.isFinite(createdAt) || createdAt <= 0 || !Number.isFinite(now) || now <= createdAt) return 0;
+  const elapsed = now - createdAt;
+  if (elapsed <= 86400) return 0;
+  return Math.ceil((elapsed - 86400) / 86400);
+}
+
 async function chooseBleedingEffect(patient, effects) {
   const options = effects.map(effect =>
     `<option value="${escapeHtml(effect.id)}">${escapeHtml(effect.name.replace(/^Bleeding Injury — /, ""))}</option>`
@@ -91,11 +117,7 @@ async function chooseBleedingEffect(patient, effects) {
         callback: (_event, _button, dialog) =>
           dialog.element?.querySelector('[name="bleedingEffect"]')?.value ?? null
       },
-      {
-        action: "cancel",
-        label: "Cancel",
-        callback: () => null
-      }
+      { action: "cancel", label: "Cancel", callback: () => null }
     ],
     rejectClose: false
   });
@@ -103,26 +125,19 @@ async function chooseBleedingEffect(patient, effects) {
   return effectId ? effects.find(effect => effect.id === effectId) ?? null : null;
 }
 
-/**
- * Always confirm which undiagnosed Injury will receive the Physician roll.
- *
- * This dialog is deliberately shown even when only one Injury is eligible. The
- * single option is already selected, making the action explicit while preserving
- * a clean Cancel path before the actual Skill roll begins.
- */
-async function chooseDiagnosisInjury(patient, injuries) {
+async function chooseMedicalInjury(patient, injuries) {
   const options = injuries.map(injury =>
-    `<option value="${escapeHtml(injury.id)}">${escapeHtml(physicianDiagnosisChooserLabel(injury))}</option>`
+    `<option value="${escapeHtml(injury.id)}">${escapeHtml(physicianWoundChooserLabel(injury))}</option>`
   ).join("");
   const content = `
     <div class="form-group">
-      <label>Injury to diagnose</label>
-      <select name="diagnosisInjury">${options}</select>
-      <p class="hint">Choose the undiagnosed injury to examine. The Physician roll occurs only after you confirm this selection.</p>
+      <label>Injury</label>
+      <select name="medicalInjury">${options}</select>
+      <p class="hint">Choose the wound to examine or treat. Injuries that already received their one Treatment Roll are not listed.</p>
     </div>`;
 
   const injuryId = await DialogV2.wait({
-    window: { title: `Diagnose ${patient.name}` },
+    window: { title: `Physician — ${patient.name}` },
     content,
     buttons: [
       {
@@ -130,13 +145,9 @@ async function chooseDiagnosisInjury(patient, injuries) {
         label: "Select Injury",
         default: true,
         callback: (_event, _button, dialog) =>
-          dialog.element?.querySelector('[name="diagnosisInjury"]')?.value ?? null
+          dialog.element?.querySelector('[name="medicalInjury"]')?.value ?? null
       },
-      {
-        action: "cancel",
-        label: "Cancel",
-        callback: () => null
-      }
+      { action: "cancel", label: "Cancel", callback: () => null }
     ],
     rejectClose: false
   });
@@ -144,43 +155,191 @@ async function chooseDiagnosisInjury(patient, injuries) {
   return injuryId ? injuries.find(injury => injury.id === injuryId) ?? null : null;
 }
 
-function treatmentOutcome(evaluation, treatment) {
+async function chooseInjuryAction(patient, injury) {
+  const diagnosis = physicianDiagnosisPresentation(injury);
+  const diagnosisText = diagnosis
+    ? `${diagnosis.resultLabel} (${diagnosis.resultCode}); Treatment ${diagnosis.treatmentLabel}`
+    : "Not diagnosed. Diagnosis is optional; this injury may be treated without diagnosing it.";
+  const buttons = [];
+
+  if (!diagnosis) {
+    buttons.push({
+      action: "diagnose",
+      label: "Diagnose",
+      callback: () => "diagnosis"
+    });
+  }
+  buttons.push({
+    action: "treat",
+    label: "Treat",
+    default: Boolean(diagnosis),
+    callback: () => "treatment"
+  });
+  buttons.push({ action: "cancel", label: "Cancel", callback: () => "cancel" });
+
+  return DialogV2.wait({
+    window: { title: `Physician — ${injury.name}` },
+    content: `
+      <p><strong>Patient:</strong> ${escapeHtml(patient.name)}</p>
+      <p><strong>Injury:</strong> ${escapeHtml(injury.name)}</p>
+      <p><strong>Diagnosis:</strong> ${escapeHtml(diagnosisText)}</p>`,
+    buttons,
+    rejectClose: false
+  });
+}
+
+function treatmentOptions(selectedKey) {
+  return Object.entries(PHYSICIAN_TREATMENT_TABLE).map(([key, entry]) => {
+    const selected = key === selectedKey ? " selected" : "";
+    return `<option value="${escapeHtml(key)}"${selected}>${escapeHtml(`${entry.label} — ${entry.procedure} (${signed(entry.modifier)})`)}</option>`;
+  }).join("");
+}
+
+async function configureTreatment(patient, injury) {
+  const defaultKey = defaultPhysicianTreatmentKey(injury);
+  const diagnosis = physicianDiagnosisPresentation(injury);
+  const diagnosisCode = diagnosis?.resultCode ?? "";
+  const failedDiagnosis = ["MF", "CF"].includes(diagnosisCode);
+  const diagnosisText = diagnosis
+    ? `${diagnosis.resultLabel} (${diagnosis.resultCode}); ${diagnosis.treatmentLabel}`
+    : "No diagnosis modifier (Diagnosis is optional).";
+  const lateDays = suggestedLateDays(injury);
+  const failureField = failedDiagnosis
+    ? `<div class="form-group">
+         <label>Failed Diagnosis Penalty</label>
+         <input type="number" name="diagnosisPenalty" min="-30" max="-10" step="1" placeholder="-10 to -30" required>
+         <p class="hint">HârnMaster leaves the exact -10 to -30 EML penalty to GM discretion.</p>
+       </div>`
+    : "";
+
+  const result = await DialogV2.wait({
+    window: { title: `Treat ${patient.name} — ${injury.name}` },
+    content: `
+      <p><strong>Diagnosis:</strong> ${escapeHtml(diagnosisText)}</p>
+      <div class="form-group">
+        <label>Treatment Table Entry</label>
+        <select name="treatmentKey">${treatmentOptions(defaultKey)}</select>
+        <p class="hint">The system suggests a row from the wound's aspect and severity. Correct it here for ambiguous or legacy injuries.</p>
+      </div>
+      ${failureField}
+      <div class="form-group">
+        <label>Equipment / Supplies Modifier</label>
+        <input type="number" name="equipmentModifier" value="0" step="1">
+        <p class="hint">Use for quality/availability of supplies, herbal remedies, disinfectants, anesthetic, or other GM-approved circumstances.</p>
+      </div>
+      <div class="form-group">
+        <label>Days Beyond First 24 Hours</label>
+        <input type="number" name="lateDays" value="${lateDays}" min="0" step="1">
+        <p class="hint">Treatment EML is reduced by 5 per delayed day. New v14 wounds derive a suggested value from world time; adjust legacy wounds as needed.</p>
+      </div>
+      <p class="hint">Procedure duration will be rolled/recorded after the Treatment Roll. Foundry world time will not advance automatically.</p>`,
+    buttons: [
+      {
+        action: "continue",
+        label: "Continue to Treatment Roll",
+        default: true,
+        callback: (_event, _button, dialog) => {
+          const root = dialog.element;
+          const diagnosisPenaltyText = root?.querySelector('[name="diagnosisPenalty"]')?.value ?? "";
+          if (failedDiagnosis) {
+            const penalty = Number(diagnosisPenaltyText);
+            if (!Number.isFinite(penalty) || penalty < -30 || penalty > -10) {
+              ui.notifications.warn("Choose a failed-diagnosis Treatment penalty from -30 to -10 EML.");
+              return null;
+            }
+          }
+          return {
+            treatmentKey: root?.querySelector('[name="treatmentKey"]')?.value ?? defaultKey,
+            diagnosisFailurePenalty: failedDiagnosis ? Number(diagnosisPenaltyText) : null,
+            equipmentModifier: Math.trunc(Number(root?.querySelector('[name="equipmentModifier"]')?.value) || 0),
+            lateDays: Math.max(0, Math.trunc(Number(root?.querySelector('[name="lateDays"]')?.value) || 0))
+          };
+        }
+      },
+      { action: "cancel", label: "Cancel", callback: () => "cancel" }
+    ],
+    rejectClose: false
+  });
+
+  if (!result || result === "cancel") return null;
+  if (!physicianTreatmentEntry(result.treatmentKey)) return null;
+  return result;
+}
+
+async function rollTreatmentDuration(treatmentKey, injuryLevel) {
+  const entry = physicianTreatmentEntry(treatmentKey);
+  const duration = entry?.duration;
+  if (!duration) return { seconds: 0, text: "" };
+
+  if (duration.type === "injuryLevel") {
+    const units = Math.max(0, Number(injuryLevel) || 0) * Number(duration.unitsPerLevel || 0);
+    return {
+      seconds: Math.round(units * duration.secondsPerUnit),
+      text: `${units} ${duration.unit}`
+    };
+  }
+
+  if (duration.type === "combined") {
+    let units = 0;
+    const parts = [];
+    for (const formula of duration.formulas ?? []) {
+      const roll = await new Roll(formula).evaluate();
+      units += Number(roll.total) || 0;
+      parts.push(`${formula}=${roll.total}`);
+    }
+    return {
+      seconds: Math.round(units * duration.secondsPerUnit),
+      text: `${units} ${duration.unit} (${parts.join(" + ")})`
+    };
+  }
+
+  const roll = await new Roll(duration.formula).evaluate();
+  const units = Number(roll.total) || 0;
+  return {
+    seconds: Math.round(units * duration.secondsPerUnit),
+    text: `${units} ${duration.unit} (${duration.formula})`
+  };
+}
+
+function bleedingOutcome(evaluation, treatment) {
   if (!evaluation.isSuccess) return "Bleeding continues.";
   switch (treatment?.status) {
     case "stopped":
-    case "requested":
-      return "Bleeding stopped.";
-    case "unavailable":
-      return "Successful treatment roll, but the patient could not be updated because no active GM is available.";
-    default:
-      return "Successful treatment roll, but the bleeding condition was not changed.";
+    case "requested": return "Bleeding stopped.";
+    case "unavailable": return "Successful roll, but the patient could not be updated because no active GM is available.";
+    default: return "Successful treatment roll, but the bleeding condition was not changed.";
   }
 }
 
 function diagnosisOutcome(evaluation, diagnosis) {
-  if (diagnosis?.status === "unavailable") {
-    return "Diagnosis result could not be recorded because no active GM is available.";
-  }
-  if (diagnosis?.status === "already-diagnosed") {
-    return "This injury had already been diagnosed; the new result was not recorded.";
-  }
+  if (diagnosis?.status === "unavailable") return "Diagnosis could not be recorded because no active GM is available.";
+  if (diagnosis?.status === "already-diagnosed") return "This injury had already been diagnosed; the new result was not recorded.";
   if (evaluation.isSuccess) {
-    return `Diagnosis succeeds. Apply ${evaluation.treatmentModifier >= 0 ? "+" : ""}${evaluation.treatmentModifier} EML to the later Treatment Roll.`;
+    return `Diagnosis succeeds. Apply ${signed(evaluation.treatmentModifier)} EML to the later Treatment Roll.`;
   }
   return "Diagnosis fails. Apply a -10 to -30 EML penalty to the later Treatment Roll at GM discretion.";
 }
 
-async function treatmentChatMessage({ healer, patient, effect, evaluation, treatment }) {
+function normalTreatmentOutcome(evaluation, treatment) {
+  if (treatment?.status === "unavailable") return "Treatment result could not be recorded because no active GM is available.";
+  if (treatment?.status === "already-treated") return "This injury already received its one Treatment Roll; the new result was not recorded.";
+  if (evaluation.amputation) {
+    return `Amputation result ${evaluation.treatmentResult}: create a new ${evaluation.amputationWound} wound and treat that new injury separately.`;
+  }
+  if (evaluation.emergencyHealing) return "EE: the injury heals in one day; no Healing Rolls are required.";
+  const impairment = evaluation.permanentImpairment
+    ? " A permanent 1d3 attribute reduction is pending after the injury heals."
+    : "";
+  return `Healing Rate ${evaluation.treatmentResult} recorded.${impairment}`;
+}
+
+async function bleedingChatMessage({ healer, patient, effect, evaluation, treatment }) {
   const woundName = effect.name.replace(/^Bleeding Injury — /, "");
   const modifierParts = [
     `Bleeder +${evaluation.treatmentModifier}`,
     evaluation.hemophiliaModifier ? `Hemophilia ${evaluation.hemophiliaModifier}` : null,
-    evaluation.situationalModifier
-      ? `Situational ${evaluation.situationalModifier > 0 ? "+" : ""}${evaluation.situationalModifier}`
-      : null
+    evaluation.situationalModifier ? `Situational ${signed(evaluation.situationalModifier)}` : null
   ].filter(Boolean).join(", ");
-
-  const outcome = treatmentOutcome(evaluation, treatment);
 
   return ChatMessage.create({
     user: game.user.id,
@@ -194,22 +353,14 @@ async function treatmentChatMessage({ healer, patient, effect, evaluation, treat
           <p><strong>Wound:</strong> ${escapeHtml(woundName)}</p>
           <p><strong>Target:</strong> ${evaluation.physicianEML} (${escapeHtml(modifierParts)}) → ${evaluation.target}</p>
           <p><strong>Physician roll:</strong> ${evaluation.rollValue} — ${evaluation.resultCode}</p>
-          <p><strong>${escapeHtml(outcome)}</strong></p>
+          <p><strong>${escapeHtml(bleedingOutcome(evaluation, treatment))}</strong></p>
         </div>
       </div>`
   });
 }
 
 async function diagnosisChatMessage({ healer, patient, injury, evaluation, diagnosis }) {
-  const modifierParts = evaluation.situationalModifier
-    ? `Situational ${evaluation.situationalModifier > 0 ? "+" : ""}${evaluation.situationalModifier}`
-    : "No situational modifier";
-  const outcome = diagnosisOutcome(evaluation, diagnosis);
   const persisted = ["recorded", "requested"].includes(diagnosis?.status);
-  const recordText = persisted
-    ? `Diagnosis recorded on ${injury.name}.`
-    : "Diagnosis was not recorded on the injury.";
-
   return ChatMessage.create({
     user: game.user.id,
     speaker: ChatMessage.getSpeaker({ actor: healer }),
@@ -220,29 +371,50 @@ async function diagnosisChatMessage({ healer, patient, injury, evaluation, diagn
           <p><strong>Physician:</strong> ${escapeHtml(healer.name)}</p>
           <p><strong>Patient:</strong> ${escapeHtml(patient.name)}</p>
           <p><strong>Injury:</strong> ${escapeHtml(injury.name)}</p>
-          <p><strong>Target:</strong> ${evaluation.physicianEML} (${escapeHtml(modifierParts)}) → ${evaluation.target}</p>
+          <p><strong>Target:</strong> ${evaluation.physicianEML}${evaluation.situationalModifier ? ` (${signed(evaluation.situationalModifier)})` : ""} → ${evaluation.target}</p>
           <p><strong>Physician roll:</strong> ${evaluation.rollValue} — ${evaluation.resultCode}</p>
-          <p><strong>${escapeHtml(outcome)}</strong></p>
-          <p><em>${escapeHtml(recordText)}</em></p>
+          <p><strong>${escapeHtml(diagnosisOutcome(evaluation, diagnosis))}</strong></p>
+          <p><em>${escapeHtml(persisted ? `Diagnosis recorded on ${injury.name}.` : "Diagnosis was not recorded on the injury.")}</em></p>
         </div>
       </div>`
   });
 }
 
-/**
- * Inspect a targeted patient and select the medical action before dice are rolled.
- *
- * A null target deliberately means an ordinary Physician Skill roll. A targeted
- * patient is different: invalid/complete medical states stop the roll entirely so
- * the user does not spend a roll on an action that cannot be performed.
- */
+async function normalTreatmentChatMessage({ healer, patient, injury, evaluation, treatment, duration }) {
+  const modifiers = [
+    `Procedure ${signed(evaluation.procedureModifier)}`,
+    evaluation.diagnosisModifier ? `Diagnosis ${signed(evaluation.diagnosisModifier)}` : null,
+    evaluation.equipmentModifier ? `Equipment ${signed(evaluation.equipmentModifier)}` : null,
+    evaluation.lateModifier ? `Delay ${evaluation.lateModifier}` : null,
+    evaluation.situationalModifier ? `Situational ${signed(evaluation.situationalModifier)}` : null
+  ].filter(Boolean).join(", ");
+  const persisted = ["recorded", "requested"].includes(treatment?.status);
+
+  return ChatMessage.create({
+    user: game.user.id,
+    speaker: ChatMessage.getSpeaker({ actor: healer }),
+    content: `
+      <div class="hm3 chat-card">
+        <header class="card-header flexrow"><h3>Physician — Wound Treatment</h3></header>
+        <div class="card-content">
+          <p><strong>Physician:</strong> ${escapeHtml(healer.name)}</p>
+          <p><strong>Patient:</strong> ${escapeHtml(patient.name)}</p>
+          <p><strong>Injury:</strong> ${escapeHtml(injury.name)}</p>
+          <p><strong>Treatment:</strong> ${escapeHtml(evaluation.treatmentLabel)} — ${escapeHtml(evaluation.procedure)}</p>
+          <p><strong>Target:</strong> ${evaluation.physicianEML} (${escapeHtml(modifiers)}) → ${evaluation.target}</p>
+          <p><strong>Physician roll:</strong> ${evaluation.rollValue} — ${evaluation.resultCode}</p>
+          <p><strong>Treatment result:</strong> ${escapeHtml(evaluation.treatmentResult)}</p>
+          <p><strong>Procedure time:</strong> ${escapeHtml(duration.text || "Not recorded")}</p>
+          <p><strong>${escapeHtml(normalTreatmentOutcome(evaluation, treatment))}</strong></p>
+          <p><em>${escapeHtml(persisted ? "This injury's one Treatment Roll has been recorded." : "Treatment was not recorded on the injury.")}</em></p>
+        </div>
+      </div>`
+  });
+}
+
 export async function preparePhysicianAction({ healer, physicianSkill } = {}) {
-  if (!game.settings.get("hm3", "advancedPhysicianAutomation")) {
-    return { status: "ordinary", action: null };
-  }
-  if (!healer || !isPhysicianSkill(physicianSkill)) {
-    return { status: "ordinary", action: null };
-  }
+  if (!game.settings.get("hm3", "advancedPhysicianAutomation")) return { status: "ordinary", action: null };
+  if (!healer || !isPhysicianSkill(physicianSkill)) return { status: "ordinary", action: null };
 
   const target = targetedPatient();
   if (target.multiple) {
@@ -258,7 +430,13 @@ export async function preparePhysicianAction({ healer, physicianSkill } = {}) {
     if (!effect) return { status: "cancelled", action: null, reason: "selection-cancelled" };
     return {
       status: "prepared",
-      action: { type: "bleeding", patient, effect }
+      action: {
+        type: "bleeding",
+        patient,
+        effect,
+        rollTargetModifier: bleederTreatmentModifier(patient),
+        rollLabel: `Physician — Stop Bleeding: ${effect.name.replace(/^Bleeding Injury — /, "")}`
+      }
     };
   }
 
@@ -268,20 +446,60 @@ export async function preparePhysicianAction({ healer, physicianSkill } = {}) {
     return { status: "cancelled", action: null, reason: "no-injuries" };
   }
 
-  const availableInjuries = injuries.filter(injury =>
-    injury.getFlag("hm3", "physicianDiagnosis") == null
-  );
-  if (!availableInjuries.length) {
-    ui.notifications.info(`All recorded injuries on ${patient.name} have already been diagnosed.`);
-    return { status: "cancelled", action: null, reason: "all-diagnosed" };
+  const untreated = injuries.filter(injury => !hasPhysicianTreatment(injury));
+  if (!untreated.length) {
+    ui.notifications.info(`All recorded injuries on ${patient.name} have already received their one Treatment Roll.`);
+    return { status: "cancelled", action: null, reason: "all-treated" };
   }
 
-  const injury = await chooseDiagnosisInjury(patient, availableInjuries);
+  const injury = await chooseMedicalInjury(patient, untreated);
   if (!injury) return { status: "cancelled", action: null, reason: "selection-cancelled" };
+
+  const actionType = await chooseInjuryAction(patient, injury);
+  if (!["diagnosis", "treatment"].includes(actionType)) {
+    return { status: "cancelled", action: null, reason: "action-cancelled" };
+  }
+
+  if (actionType === "diagnosis") {
+    if (injury.getFlag("hm3", "physicianDiagnosis") != null) {
+      ui.notifications.info(`${patient.name}'s ${injury.name} has already been diagnosed.`);
+      return { status: "cancelled", action: null, reason: "already-diagnosed" };
+    }
+    return {
+      status: "prepared",
+      action: {
+        type: "diagnosis",
+        patient,
+        injury,
+        rollTargetModifier: 0,
+        rollLabel: `Physician — Diagnose: ${injury.name}`
+      }
+    };
+  }
+
+  const treatmentConfig = await configureTreatment(patient, injury);
+  if (!treatmentConfig) return { status: "cancelled", action: null, reason: "treatment-cancelled" };
+  const entry = physicianTreatmentEntry(treatmentConfig.treatmentKey);
+  const diagnosisModifier = diagnosisModifierForPreparedTreatment(
+    injury,
+    treatmentConfig.diagnosisFailurePenalty
+  );
+  const lateModifier = -5 * treatmentConfig.lateDays;
+  const rollTargetModifier = entry.modifier
+    + diagnosisModifier
+    + treatmentConfig.equipmentModifier
+    + lateModifier;
 
   return {
     status: "prepared",
-    action: { type: "diagnosis", patient, injury }
+    action: {
+      type: "treatment",
+      patient,
+      injury,
+      ...treatmentConfig,
+      rollTargetModifier,
+      rollLabel: `Physician — Treat: ${injury.name}`
+    }
   };
 }
 
@@ -350,8 +568,57 @@ async function resolveBleedingAction({ healer, physicianSkill, rollResult, token
     });
   }
 
-  await treatmentChatMessage({ healer, patient, effect, evaluation, treatment });
+  await bleedingChatMessage({ healer, patient, effect, evaluation, treatment });
   return { healer, patient, effect, evaluation, treatment, stopped: treatment.changed, token };
+}
+
+async function resolveNormalTreatmentAction({ healer, physicianSkill, rollResult, token, action }) {
+  const patient = action.patient;
+  const injury = patient?.items?.get(action.injury?.id) ?? null;
+  if (!injury || isBloodlossInjury(injury)) {
+    ui.notifications.warn("The selected injury is no longer available for treatment.");
+    return { status: "invalid", changed: false };
+  }
+  if (BloodlossService.bleedingEffects(patient).length) {
+    ui.notifications.warn(`${patient.name}'s bleeding must be stopped before normal wounds can be treated.`);
+    return { status: "bleeding", changed: false };
+  }
+  if (hasPhysicianTreatment(injury)) {
+    ui.notifications.info(`${patient.name}'s ${injury.name} has already received its one Treatment Roll.`);
+    return { status: "already-treated", changed: false };
+  }
+
+  const physicianEML = Number(physicianSkill.system.effectiveMasteryLevel)
+    || Number(physicianSkill.system.masteryLevel)
+    || 0;
+  const additionalModifier = signedRollModifier(rollResult);
+  const diagnosisModifier = diagnosisModifierForPreparedTreatment(injury, action.diagnosisFailurePenalty);
+  const evaluation = evaluatePhysicianTreatment({
+    rollValue: rollResult.rollValue,
+    physicianEML,
+    treatmentKey: action.treatmentKey,
+    diagnosisModifier,
+    equipmentModifier: action.equipmentModifier,
+    lateDays: action.lateDays,
+    additionalModifier
+  });
+  const duration = await rollTreatmentDuration(action.treatmentKey, injury.system?.injuryLevel);
+  const treatment = await MedicalService.recordTreatment({
+    healer,
+    patient,
+    injury,
+    physicianSkill,
+    treatmentKey: action.treatmentKey,
+    diagnosisFailurePenalty: action.diagnosisFailurePenalty,
+    equipmentModifier: action.equipmentModifier,
+    lateDays: action.lateDays,
+    rollValue: rollResult.rollValue,
+    additionalModifier,
+    duration
+  });
+
+  await normalTreatmentChatMessage({ healer, patient, injury, evaluation, treatment, duration });
+  return { healer, patient, injury, evaluation, treatment, duration, token };
 }
 
 export async function resolvePhysicianAction({
@@ -362,50 +629,24 @@ export async function resolvePhysicianAction({
   action
 } = {}) {
   if (!healer || !isPhysicianSkill(physicianSkill) || !rollResult || !action) return null;
-
-  if (action.type === "diagnosis") {
-    return resolveDiagnosisAction({ healer, physicianSkill, rollResult, token, action });
-  }
-  if (action.type === "bleeding") {
-    return resolveBleedingAction({ healer, physicianSkill, rollResult, token, action });
-  }
+  if (action.type === "diagnosis") return resolveDiagnosisAction({ healer, physicianSkill, rollResult, token, action });
+  if (action.type === "bleeding") return resolveBleedingAction({ healer, physicianSkill, rollResult, token, action });
+  if (action.type === "treatment") return resolveNormalTreatmentAction({ healer, physicianSkill, rollResult, token, action });
   return null;
 }
 
-/**
- * Compatibility entry point used by existing Physician Item macros.
- *
- * System-managed Physician rolls are now prepared before the roll and resolved
- * from the Skill-roll hook below. When such a state exists, this legacy launcher
- * intentionally does nothing so it cannot diagnose/treat the same wound twice.
- * Direct callers without a prepared state retain the old post-roll compatibility
- * behavior, including the new no-injury/already-diagnosed guards.
- */
 export async function physicianTreatment({ healer, physicianSkill, rollResult, token = null } = {}) {
   if (!game.settings.get("hm3", "advancedPhysicianAutomation")) return null;
   if (!healer || !isPhysicianSkill(physicianSkill) || !rollResult) return null;
 
   const key = physicianStateKey(healer, physicianSkill);
-  if (key && physicianRollStates.has(key)) {
-    return physicianRollStates.get(key)?.result ?? null;
-  }
+  if (key && physicianRollStates.has(key)) return physicianRollStates.get(key)?.result ?? null;
 
   const prepared = await preparePhysicianAction({ healer, physicianSkill });
   if (prepared.status !== "prepared") return null;
-  return resolvePhysicianAction({
-    healer,
-    physicianSkill,
-    rollResult,
-    token,
-    action: prepared.action
-  });
+  return resolvePhysicianAction({ healer, physicianSkill, rollResult, token, action: prepared.action });
 }
 
-/**
- * Intercept targeted Physician tests before the generic Skill roller opens its
- * roll dialog. The initial call is cancelled while the patient/wound is selected;
- * then the same generic Skill roller is invoked once with a prepared action.
- */
 Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
   if (!isPhysicianSkill(item)) return true;
   if (!game.settings.get("hm3", "advancedPhysicianAutomation")) return true;
@@ -416,6 +657,11 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
   const existing = physicianRollStates.get(key);
   if (existing?.phase === "ready") {
     existing.phase = "rolling";
+    const action = existing.action;
+    if (action) {
+      stdRollData.target = Number(stdRollData.target) + (Number(action.rollTargetModifier) || 0);
+      stdRollData.label = action.rollLabel ?? stdRollData.label;
+    }
     return true;
   }
   if (["preparing", "rolling"].includes(existing?.phase)) {
@@ -426,16 +672,7 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
 
   const target = targetedPatient();
   if (!target.patient && !target.multiple) {
-    // Preserve an ordinary no-target Physician test, but retain a state marker so
-    // the historical post-roll Item macro cannot turn it into treatment if the
-    // user's target selection changes while the roll dialog is open.
-    physicianRollStates.set(key, {
-      phase: "ordinary",
-      actor,
-      item,
-      action: null,
-      result: null
-    });
+    physicianRollStates.set(key, { phase: "ordinary", actor, item, action: null, result: null });
     return true;
   }
   if (target.multiple) {
@@ -443,13 +680,7 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
     return false;
   }
 
-  const state = {
-    phase: "preparing",
-    actor,
-    item,
-    action: null,
-    result: null
-  };
+  const state = { phase: "preparing", actor, item, action: null, result: null };
   physicianRollStates.set(key, state);
 
   void preparePhysicianAction({ healer: actor, physicianSkill: item })
@@ -472,13 +703,7 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
     })
     .then(result => {
       if (physicianRollStates.get(key) !== state) return result;
-
-      // Closing/cancelling the ordinary HM3 roll dialog returns null and does not
-      // fire hm3.onSkillRoll. Release the prepared action here so a cancelled roll
-      // can never leave the Physician Skill stuck in the rolling phase.
-      if (state.phase === "rolling" && result == null) {
-        physicianRollStates.delete(key);
-      }
+      if (state.phase === "rolling" && result == null) physicianRollStates.delete(key);
       return result;
     })
     .catch(error => {
@@ -490,11 +715,6 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
   return false;
 });
 
-/**
- * Resolve the already-selected Physician action after the ordinary HM3 Skill
- * roller has produced its result. This hook is system-owned, so diagnosis works
- * even for migrated Physician Items whose historical custom macro is blank.
- */
 Hooks.on("hm3.onSkillRoll", (actor, result, _stdRollData, item) => {
   if (!isPhysicianSkill(item)) return;
   if (!game.settings.get("hm3", "advancedPhysicianAutomation")) return;
@@ -510,10 +730,6 @@ Hooks.on("hm3.onSkillRoll", (actor, result, _stdRollData, item) => {
   }
   if (state.phase !== "rolling" || !state.action) return;
 
-  // The prepared action has now consumed its Physician roll. It must no longer
-  // block a subsequent Physician use while document updates/chat presentation
-  // finish asynchronously. The medical service independently rejects attempts
-  // to overwrite an already-recorded diagnosis or an inactive Bleeder effect.
   state.phase = "consumed";
   const rollResult = {
     rollValue: Number(result?.rollValue),

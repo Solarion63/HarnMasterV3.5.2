@@ -1,9 +1,17 @@
 import { BloodlossService } from "./bloodloss-service.js";
-import { evaluateBleederTreatment, evaluatePhysicianDiagnosis } from "./medical-rules.js";
+import {
+  DIAGNOSIS_FAILURE_PENALTY_MAX,
+  DIAGNOSIS_FAILURE_PENALTY_MIN,
+  evaluateBleederTreatment,
+  evaluatePhysicianDiagnosis,
+  evaluatePhysicianTreatment,
+  physicianTreatmentEntry
+} from "./medical-rules.js";
 
 const SOCKET_NAMESPACE = "system.hm3";
 const STOP_BLEEDING_REQUEST = "medical.stopBleeding";
 const RECORD_DIAGNOSIS_REQUEST = "medical.recordDiagnosis";
+const RECORD_TREATMENT_REQUEST = "medical.recordTreatment";
 const MEDICAL_RESPONSE = "medical.response";
 let socketRegistered = false;
 
@@ -47,7 +55,7 @@ function userOwnsActor(user, actor) {
   return false;
 }
 
-function diagnosableInjury(patient, injuryId) {
+function medicalInjury(patient, injuryId) {
   const injury = patient?.items?.get(injuryId) ?? null;
   if (!injury || injury.type !== "injury") return null;
   if (injury.getFlag("hm3", "bloodloss") === true) return null;
@@ -58,6 +66,60 @@ function diagnosableInjury(patient, injuryId) {
 
 function hasPhysicianDiagnosis(injury) {
   return injury?.getFlag("hm3", "physicianDiagnosis") != null;
+}
+
+function hasPhysicianTreatment(injury) {
+  if (!injury) return false;
+  if (injury.getFlag("hm3", "physicianTreatment") != null) return true;
+
+  // Compatibility with the historical standalone treatment macro. The new
+  // system-owned workflow never writes this legacy flag, but respecting it
+  // prevents an imported/macro-treated Injury from receiving a second roll.
+  const legacyTreated = injury.getFlag("hm3", "treated");
+  return legacyTreated === true || String(legacyTreated).toLowerCase() === "treated";
+}
+
+function diagnosisModifierForTreatment(injury, requestedFailurePenalty = null) {
+  const diagnosis = injury?.getFlag("hm3", "physicianDiagnosis") ?? null;
+  if (!diagnosis) return 0;
+
+  const code = String(diagnosis.resultCode ?? "").toUpperCase();
+  if (["MS", "CS"].includes(code)) return Number(diagnosis.treatmentModifier) || 0;
+
+  if (["MF", "CF"].includes(code)) {
+    const penalty = Number(requestedFailurePenalty);
+    if (!Number.isFinite(penalty)
+      || penalty < DIAGNOSIS_FAILURE_PENALTY_MIN
+      || penalty > DIAGNOSIS_FAILURE_PENALTY_MAX) {
+      throw new Error("Failed diagnosis requires a GM-selected Treatment penalty from -30 to -10 EML.");
+    }
+    return Math.trunc(penalty);
+  }
+
+  return 0;
+}
+
+function sanitizeInteger(value, { min, max, label }) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) throw new Error(`${label} must be a number.`);
+  const integer = Math.trunc(number);
+  if (integer < min || integer > max) {
+    throw new Error(`${label} must be between ${min} and ${max}.`);
+  }
+  return integer;
+}
+
+function sanitizeDuration(duration) {
+  if (!duration || typeof duration !== "object") return { seconds: 0, text: "" };
+  const seconds = sanitizeInteger(duration.seconds ?? 0, {
+    min: 0,
+    max: 60 * 60 * 24,
+    label: "Treatment duration"
+  });
+  return {
+    seconds,
+    text: String(duration.text ?? "").slice(0, 160)
+  };
 }
 
 async function applyStopBleeding({ patient, effect }) {
@@ -81,6 +143,44 @@ async function applyDiagnosis({ healer, patient, injury, evaluation }) {
     failurePenaltyMax: evaluation.failurePenaltyMax,
     diagnosedAt: Number(game.time?.worldTime) || 0
   });
+  return true;
+}
+
+async function applyTreatment({ healer, patient, injury, evaluation, duration }) {
+  if (!healer || !patient || !injury || !evaluation) return false;
+  if (hasPhysicianTreatment(injury)) return false;
+
+  const treatment = {
+    healerUuid: healer.uuid,
+    healerName: healer.name,
+    resultCode: evaluation.resultCode,
+    rollValue: evaluation.rollValue,
+    physicianEML: evaluation.physicianEML,
+    treatmentKey: evaluation.treatmentKey,
+    treatmentLabel: evaluation.treatmentLabel,
+    procedure: evaluation.procedure,
+    procedureModifier: evaluation.procedureModifier,
+    diagnosisModifier: evaluation.diagnosisModifier,
+    equipmentModifier: evaluation.equipmentModifier,
+    lateDays: evaluation.lateDays,
+    lateModifier: evaluation.lateModifier,
+    situationalModifier: evaluation.situationalModifier,
+    totalModifier: evaluation.totalModifier,
+    modifiedTarget: evaluation.target,
+    treatmentResult: evaluation.treatmentResult,
+    healingRate: evaluation.healingRate,
+    emergencyHealing: evaluation.emergencyHealing,
+    permanentImpairment: evaluation.permanentImpairment,
+    amputation: evaluation.amputation,
+    amputationWound: evaluation.amputationWound,
+    durationSeconds: duration.seconds,
+    durationText: duration.text,
+    treatedAt: Number(game.time?.worldTime) || 0
+  };
+
+  const update = { "flags.hm3.physicianTreatment": treatment };
+  if (evaluation.healingRate != null) update["system.healRate"] = evaluation.healingRate;
+  await injury.update(update);
   return true;
 }
 
@@ -151,7 +251,7 @@ async function handleDiagnosisRequest(payload) {
     const skill = physicianSkill(healer, payload.physicianSkillId);
     if (!skill) throw new Error(`${healer.name} does not have the Physician skill.`);
 
-    const injury = diagnosableInjury(patient, payload.injuryId);
+    const injury = medicalInjury(patient, payload.injuryId);
     if (!injury) throw new Error("The requested injury is no longer available for diagnosis.");
     if (hasPhysicianDiagnosis(injury)) {
       throw new Error(`${patient.name}'s ${injury.name} has already been diagnosed.`);
@@ -176,6 +276,70 @@ async function handleDiagnosisRequest(payload) {
   }
 }
 
+async function handleTreatmentRequest(payload) {
+  if (!activeGmOwnsMedicalRequests()) return;
+
+  try {
+    const requester = game.users.get(payload.requesterId);
+    if (!requester) throw new Error("Requesting user could not be found.");
+
+    const healer = await actorFromUuid(payload.healerUuid);
+    const patient = await actorFromUuid(payload.patientUuid);
+    if (!healer || !patient) throw new Error("Healer or patient could not be resolved.");
+    if (!userOwnsActor(requester, healer)) {
+      throw new Error("Requesting user does not own the treating actor.");
+    }
+    if (BloodlossService.bleedingEffects(patient).length) {
+      throw new Error(`${patient.name}'s bleeding must be stopped before normal wounds can be treated.`);
+    }
+
+    const skill = physicianSkill(healer, payload.physicianSkillId);
+    if (!skill) throw new Error(`${healer.name} does not have the Physician skill.`);
+
+    const injury = medicalInjury(patient, payload.injuryId);
+    if (!injury) throw new Error("The requested injury is no longer available for treatment.");
+    if (hasPhysicianTreatment(injury)) {
+      throw new Error(`${patient.name}'s ${injury.name} has already received its one Treatment Roll.`);
+    }
+    if (!physicianTreatmentEntry(payload.treatmentKey)) {
+      throw new Error("The selected Treatment Table entry is invalid.");
+    }
+
+    const diagnosisModifier = diagnosisModifierForTreatment(injury, payload.diagnosisFailurePenalty);
+    const equipmentModifier = sanitizeInteger(payload.equipmentModifier ?? 0, {
+      min: -100,
+      max: 100,
+      label: "Equipment/supplies modifier"
+    });
+    const lateDays = sanitizeInteger(payload.lateDays ?? 0, {
+      min: 0,
+      max: 3650,
+      label: "Delayed-treatment days"
+    });
+    const evaluation = evaluatePhysicianTreatment({
+      rollValue: payload.rollValue,
+      physicianEML: Number(skill.system.effectiveMasteryLevel) || Number(skill.system.masteryLevel) || 0,
+      treatmentKey: payload.treatmentKey,
+      diagnosisModifier,
+      equipmentModifier,
+      lateDays,
+      additionalModifier: payload.additionalModifier
+    });
+    const duration = sanitizeDuration(payload.duration);
+    const changed = await applyTreatment({ healer, patient, injury, evaluation, duration });
+    if (!changed) throw new Error(`${patient.name}'s ${injury.name} has already received its one Treatment Roll.`);
+
+    emitResponse(
+      payload,
+      true,
+      `${patient.name}'s ${injury.name} treatment recorded (${evaluation.resultCode} → ${evaluation.treatmentResult}).`
+    );
+  } catch (error) {
+    console.error("HM3 | Medical treatment socket request failed.", error);
+    emitResponse(payload, false, error.message ?? "Medical wound-treatment request failed.");
+  }
+}
+
 function handleMedicalResponse(payload) {
   if (payload.requesterId !== game.user?.id) return;
   if (payload.ok) ui.notifications.info(payload.message);
@@ -190,6 +354,10 @@ async function onSocketMessage(payload) {
   }
   if (payload.type === RECORD_DIAGNOSIS_REQUEST) {
     await handleDiagnosisRequest(payload);
+    return;
+  }
+  if (payload.type === RECORD_TREATMENT_REQUEST) {
+    await handleTreatmentRequest(payload);
     return;
   }
   if (payload.type === MEDICAL_RESPONSE) handleMedicalResponse(payload);
@@ -273,7 +441,7 @@ export class MedicalService {
       return { status: "invalid", changed: false };
     }
 
-    const diagnosisInjury = diagnosableInjury(patient, injury.id);
+    const diagnosisInjury = medicalInjury(patient, injury.id);
     if (!diagnosisInjury) return { status: "invalid", changed: false };
     if (hasPhysicianDiagnosis(diagnosisInjury)) {
       ui.notifications.info(`${patient.name}'s ${diagnosisInjury.name} has already been diagnosed.`);
@@ -312,6 +480,103 @@ export class MedicalService {
       additionalModifier: Number(additionalModifier) || 0
     });
     ui.notifications.info(`Diagnosis result sent to the GM for ${patient.name}'s ${diagnosisInjury.name}.`);
+    return { status: "requested", changed: false, evaluation };
+  }
+
+  static async recordTreatment({
+    healer,
+    patient,
+    injury,
+    physicianSkill: skill,
+    treatmentKey,
+    diagnosisFailurePenalty = null,
+    equipmentModifier = 0,
+    lateDays = 0,
+    rollValue,
+    additionalModifier = 0,
+    duration = null
+  }) {
+    if (!healer || !patient || !injury) return { status: "invalid", changed: false };
+
+    const treatingSkill = skill ?? physicianSkill(healer);
+    if (!treatingSkill) {
+      ui.notifications.warn(`${healer.name} does not have the Physician skill.`);
+      return { status: "invalid", changed: false };
+    }
+    if (BloodlossService.bleedingEffects(patient).length) {
+      ui.notifications.warn(`${patient.name}'s bleeding must be stopped before normal wounds can be treated.`);
+      return { status: "bleeding", changed: false };
+    }
+
+    const treatmentInjury = medicalInjury(patient, injury.id);
+    if (!treatmentInjury) return { status: "invalid", changed: false };
+    if (hasPhysicianTreatment(treatmentInjury)) {
+      ui.notifications.info(`${patient.name}'s ${treatmentInjury.name} has already received its one Treatment Roll.`);
+      return { status: "already-treated", changed: false };
+    }
+    if (!physicianTreatmentEntry(treatmentKey)) {
+      ui.notifications.error("The selected Treatment Table entry is invalid.");
+      return { status: "invalid", changed: false };
+    }
+
+    let diagnosisModifier;
+    try {
+      diagnosisModifier = diagnosisModifierForTreatment(treatmentInjury, diagnosisFailurePenalty);
+    } catch (error) {
+      ui.notifications.warn(error.message);
+      return { status: "invalid", changed: false };
+    }
+
+    const safeEquipmentModifier = Math.trunc(Number(equipmentModifier) || 0);
+    const safeLateDays = Math.max(0, Math.trunc(Number(lateDays) || 0));
+    const evaluation = evaluatePhysicianTreatment({
+      rollValue,
+      physicianEML: Number(treatingSkill.system.effectiveMasteryLevel) || Number(treatingSkill.system.masteryLevel) || 0,
+      treatmentKey,
+      diagnosisModifier,
+      equipmentModifier: safeEquipmentModifier,
+      lateDays: safeLateDays,
+      additionalModifier
+    });
+    const safeDuration = sanitizeDuration(duration);
+
+    if (patient.isOwner || game.user.isGM) {
+      const changed = await applyTreatment({
+        healer,
+        patient,
+        injury: treatmentInjury,
+        evaluation,
+        duration: safeDuration
+      });
+      return {
+        status: changed ? "recorded" : "already-treated",
+        changed,
+        evaluation
+      };
+    }
+
+    if (!hasActiveGm()) {
+      ui.notifications.error(`An active GM is required for ${healer.name} to treat ${patient.name}, because you do not own the patient actor.`);
+      return { status: "unavailable", changed: false, evaluation };
+    }
+
+    game.socket.emit(SOCKET_NAMESPACE, {
+      type: RECORD_TREATMENT_REQUEST,
+      requestId: foundry.utils.randomID(),
+      requesterId: game.user.id,
+      healerUuid: healer.uuid,
+      patientUuid: patient.uuid,
+      physicianSkillId: treatingSkill.id,
+      injuryId: treatmentInjury.id,
+      treatmentKey,
+      diagnosisFailurePenalty: diagnosisFailurePenalty == null ? null : Number(diagnosisFailurePenalty),
+      equipmentModifier: safeEquipmentModifier,
+      lateDays: safeLateDays,
+      rollValue: Number(rollValue),
+      additionalModifier: Number(additionalModifier) || 0,
+      duration: safeDuration
+    });
+    ui.notifications.info(`Treatment result sent to the GM for ${patient.name}'s ${treatmentInjury.name}.`);
     return { status: "requested", changed: false, evaluation };
   }
 }
