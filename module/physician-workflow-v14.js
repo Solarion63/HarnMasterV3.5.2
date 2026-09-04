@@ -1,6 +1,7 @@
 import { BloodlossService } from "./bloodloss-service.js";
 import { evaluateBleederTreatment, evaluatePhysicianDiagnosis } from "./medical-rules.js";
 import { MedicalService } from "./medical-service.js";
+import { physicianDiagnosisChooserLabel } from "./physician-diagnosis-presentation-v14.js";
 
 const { DialogV2 } = foundry.applications.api;
 
@@ -62,13 +63,13 @@ async function chooseDiagnosisInjury(patient, injuries) {
   if (injuries.length === 1) return injuries[0];
 
   const options = injuries.map(injury =>
-    `<option value="${escapeHtml(injury.id)}">${escapeHtml(injury.name)}</option>`
+    `<option value="${escapeHtml(injury.id)}">${escapeHtml(physicianDiagnosisChooserLabel(injury))}</option>`
   ).join("");
   const content = `
     <div class="form-group">
       <label>Injury to diagnose</label>
       <select name="diagnosisInjury">${options}</select>
-      <p class="hint">Choose which of ${escapeHtml(patient.name)}'s injuries is being diagnosed.</p>
+      <p class="hint">Existing diagnosis status is shown so you can distinguish diagnosed and undiagnosed wounds.</p>
     </div>`;
 
   const injuryId = await DialogV2.prompt({
@@ -143,6 +144,10 @@ async function diagnosisChatMessage({ healer, patient, injury, evaluation, diagn
     ? `Situational ${evaluation.situationalModifier > 0 ? "+" : ""}${evaluation.situationalModifier}`
     : "No situational modifier";
   const outcome = diagnosisOutcome(evaluation, diagnosis);
+  const persisted = ["recorded", "requested"].includes(diagnosis?.status);
+  const recordText = persisted
+    ? `Diagnosis recorded on ${injury.name}.`
+    : "Diagnosis was not recorded on the injury.";
 
   return ChatMessage.create({
     user: game.user.id,
@@ -157,6 +162,7 @@ async function diagnosisChatMessage({ healer, patient, injury, evaluation, diagn
           <p><strong>Target:</strong> ${evaluation.physicianEML} (${escapeHtml(modifierParts)}) → ${evaluation.target}</p>
           <p><strong>Existing Physician roll:</strong> ${evaluation.rollValue} — ${evaluation.resultCode}</p>
           <p><strong>${escapeHtml(outcome)}</strong></p>
+          <p><em>${escapeHtml(recordText)}</em></p>
         </div>
       </div>`
   });
