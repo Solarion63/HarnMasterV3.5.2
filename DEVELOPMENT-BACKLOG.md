@@ -24,7 +24,7 @@ Planned scope:
 
 ### Condition Skill with ML 0 Collapses Endurance and Physical Abilities
 
-**Status:** Known RC2 defect / correction required
+**Status:** Known release-candidate defect / correction required
 
 An Actor that has a `Condition` skill with `masteryLevel` 0 can have its derived Endurance forced to 1, causing Encumbrance to become abnormally large and effective Strength, Stamina, Dexterity, and Agility to display as 0 even though their stored base values are valid and nonzero.
 
@@ -47,23 +47,6 @@ Planned correction:
 - Verify that Encumbrance and effective Strength, Stamina, Dexterity, and Agility remain correct after the change.
 
 ## Medical Automation
-
-### Normal Physician Wound Treatment
-
-**Status:** Deferred
-
-Extend the system-owned Physician workflow beyond Bleeder treatment to normal wound treatment.
-
-Planned scope:
-
-- Use the Physician Skill on the healer Actor as the player-facing entry point.
-- Use the targeted Character or Creature Actor as the patient.
-- Select the Injury being treated when more than one eligible wound exists.
-- Apply the HârnMaster Physician treatment rules and modifiers from authoritative rules sources.
-- Preserve the Advanced Physician Automation world setting so automated treatment remains optional.
-- Use the existing HM3 native socket authority model for cross-owner patient updates.
-- Enforce the Physician rule that active bleeding must be stopped before normal wound treatment proceeds.
-- Avoid duplicating treatment state mutations in Skill-item macros; the compendium Physician macro should remain a small launcher into system-owned services.
 
 ### Bloodloss Death Chat Notification
 
@@ -105,7 +88,7 @@ Known HârnMaster rule behavior already identified:
 - Critical Success reduces Bloodloss by 2 BP.
 - Marginal Failure and Critical Failure have no effect.
 
-The exact Bloodloss Healing Rate value has not yet been sourced from the authoritative rules material available during RC2 development. Do not implement or guess that value until it is verified.
+The exact Bloodloss Healing Rate value has not yet been sourced from the authoritative rules material available during release-candidate development. Do not implement or guess that value until it is verified.
 
 Future implementation should reuse the existing single Bloodloss Injury and system-owned Bloodloss service.
 
