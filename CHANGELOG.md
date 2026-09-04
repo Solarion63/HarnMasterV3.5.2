@@ -2,7 +2,66 @@
 
 All notable changes to the HarnMaster 3 Foundry VTT system will be documented in this file.
 
-## 2.0.0-rc.2 — In Development
+## 2.0.0-rc.3 — Release Candidate
+
+### Physician Diagnosis
+
+- Added rules-based Physician Diagnosis before normal wound Treatment.
+- Targeted Physician use now selects the patient and Injury before the Skill roll; no-target use remains an ordinary Physician Skill roll.
+- Diagnosis is optional and records its result on the selected Injury under `flags.hm3.physicianDiagnosis`.
+- Marginal Success records +10 EML to the later Treatment Roll and Critical Success records +30 EML.
+- Failed Diagnosis records the HârnMaster -10 to -30 discretionary Treatment penalty range without inventing a fixed penalty.
+- Already-diagnosed Injuries are excluded from another normal Diagnosis attempt; the local and GM-authoritative services also reject attempts to overwrite an existing diagnosis.
+- Diagnosis presentation is derived from structured Injury flags and does not modify user-editable Injury notes.
+- Injury sheets show a read-only Physician Diagnosis summary.
+
+### Physician Wound Treatment
+
+- Added normal Physician wound Treatment using the HârnMaster Physician 3 Treatment Table.
+- Active Bleeders retain priority and must be stopped before normal wounds can be treated.
+- The workflow explicitly selects an untreated Injury, then offers Diagnose, Treat, or Cancel as appropriate before any roll is made.
+- An undiagnosed Injury may be treated directly because Diagnosis is optional.
+- Treatment configuration shows the inferred Treatment Table entry and allows correction for legacy or ambiguous Injuries.
+- Successful Diagnosis modifiers, failed-Diagnosis penalties, equipment/supplies modifiers, and the -5 EML per delayed day after the first 24 hours are incorporated into the actual HM3 Physician roll target.
+- Exactly one Treatment Roll is permitted per Injury regardless of CF, MF, MS, or CS.
+- Treatment results persist under `flags.hm3.physicianTreatment`; numeric H1-H6 results also update `system.healRate`.
+- EE is preserved explicitly as emergency healing in one day without later Healing Rolls.
+- Asterisked Healing Rates retain a pending permanent-impairment marker for later resolution.
+- Grievous Frost records its amputation result and required follow-up wound rather than treating the result as an ordinary Healing Rate.
+- Procedure duration is rolled and recorded according to the Physician rules, but Foundry world time is not advanced automatically.
+- Legacy `flags.hm3.treated` records from the historical standalone macro are respected.
+- New v14 Injuries record structured aspect and creation world time to improve Treatment Table inference and delayed-treatment defaults.
+- Cross-owner Treatment uses the native `system.hm3` GM-authoritative socket; no Socketlib dependency is required.
+- Actor Injury rows and Injury sheets derive Treatment status from structured flags without polluting editable notes.
+- Physician Injury-selection and Treatment-configuration dialogs use compact, workflow-specific sizing.
+
+### Physician Workflow Reliability
+
+- Explicit Injury selection is shown even when only one eligible wound exists, giving the user a clear Cancel path before rolling.
+- Cancelling Injury selection, Diagnose/Treat selection, Treatment configuration, or the subsequent Physician roll releases workflow state cleanly.
+- Repeated Physician use after a completed Diagnosis or Treatment no longer becomes stuck in an "action already in progress" state.
+- Migrated Physician Skills with a blank historical custom macro still use the system-owned pre/post Skill-roll workflow.
+- The historical Physician macro remains a compatibility launcher and cannot duplicate a system-managed medical action.
+
+### Validation
+
+Focused Foundry VTT 14.365 runtime testing completed for the RC3 Physician scope, including:
+
+- Ordinary no-target Physician rolls and Advanced Physician Automation disabled behavior.
+- No-injury, multiple-target, and all-diagnosed/all-treated guard paths.
+- One and multiple eligible Injury selection.
+- Explicit cancellation at every Physician workflow dialog and at the Skill-roll dialog.
+- Repeat Physician use after completed Diagnosis and Treatment.
+- Diagnosis MS/CS modifiers and MF/CF discretionary penalty handling.
+- Treatment Table resolution across representative Bruise, Fracture, Crush, Cut/Tear, Stab/Bite, Burn, and Frost entries.
+- CF/MF/MS/CS Treatment results all consuming the Injury's single Treatment Roll.
+- EE, asterisked permanent-impairment results, and Grievous Frost amputation results.
+- Procedure-duration recording without automatic world-time advancement.
+- Player-to-player/cross-owner Diagnosis and Treatment through the native HM3 socket with an active GM.
+- Cross-owner requests without an active GM leaving patient state unchanged.
+- Compact Injury-selection and Treatment-dialog presentation.
+
+## 2.0.0-rc.2 — Foundry VTT v14 Release Candidate
 
 ### Foundry v14 Compatibility
 
@@ -55,7 +114,6 @@ Focused Foundry VTT 14.365 runtime testing completed for the implemented RC2 sco
 
 ### Deferred
 
-- Normal Physician wound treatment is deferred to later development and recorded in `DEVELOPMENT-BACKLOG.md`.
 - Blood Regeneration is deferred pending authoritative confirmation of the exact Bloodloss Healing Rate; known success effects and five-day cadence are recorded in `DEVELOPMENT-BACKLOG.md` without inventing the missing value.
 
 ## 2.0.0-rc.1 — Foundry VTT v14 Release Candidate
