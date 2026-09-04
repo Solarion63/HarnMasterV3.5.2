@@ -56,6 +56,10 @@ function diagnosableInjury(patient, injuryId) {
   return injury;
 }
 
+function hasPhysicianDiagnosis(injury) {
+  return injury?.getFlag("hm3", "physicianDiagnosis") != null;
+}
+
 async function applyStopBleeding({ patient, effect }) {
   if (!patient || !BloodlossService.isBleedingEffect(effect)) return false;
   return BloodlossService.stopBleeding(patient, effect);
@@ -63,6 +67,8 @@ async function applyStopBleeding({ patient, effect }) {
 
 async function applyDiagnosis({ healer, patient, injury, evaluation }) {
   if (!healer || !patient || !injury || !evaluation) return false;
+  if (hasPhysicianDiagnosis(injury)) return false;
+
   await injury.setFlag("hm3", "physicianDiagnosis", {
     healerUuid: healer.uuid,
     healerName: healer.name,
@@ -147,6 +153,9 @@ async function handleDiagnosisRequest(payload) {
 
     const injury = diagnosableInjury(patient, payload.injuryId);
     if (!injury) throw new Error("The requested injury is no longer available for diagnosis.");
+    if (hasPhysicianDiagnosis(injury)) {
+      throw new Error(`${patient.name}'s ${injury.name} has already been diagnosed.`);
+    }
 
     const evaluation = evaluatePhysicianDiagnosis({
       rollValue: payload.rollValue,
@@ -154,7 +163,9 @@ async function handleDiagnosisRequest(payload) {
       additionalModifier: payload.additionalModifier
     });
 
-    await applyDiagnosis({ healer, patient, injury, evaluation });
+    const changed = await applyDiagnosis({ healer, patient, injury, evaluation });
+    if (!changed) throw new Error(`${patient.name}'s ${injury.name} has already been diagnosed.`);
+
     const modifierText = evaluation.isSuccess
       ? `Treatment modifier ${evaluation.treatmentModifier >= 0 ? "+" : ""}${evaluation.treatmentModifier}.`
       : "Treatment penalty is -10 to -30 at GM discretion.";
@@ -264,6 +275,10 @@ export class MedicalService {
 
     const diagnosisInjury = diagnosableInjury(patient, injury.id);
     if (!diagnosisInjury) return { status: "invalid", changed: false };
+    if (hasPhysicianDiagnosis(diagnosisInjury)) {
+      ui.notifications.info(`${patient.name}'s ${diagnosisInjury.name} has already been diagnosed.`);
+      return { status: "already-diagnosed", changed: false };
+    }
 
     const evaluation = evaluatePhysicianDiagnosis({
       rollValue,
@@ -273,7 +288,11 @@ export class MedicalService {
 
     if (patient.isOwner || game.user.isGM) {
       const changed = await applyDiagnosis({ healer, patient, injury: diagnosisInjury, evaluation });
-      return { status: changed ? "recorded" : "invalid", changed, evaluation };
+      return {
+        status: changed ? "recorded" : "already-diagnosed",
+        changed,
+        evaluation
+      };
     }
 
     if (!hasActiveGm()) {
