@@ -397,7 +397,7 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
     existing.phase = "rolling";
     return true;
   }
-  if (["preparing", "rolling", "resolving"].includes(existing?.phase)) {
+  if (["preparing", "rolling"].includes(existing?.phase)) {
     ui.notifications.info("A Physician action is already in progress.");
     return false;
   }
@@ -485,7 +485,11 @@ Hooks.on("hm3.onSkillRoll", (actor, result, _stdRollData, item) => {
   }
   if (state.phase !== "rolling" || !state.action) return;
 
-  state.phase = "resolving";
+  // The prepared action has now consumed its Physician roll. It must no longer
+  // block a subsequent Physician use while document updates/chat presentation
+  // finish asynchronously. The medical service independently rejects attempts
+  // to overwrite an already-recorded diagnosis or an inactive Bleeder effect.
+  state.phase = "consumed";
   const rollResult = {
     rollValue: Number(result?.rollValue),
     modifier: signedRollModifier(result)
