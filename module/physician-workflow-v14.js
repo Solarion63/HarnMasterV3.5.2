@@ -175,7 +175,7 @@ async function chooseInjuryAction(patient, injury) {
     default: Boolean(diagnosis),
     callback: () => "treatment"
   });
-  buttons.push({ action: "cancel", label: "Cancel", callback: () => null });
+  buttons.push({ action: "cancel", label: "Cancel", callback: () => "cancel" });
 
   return DialogV2.wait({
     window: { title: `Physician — ${injury.name}` },
@@ -256,12 +256,12 @@ async function configureTreatment(patient, injury) {
           };
         }
       },
-      { action: "cancel", label: "Cancel", callback: () => null }
+      { action: "cancel", label: "Cancel", callback: () => "cancel" }
     ],
     rejectClose: false
   });
 
-  if (!result) return null;
+  if (!result || result === "cancel") return null;
   if (!physicianTreatmentEntry(result.treatmentKey)) return null;
   return result;
 }
@@ -456,7 +456,9 @@ export async function preparePhysicianAction({ healer, physicianSkill } = {}) {
   if (!injury) return { status: "cancelled", action: null, reason: "selection-cancelled" };
 
   const actionType = await chooseInjuryAction(patient, injury);
-  if (!actionType) return { status: "cancelled", action: null, reason: "action-cancelled" };
+  if (!["diagnosis", "treatment"].includes(actionType)) {
+    return { status: "cancelled", action: null, reason: "action-cancelled" };
+  }
 
   if (actionType === "diagnosis") {
     if (injury.getFlag("hm3", "physicianDiagnosis") != null) {
