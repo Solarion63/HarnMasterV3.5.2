@@ -56,12 +56,6 @@ function recordedInjuries(patient) {
   return Array.from(patient?.itemTypes?.injury ?? []).filter(injury => !isBloodlossInjury(injury));
 }
 
-function undiagnosedInjuries(patient) {
-  return recordedInjuries(patient).filter(injury =>
-    injury.getFlag("hm3", "physicianDiagnosis") == null
-  );
-}
-
 function signedRollModifier(rollResult) {
   const modifier = Number(rollResult?.modifier) || 0;
   if (rollResult?.plusMinus === "-") return -Math.abs(modifier);
@@ -69,9 +63,13 @@ function signedRollModifier(rollResult) {
   return modifier;
 }
 
+/**
+ * Always confirm which bleeding wound will receive the Physician roll.
+ *
+ * Even a single eligible wound is presented explicitly so the user can see what
+ * is about to be treated and can cancel before any dice are rolled.
+ */
 async function chooseBleedingEffect(patient, effects) {
-  if (effects.length === 1) return effects[0];
-
   const options = effects.map(effect =>
     `<option value="${escapeHtml(effect.id)}">${escapeHtml(effect.name.replace(/^Bleeding Injury — /, ""))}</option>`
   ).join("");
@@ -79,26 +77,40 @@ async function chooseBleedingEffect(patient, effects) {
     <div class="form-group">
       <label>Bleeding wound</label>
       <select name="bleedingEffect">${options}</select>
-      <p class="hint">Choose which of ${escapeHtml(patient.name)}'s bleeding wounds is being treated before making the Physician roll.</p>
+      <p class="hint">Choose the bleeding wound to treat. The Physician roll occurs only after you confirm this selection.</p>
     </div>`;
 
-  const effectId = await DialogV2.prompt({
+  const effectId = await DialogV2.wait({
     window: { title: `Treat ${patient.name}'s Bleeding` },
     content,
-    ok: {
-      label: "Select Wound",
-      callback: (_event, _button, dialog) =>
-        dialog.element?.querySelector('[name="bleedingEffect"]')?.value ?? null
-    },
+    buttons: [
+      {
+        action: "select",
+        label: "Select Wound",
+        default: true,
+        callback: (_event, _button, dialog) =>
+          dialog.element?.querySelector('[name="bleedingEffect"]')?.value ?? null
+      },
+      {
+        action: "cancel",
+        label: "Cancel",
+        callback: () => null
+      }
+    ],
     rejectClose: false
   });
 
   return effectId ? effects.find(effect => effect.id === effectId) ?? null : null;
 }
 
+/**
+ * Always confirm which undiagnosed Injury will receive the Physician roll.
+ *
+ * This dialog is deliberately shown even when only one Injury is eligible. The
+ * single option is already selected, making the action explicit while preserving
+ * a clean Cancel path before the actual Skill roll begins.
+ */
 async function chooseDiagnosisInjury(patient, injuries) {
-  if (injuries.length === 1) return injuries[0];
-
   const options = injuries.map(injury =>
     `<option value="${escapeHtml(injury.id)}">${escapeHtml(physicianDiagnosisChooserLabel(injury))}</option>`
   ).join("");
@@ -106,17 +118,26 @@ async function chooseDiagnosisInjury(patient, injuries) {
     <div class="form-group">
       <label>Injury to diagnose</label>
       <select name="diagnosisInjury">${options}</select>
-      <p class="hint">Choose which undiagnosed injury is being examined before making the Physician roll.</p>
+      <p class="hint">Choose the undiagnosed injury to examine. The Physician roll occurs only after you confirm this selection.</p>
     </div>`;
 
-  const injuryId = await DialogV2.prompt({
+  const injuryId = await DialogV2.wait({
     window: { title: `Diagnose ${patient.name}` },
     content,
-    ok: {
-      label: "Select Injury",
-      callback: (_event, _button, dialog) =>
-        dialog.element?.querySelector('[name="diagnosisInjury"]')?.value ?? null
-    },
+    buttons: [
+      {
+        action: "select",
+        label: "Select Injury",
+        default: true,
+        callback: (_event, _button, dialog) =>
+          dialog.element?.querySelector('[name="diagnosisInjury"]')?.value ?? null
+      },
+      {
+        action: "cancel",
+        label: "Cancel",
+        callback: () => null
+      }
+    ],
     rejectClose: false
   });
 
@@ -419,13 +440,6 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
   }
   if (target.multiple) {
     ui.notifications.warn("Target exactly one patient to use automated Physician treatment or diagnosis.");
-    physicianRollStates.set(key, {
-      phase: "cancelled",
-      actor,
-      item,
-      action: null,
-      result: null
-    });
     return false;
   }
 
@@ -442,7 +456,7 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
     .then(prepared => {
       if (physicianRollStates.get(key) !== state) return null;
       if (prepared.status !== "prepared") {
-        state.phase = "cancelled";
+        physicianRollStates.delete(key);
         return null;
       }
 
@@ -450,14 +464,25 @@ Hooks.on("hm3.preSkillRoll", (stdRollData, actor, item) => {
       state.phase = "ready";
       const roller = game.hm3?.macros?.skillRoll;
       if (typeof roller !== "function") {
-        state.phase = "cancelled";
+        physicianRollStates.delete(key);
         ui.notifications.error("The HM3 Skill roller is unavailable.");
         return null;
       }
       return roller(item.uuid, Boolean(stdRollData.fastforward), actor);
     })
+    .then(result => {
+      if (physicianRollStates.get(key) !== state) return result;
+
+      // Closing/cancelling the ordinary HM3 roll dialog returns null and does not
+      // fire hm3.onSkillRoll. Release the prepared action here so a cancelled roll
+      // can never leave the Physician Skill stuck in the rolling phase.
+      if (state.phase === "rolling" && result == null) {
+        physicianRollStates.delete(key);
+      }
+      return result;
+    })
     .catch(error => {
-      state.phase = "cancelled";
+      if (physicianRollStates.get(key) === state) physicianRollStates.delete(key);
       console.error("HM3 | Physician pre-roll preparation failed", error);
       ui.notifications.error("The Physician action could not be prepared. See the console for details.");
     });
