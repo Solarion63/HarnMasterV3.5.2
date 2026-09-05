@@ -17,4 +17,14 @@
     </button>
   </div>
   {{/if}}
+  {{#if clearAction}}
+  <div class="card-buttons">
+    <button type="button"
+            data-action="shock-clear"
+            {{#if tokenId}}data-token-id="{{tokenId}}"{{else}}data-actor-id="{{actorId}}"{{/if}}
+            data-visible-actor-id="{{visibleActorId}}">
+      {{clearAction}}
+    </button>
+  </div>
+  {{/if}}
 </div>
