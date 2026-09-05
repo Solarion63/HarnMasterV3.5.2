@@ -1,7 +1,7 @@
 import gulp from "gulp";
 import autoprefixer from "gulp-autoprefixer";
 import gulpSass from "gulp-sass";
-import dartSass from "sass";
+import * as dartSass from "sass";
 
 const sass = gulpSass(dartSass);
 const SYSTEM_SCSS = ["scss/**/*.scss"];
