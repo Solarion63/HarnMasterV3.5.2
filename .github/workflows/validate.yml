@@ -71,7 +71,9 @@ jobs:
           test -f module/shock-service.js
           test -f module/shock-workflow-v14.js
           test -f module/shock-api-v14.js
+          test -f module/shock-turn-v14.js
           test -f templates/chat/shock-consequence-card.html
+          test -f templates/chat/shock-recovery-reminder-card.html
           test -d templates
           test -d packs
           node <<'NODE'
@@ -90,46 +92,51 @@ jobs:
           if (JSON.stringify(actualItems) !== JSON.stringify(expectedItems)) {
             throw new Error(`Unexpected Item documentTypes: ${actualItems.join(", ")}`);
           }
-          if (!manifest.esmodules?.includes("module/config-v14-overrides.js")) {
-            throw new Error("config-v14-overrides.js is not loaded by system.json");
-          }
-          if (!manifest.esmodules?.includes("module/document-defaults-v14.js")) {
-            throw new Error("document-defaults-v14.js is not loaded by system.json");
-          }
-          if (!manifest.esmodules?.includes("module/blood-regeneration-v14.js")) {
-            throw new Error("blood-regeneration-v14.js is not loaded by system.json");
-          }
-          if (!manifest.esmodules?.includes("module/shock-api-v14.js")) {
-            throw new Error("shock-api-v14.js is not loaded by system.json");
+          for (const modulePath of [
+            "module/config-v14-overrides.js",
+            "module/document-defaults-v14.js",
+            "module/blood-regeneration-v14.js",
+            "module/shock-api-v14.js",
+            "module/shock-turn-v14.js"
+          ]) {
+            if (!manifest.esmodules?.includes(modulePath)) {
+              throw new Error(`${modulePath} is not loaded by system.json`);
+            }
           }
           const hm3Index = manifest.esmodules.indexOf("module/hm3.js");
           const shockApiIndex = manifest.esmodules.indexOf("module/shock-api-v14.js");
-          if (shockApiIndex <= hm3Index) {
-            throw new Error("shock-api-v14.js must load after module/hm3.js");
+          const shockTurnIndex = manifest.esmodules.indexOf("module/shock-turn-v14.js");
+          if (shockApiIndex <= hm3Index || shockTurnIndex <= shockApiIndex) {
+            throw new Error("Shock API/turn modules have an invalid load order");
           }
 
           const config = fs.readFileSync("module/config.js", "utf8");
-          const requiredConfigSections = [
+          for (const marker of [
             "HM3.injuryLevels =",
             "HM3.activeEffectKey =",
             "HM3.meleeCombatTable =",
             "HM3.missileCombatTable =",
             "HM3.actorLabels =",
             "HM3.itemLabels ="
-          ];
-          for (const marker of requiredConfigSections) {
-            if (!config.includes(marker)) {
-              throw new Error(`module/config.js is missing required section: ${marker}`);
-            }
+          ]) {
+            if (!config.includes(marker)) throw new Error(`module/config.js is missing required section: ${marker}`);
           }
 
           const combatConsequences = fs.readFileSync("module/combat-consequences-v14.js", "utf8");
-          if (!combatConsequences.includes('from "./shock-workflow-v14.js"')) {
-            throw new Error("combat Shock consequences are not routed through shock-workflow-v14.js");
+          if (!combatConsequences.includes('from "./shock-workflow-v14.js"')
+            || !combatConsequences.includes('data-action="shock-recovery"')) {
+            throw new Error("combat Shock consequences/reminders are not routed through shock-workflow-v14.js");
           }
 
           const actorCombat = fs.readFileSync("module/actor/actor-combat-v2.js", "utf8");
           if (!actorCombat.includes('from "../shock-workflow-v14.js"')) {
             throw new Error("Actor-sheet Shock rolls are not routed through shock-workflow-v14.js");
+          }
+
+          const shockTurn = fs.readFileSync("module/shock-turn-v14.js", "utf8");
+          if (!shockTurn.includes('Hooks.on("updateCombat"')
+            || !shockTurn.includes("playerOwners(actor)")
+            || !shockTurn.includes("shockRoll(true, actor)")) {
+            throw new Error("turn-based Shock recovery automation is incomplete");
           }
           NODE
