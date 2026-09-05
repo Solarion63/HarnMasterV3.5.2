@@ -1,3 +1,8 @@
+import {
+  legacyDataOperatorPaths,
+  modernizeLegacyDataOperators
+} from "./migration-rules.js";
+
 const {
   deepClone,
   expandObject,
@@ -5,7 +10,7 @@ const {
   isEmpty
 } = foundry.utils;
 
-const { ForcedDeletion } = foundry.data.operators;
+const { ForcedDeletion, ForcedReplacement } = foundry.data.operators;
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object ?? {}, key);
 
 /**
@@ -14,6 +19,64 @@ const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object ?? {
  */
 function deleteField(updateData, path) {
   updateData[path] = new ForcedDeletion();
+}
+
+/**
+ * Replace legacy data-operator property names within one ActorDelta before any
+ * base Actor update can cause Foundry to apply that delta to its synthetic
+ * Actor. This is important because Actor updates automatically propagate to
+ * dependent unlinked Tokens.
+ */
+async function migrateActorDeltaOperators(token, label, failures = []) {
+  const delta = token?.delta;
+  if (!delta) return true;
+
+  const source = delta.toObject();
+  const legacyPaths = legacyDataOperatorPaths(source);
+  if (!legacyPaths.length) return true;
+
+  try {
+    const modernized = modernizeLegacyDataOperators(source, {
+      deletion: () => new ForcedDeletion(),
+      replacement: value => ForcedReplacement.create(value)
+    });
+
+    console.log(
+      `HM3 | Modernizing ${legacyPaths.length} legacy ActorDelta data operator(s) for ${label}`,
+      legacyPaths
+    );
+
+    // Replace the complete ActorDelta instead of recursively merging it. A
+    // recursive merge would leave the old "-=field" property beside the new
+    // v14 operator and the next synthetic-Actor refresh would warn again.
+    await token.update({
+      delta: ForcedReplacement.create(modernized)
+    });
+    return true;
+  } catch (error) {
+    recordFailure(failures, error, `${label} ActorDelta`);
+    return false;
+  }
+}
+
+/**
+ * Normalize all world-scene ActorDeltas before migrating world Actors.
+ *
+ * Base Actor updates refresh dependent unlinked Tokens synchronously. Therefore
+ * stale ActorDelta operator keys must be modernized first or Foundry v14 emits
+ * the legacy forced-deletion compatibility warning during Actor.update().
+ */
+async function migrateWorldActorDeltaOperators(failures = []) {
+  for (const scene of game.scenes.contents) {
+    for (const token of scene.tokens) {
+      if (token.actorLink || !token.delta) continue;
+      await migrateActorDeltaOperators(
+        token,
+        `Token ${token.name} in Scene ${scene.name}`,
+        failures
+      );
+    }
+  }
 }
 
 /**
@@ -31,6 +94,11 @@ export async function migrateWorld() {
   console.log("HM3 | Starting Migration");
 
   const failures = [];
+
+  // Actor updates automatically refresh all dependent synthetic Actors. Clean
+  // old ActorDelta operators first so those refreshes never encounter legacy
+  // "-=field" or "==field" keys from pre-v14 world data.
+  await migrateWorldActorDeltaOperators(failures);
 
   for (const actor of game.actors.contents) {
     await migrateDocument(actor, migrateActorData, "Actor", failures);
@@ -134,6 +202,11 @@ export async function migrateCompendium(pack, failures = []) {
       } else if (document.documentName === "Scene") {
         for (const token of document.tokens) {
           if (token.actorLink || !token.actor) continue;
+          await migrateActorDeltaOperators(
+            token,
+            `unlinked Token ${token.name} in Compendium Scene ${document.name}`,
+            failures
+          );
           try {
             const updateData = migrateActorData(token.actor.toObject());
             if (!isEmpty(updateData)) {
