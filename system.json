@@ -33,6 +33,7 @@
     "module/actor/actor-interactions-v14.js",
     "module/physician-diagnosis-presentation-v14.js",
     "module/hm3.js",
+    "module/blood-regeneration-v14.js",
     "module/macro-create-v14.js"
   ],
   "styles": [
