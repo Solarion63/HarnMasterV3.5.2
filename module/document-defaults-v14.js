@@ -1,5 +1,7 @@
 import { HarnMasterActor } from "./actor/actor.js";
 import { HarnMasterItem } from "./item/item.js";
+import * as utility from "./utility.js";
+import { resolveInitialSkillMastery } from "./skill-opening-rules.js";
 
 const ABILITY_NAMES = [
   "strength", "stamina", "dexterity", "agility", "intelligence", "aura",
@@ -190,12 +192,45 @@ export function withItemDefaults(data) {
   return withDefaults(data, ITEM_DEFAULT_FACTORIES);
 }
 
-function installCreateDefaults(DocumentClass, prepare) {
+/**
+ * Initialize a newly embedded Skill from its current Actor-derived Skill Base.
+ *
+ * This is deliberately a creation-time operation. Once a Skill has a positive
+ * Mastery Level, later Actor attribute or Skill Base changes must not reset the
+ * established ML. Skills whose normal opening rule requires additional context
+ * (for example Language) are left unchanged rather than guessed.
+ */
+export function withInitialSkillMastery(data, context = {}) {
+  const prepared = data;
+  if (prepared?.type !== "skill" || !context.parent?.system) return prepared;
+
+  // Reuse the existing HM3 Skill Base formula engine against the fully-defaulted
+  // source object before Foundry constructs the embedded Item document.
+  utility.calcSkillBase({
+    system: prepared.system,
+    actor: context.parent
+  });
+
+  const initial = resolveInitialSkillMastery({
+    skillName: prepared.name,
+    skillBase: prepared.system.skillBase?.value,
+    masteryLevel: prepared.system.masteryLevel
+  });
+
+  if (initial.initialized) prepared.system.masteryLevel = initial.value;
+  return prepared;
+}
+
+function installCreateDefaults(DocumentClass, prepare, finalize = null) {
   const nativeCreateDocuments = DocumentClass.createDocuments;
   DocumentClass.createDocuments = function hm3CreateDocumentsWithDefaults(data = [], context = {}) {
+    const prepareEntry = entry => {
+      const prepared = prepare(entry);
+      return finalize ? finalize(prepared, context) : prepared;
+    };
     const prepared = Array.isArray(data)
-      ? data.map(entry => prepare(entry))
-      : prepare(data);
+      ? data.map(prepareEntry)
+      : prepareEntry(data);
     return nativeCreateDocuments.call(this, prepared, context);
   };
 }
@@ -205,7 +240,7 @@ function installCreateDefaults(DocumentClass, prepare) {
 // HM3 prepareBaseData/prepareData always receives the same shape it historically
 // received, while leaving arbitrary legacy/custom system keys unrestricted.
 installCreateDefaults(HarnMasterActor, withActorDefaults);
-installCreateDefaults(HarnMasterItem, withItemDefaults);
+installCreateDefaults(HarnMasterItem, withItemDefaults, withInitialSkillMastery);
 
 export const HM3_DOCUMENT_DEFAULTS = Object.freeze({
   actorTypes: Object.freeze(Object.keys(ACTOR_DEFAULT_FACTORIES)),
