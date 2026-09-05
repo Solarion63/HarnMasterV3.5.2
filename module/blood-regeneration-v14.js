@@ -61,8 +61,7 @@ async function postRegenerationResult(actor, rollResult, resolution) {
     description: rollResult.description,
     previousBloodloss: resolution.previousBloodloss,
     reduction: resolution.reduction,
-    totalBloodloss: resolution.totalBloodloss,
-    nextAvailableAt: resolution.availableAt
+    totalBloodloss: resolution.totalBloodloss
   });
 
   return ChatMessage.create({
@@ -155,3 +154,14 @@ export async function healingRoll(itemRef, noDialog = false, myActor = null) {
     bloodRegeneration: resolution
   };
 }
+
+// hm3.js owns creation of the public game.hm3 API. This module is loaded after
+// hm3.js and replaces only the Healing Roll entry point during the same init
+// phase, preserving every other historical macro function unchanged.
+Hooks.once("init", () => {
+  if (!game.hm3?.macros) {
+    console.error("HM3 | Blood Regeneration could not register the Healing Roll wrapper.");
+    return;
+  }
+  game.hm3.macros.healingRoll = healingRoll;
+});
