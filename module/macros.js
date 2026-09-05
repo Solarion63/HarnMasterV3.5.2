@@ -272,7 +272,7 @@ export async function weaponDamageRoll(itemName, aspect = null, myActor = null) 
 
     if (!Hooks.call("hm3.preDamageRoll", rollData, actor)) return null;
     const result = await DiceHM3.damageRoll(rollData);
-    if (result) callOnHooks("hm3.onDamageRoll", actorInfo.actor, result, rollData);
+    if (result) callOnHooks("hm3.onDamageRoll", actor, result, rollData);
     return result;
 }
 
