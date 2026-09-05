@@ -1,14 +1,4 @@
 const LEGACY_OPERATOR_PREFIXES = ["-=", "=="];
-const ACTOR_DELTA_FIELDS = [
-  "name",
-  "type",
-  "img",
-  "system",
-  "ownership",
-  "flags",
-  "items",
-  "effects"
-];
 
 /**
  * Return paths whose property names use Foundry's pre-v14 data-operator syntax.
@@ -51,21 +41,37 @@ export function hasLegacyDataOperatorKeys(value) {
 }
 
 /**
- * Project a full Actor source object onto the fields supported by ActorDelta.
+ * Replace legacy `-=field` / `==field` property names with caller-provided
+ * modern Foundry data operators while preserving every other value verbatim.
  *
- * Rebuilding a stale ActorDelta starts from the synthetic Actor's effective
- * source so token-specific values are preserved exactly. Actor-only fields such
- * as folder, sort, prototypeToken, and _stats are intentionally excluded.
+ * The callbacks keep this rules helper independent of the Foundry runtime so it
+ * can be covered by Node regression tests.
  *
- * @param {object} actorSource Full synthetic Actor source data.
- * @returns {object} ActorDelta-compatible snapshot.
+ * @param {*} value Source value to modernize.
+ * @param {object} operators Operator factory callbacks.
+ * @param {Function} operators.deletion Create a modern forced-deletion value.
+ * @param {Function} operators.replacement Create a modern forced-replacement value.
+ * @returns {*} A recursively modernized copy.
  */
-export function actorDeltaSnapshot(actorSource) {
-  const snapshot = {};
-  for (const field of ACTOR_DELTA_FIELDS) {
-    if (Object.prototype.hasOwnProperty.call(actorSource ?? {}, field)) {
-      snapshot[field] = actorSource[field];
-    }
+export function modernizeLegacyDataOperators(value, { deletion, replacement }) {
+  if (value == null || typeof value !== "object") return value;
+  if (Array.isArray(value)) {
+    return value.map(entry => modernizeLegacyDataOperators(entry, { deletion, replacement }));
   }
-  return snapshot;
+
+  const result = {};
+  for (const [key, child] of Object.entries(value)) {
+    if (key.startsWith("-=")) {
+      result[key.slice(2)] = deletion();
+      continue;
+    }
+    if (key.startsWith("==")) {
+      result[key.slice(2)] = replacement(
+        modernizeLegacyDataOperators(child, { deletion, replacement })
+      );
+      continue;
+    }
+    result[key] = modernizeLegacyDataOperators(child, { deletion, replacement });
+  }
+  return result;
 }
