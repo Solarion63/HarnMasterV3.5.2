@@ -2,50 +2,6 @@
 
 This backlog records work intentionally deferred from the current Foundry VTT v14 release-candidate development. Items listed here are not part of the currently validated feature scope unless explicitly promoted into active development.
 
-## Character and Derived-Stat Corrections
-
-### Initialize Newly Added Skills to Opening Mastery Level
-
-**Status:** Deferred improvement / rules-correct initialization
-
-When a Skill is added to an Actor for the first time, initialize its Mastery Level from its calculated Skill Base and the Skill's proper Opening Mastery Level rule instead of leaving `masteryLevel` at 0.
-
-Planned scope:
-
-- Perform initialization when the Skill Item is first created as an embedded Item on an Actor.
-- Calculate the Skill Base from the Skill formula and the Actor's current attributes.
-- Apply the Skill's proper Opening Mastery Level multiplier or opening rule rather than assuming every Skill opens at exactly its Skill Base.
-- Example: Condition should open at `SB × 5`, so a Condition Skill Base of 17 should initialize to ML 85.
-- Do not recalculate or overwrite Mastery Level during normal Actor data preparation after initialization.
-- Preserve manually assigned or previously established Mastery Levels.
-- Ensure later changes to attributes or Skill Base do not silently reset an improved Skill's Mastery Level.
-- Add regression coverage for newly added Skills, already-opened Skills, manually assigned ML values, and Skills with different opening multipliers.
-- Keep the implementation generic so Condition and other Skills use the same initialization architecture rather than introducing Skill-specific creation hacks.
-
-### Condition Skill with ML 0 Collapses Endurance and Physical Abilities
-
-**Status:** Known release-candidate defect / correction required
-
-An Actor that has a `Condition` skill with `masteryLevel` 0 can have its derived Endurance forced to 1, causing Encumbrance to become abnormally large and effective Strength, Stamina, Dexterity, and Agility to display as 0 even though their stored base values are valid and nonzero.
-
-Observed failure chain:
-
-- Character base physical ability values remain correctly stored in Actor data.
-- Normal Endurance is initially derived from Strength, Stamina, and Will.
-- If a `Condition` skill exists, the current preparation logic replaces the normal Endurance calculation with `Condition masteryLevel / 5`.
-- A newly added or otherwise uninitialized Condition skill with ML 0 therefore produces Endurance 0, which is then clamped to 1.
-- Encumbrance is divided by this Endurance value, producing an excessive physical penalty.
-- Effective Strength, Stamina, Dexterity, and Agility are then reduced to 0 by that penalty.
-
-Planned correction:
-
-- Preserve the normal Strength/Stamina/Will-derived Endurance when Condition is absent or not meaningfully initialized.
-- Do not allow the mere presence of a Condition skill with ML 0 to overwrite a valid derived Endurance value.
-- Define explicitly when Condition-derived Endurance becomes authoritative, consistent with the HârnMaster rules and existing skill-opening behavior.
-- Preserve existing behavior for Actors with a valid/opened Condition mastery level.
-- Add regression coverage for Actors with no Condition skill, Condition ML 0, and a valid nonzero Condition ML.
-- Verify that Encumbrance and effective Strength, Stamina, Dexterity, and Agility remain correct after the change.
-
 ## Medical Automation
 
 ### Bloodloss Death Chat Notification
@@ -79,18 +35,31 @@ Planned scope:
 
 ### Blood Regeneration
 
-**Status:** Deferred pending exact rules sourcing
+**Status:** Ready for implementation
 
-Known HârnMaster rule behavior already identified:
+Authoritative HârnMaster behavior confirmed:
 
+- Bloodloss has Healing Rate **H6**.
 - Test `HR × Endurance` once per 5 days.
 - Marginal Success reduces Bloodloss by 1 BP.
 - Critical Success reduces Bloodloss by 2 BP.
 - Marginal Failure and Critical Failure have no effect.
 
-The exact Bloodloss Healing Rate value has not yet been sourced from the authoritative rules material available during release-candidate development. Do not implement or guess that value until it is verified.
+Future implementation should reuse the existing single Bloodloss Injury and system-owned Bloodloss service and should not create a parallel wound-healing scheduler.
 
-Future implementation should reuse the existing single Bloodloss Injury and system-owned Bloodloss service.
+### Physician Rules Gaps
+
+**Status:** Deferred rules-completion work
+
+Normal Physician treatment is implemented, but the following rules remain to be automated or completed:
+
+- apply the Creature treatment penalty of -10 unless the healer has Veterinary Medicine;
+- enforce the self-treatment restrictions for Grievous injuries and Shock;
+- create the appropriate post-amputation wound automatically where required;
+- complete the NT-column behavior where applicable;
+- add the recurring wound Healing Roll workflow and later Infection/impairment handling;
+- remove the remaining duplicate/hard-coded late-treatment `-5 per day` logic by centralizing that rule;
+- review cross-owner treatment wording so requested/authoritative treatment messages are consistently presented.
 
 ## Combat Improvements
 
@@ -128,6 +97,35 @@ Planned scope:
 - Preserve ownership/socket authority requirements for Actor/Item updates.
 - Do not unequip the item for fumble results that do not actually cause it to be dropped.
 
+## Build and Repository Maintenance
+
+### Migrate Sass `@import` to `@use` / `@forward`
+
+**Status:** Deferred build-maintenance work
+
+The CSS toolchain has been modernized to Gulp 5, Dart Sass, `gulp-sass` 6, and `gulp-autoprefixer` 10. Dart Sass still reports deprecation warnings for the existing SCSS `@import` graph.
+
+Planned scope:
+
+- migrate the SCSS module graph to `@use` / `@forward` without changing rendered Foundry styling;
+- preserve current variable, mixin, and selector behavior;
+- keep compiled `css/hm3.css` deterministic and committed;
+- use the existing `Validate Build Toolchain` workflow to require a clean reproducible build;
+- treat stylesheet-source restructuring separately from gameplay/runtime changes.
+
+### GitHub Actions Runtime Versions
+
+**Status:** Deferred repository maintenance
+
+GitHub currently reports that some pinned GitHub-maintained actions target deprecated Node runtimes and are being forced onto newer runtimes by hosted runners.
+
+Planned scope:
+
+- adopt supported major versions of GitHub-maintained actions as they become available;
+- keep repository workflows on a supported Node version;
+- preserve the current read-only default workflow permissions and explicit least-privilege permissions;
+- verify release packaging and validation workflows after any action-version changes.
+
 ## Architecture
 
 ### Formal Foundry DataModel Classes
@@ -135,3 +133,11 @@ Planned scope:
 **Status:** Deferred
 
 Introduce formal Foundry DataModel classes only after the v14 user-interface and legacy document compatibility work is stable. This remains intentionally separate from the current migration to reduce regression risk.
+
+## Completed During RC4 Development
+
+The following backlog items have been completed and removed from active work:
+
+- **Condition Skill with ML 0 Collapses Endurance and Physical Abilities** — fixed in PR #14; ML 0 Condition no longer replaces valid ability-derived Endurance.
+- **Initialize Newly Added Skills to Opening Mastery Level** — implemented in PR #15 with generic normal-OML initialization and preservation of established ML values.
+- **CSS build-toolchain modernization / Dependabot dependency cleanup** — completed in PR #16 with a modern Node 22-compatible toolchain, regenerated lockfile, reproducible build validation, and zero high-severity npm audit findings at merge time.
