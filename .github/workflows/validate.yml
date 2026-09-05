@@ -39,6 +39,9 @@ jobs:
             node --check "$file"
           done < <(find module -type f -name '*.js' -print0)
 
+      - name: Run Condition endurance regression tests
+        run: node scripts/test-condition-endurance.mjs
+
       - name: Verify required system files
         shell: bash
         run: |
