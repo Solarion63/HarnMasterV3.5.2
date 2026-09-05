@@ -91,7 +91,8 @@ export async function healingRoll(itemRef, noDialog = false, myActor = null) {
   const preparedItem = await BloodlossService.prepareBloodRegeneration(actor);
   if (!preparedItem) return null;
   if (Math.max(0, Number(preparedItem.system.injuryLevel) || 0) <= 0) {
-    ui.notifications.warn(`${actor.name} has no Bloodloss to regenerate.`);
+    await actor.deleteEmbeddedDocuments("Item", [preparedItem.id]);
+    ui.notifications.info(`${actor.name}'s Bloodloss has fully regenerated.`);
     return null;
   }
 
@@ -144,7 +145,10 @@ export async function healingRoll(itemRef, noDialog = false, myActor = null) {
   callOnHooks("hm3.onHealingRoll", actor, result, stdRollData, preparedItem);
   await postRegenerationResult(actor, result, resolution);
 
-  if (resolution.reduction > 0) {
+  if (resolution.totalBloodloss <= 0) {
+    await actor.deleteEmbeddedDocuments("Item", [preparedItem.id]);
+    ui.notifications.info(`${actor.name}'s Bloodloss has fully regenerated.`);
+  } else if (resolution.reduction > 0) {
     ui.notifications.info(
       `${actor.name} regenerates ${resolution.reduction} Blood Point${resolution.reduction === 1 ? "" : "s"}; `
       + `${resolution.totalBloodloss} Bloodloss remains.`
