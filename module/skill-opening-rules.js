@@ -7,8 +7,9 @@ const BASE_PLUS = value => Object.freeze({ type: "base-plus", value });
  * and Shek-Pvar training can deliberately replace these normal OMLs and are not
  * represented here.
  *
- * Skills whose OML depends on additional context, notably Language, are omitted
- * rather than guessed. Script is the core table's special 70 + SB rule.
+ * Skills whose OML depends on additional context, notably Language, Ritual, and
+ * Magic convocations, are omitted rather than guessed. Script is the core table's
+ * special 70 + SB rule.
  */
 const CORE_OPENING_RULES = Object.freeze({
   // Physical skills
@@ -36,6 +37,7 @@ const CORE_OPENING_RULES = Object.freeze({
   script: BASE_PLUS(70),
 
   // Combat skills
+  dodge: MULTIPLIER(5),
   initiative: MULTIPLIER(4),
   unarmed: MULTIPLIER(4),
   riding: MULTIPLIER(1),
@@ -96,20 +98,7 @@ const CORE_OPENING_RULES = Object.freeze({
   tracking: MULTIPLIER(2),
   weaponcraft: MULTIPLIER(1),
   weatherlore: MULTIPLIER(3),
-  woodcraft: MULTIPLIER(2),
-
-  // Core deity Ritual skills use the normal SB x 1 OML. Clerical Ritual/4 is
-  // a character-generation training rule, not the normal opening rule.
-  agrik: MULTIPLIER(1),
-  halea: MULTIPLIER(1),
-  ilvir: MULTIPLIER(1),
-  larani: MULTIPLIER(1),
-  morgath: MULTIPLIER(1),
-  naveh: MULTIPLIER(1),
-  peoni: MULTIPLIER(1),
-  sarajin: MULTIPLIER(1),
-  "save-k'nor": MULTIPLIER(1),
-  siem: MULTIPLIER(1)
+  woodcraft: MULTIPLIER(2)
 });
 
 /**
@@ -152,7 +141,6 @@ const WEAPON_SPECIALTY_PARENT = Object.freeze({
   "round shield": "shield",
   roundshield: "shield",
   "tower shield": "shield",
-  staffslings: "sling",
   staffsling: "sling",
   javelin: "spear",
   staff: "spear",
