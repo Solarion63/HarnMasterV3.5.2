@@ -154,7 +154,12 @@ export class ShockService {
   }
 
   static workflowState(actor) {
-    return this.state(actor) ?? (this.shockInjury(actor) ? SHOCK_STATES.SHOCK : null);
+    const state = this.state(actor);
+    if (state === SHOCK_STATES.UNCONSCIOUS
+      && !actor?.effects?.some(effect => statusMatches(effect, "unconscious"))) {
+      return null;
+    }
+    return state ?? (this.shockInjury(actor) ? SHOCK_STATES.SHOCK : null);
   }
 
   static async ensureShockInjury(actor) {
@@ -223,7 +228,7 @@ export class ShockService {
   }
 
   static async cancelUnconsciousRecovery(actor) {
-    if (this.state(actor) !== SHOCK_STATES.UNCONSCIOUS) return false;
+    if (this.workflowState(actor) !== SHOCK_STATES.UNCONSCIOUS) return false;
     await this.clearTransientShockState(actor);
     return true;
   }
