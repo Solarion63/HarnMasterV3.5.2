@@ -1,5 +1,5 @@
 import { BloodlossService } from "./bloodloss-service.js";
-import { BLOODLOSS_HEAL_RATE } from "./bloodloss-rules.js";
+import { BLOODLOSS_HEAL_RATE, bloodRegenerationTarget } from "./bloodloss-rules.js";
 import { DiceHM3 } from "./dice-hm3.js";
 import { getItem } from "./item-lookup.js";
 import { callOnHooks, healingRoll as legacyHealingRoll } from "./macros.js";
@@ -90,6 +90,10 @@ export async function healingRoll(itemRef, noDialog = false, myActor = null) {
 
   const preparedItem = await BloodlossService.prepareBloodRegeneration(actor);
   if (!preparedItem) return null;
+  if (Math.max(0, Number(preparedItem.system.injuryLevel) || 0) <= 0) {
+    ui.notifications.warn(`${actor.name} has no Bloodloss to regenerate.`);
+    return null;
+  }
 
   const worldTime = Number(game.time?.worldTime) || 0;
   const eligibility = BloodlossService.regenerationEligibility(actor, worldTime);
@@ -104,7 +108,7 @@ export async function healingRoll(itemRef, noDialog = false, myActor = null) {
   const stdRollData = {
     type: "blood-regeneration",
     label: `${actor.name} Blood Regeneration Roll`,
-    target: BLOODLOSS_HEAL_RATE * Number(actor.system.endurance || 0),
+    target: bloodRegenerationTarget(actor.system.endurance),
     notesData: {
       up: actor.system.universalPenalty,
       pp: actor.system.physicalPenalty,
