@@ -1,4 +1,5 @@
 import * as macros from "./macros.js";
+import { shockRoll } from "./shock-workflow-v14.js";
 
 function rootsFromRender(html) {
   if (!html) return [];
@@ -41,7 +42,7 @@ async function performConsequence(button) {
 
   switch (button.dataset.action) {
     case "shock":
-      return macros.shockRoll(false, actor);
+      return shockRoll(false, actor);
     case "stumble":
       return macros.stumbleRoll(false, actor);
     case "fumble":
