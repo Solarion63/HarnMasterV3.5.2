@@ -1,4 +1,5 @@
 import { HM3 } from "./config.js";
+import { repairUninitializedConditionEndurance } from "./actor/actor-derived-rules.js";
 
 /**
  * Foundry v14-specific configuration adjustments.
@@ -11,3 +12,7 @@ if (!HM3.defaultCharacterSkills.includes("Condition")) {
   const insertAt = climbingIndex >= 0 ? climbingIndex + 1 : 0;
   HM3.defaultCharacterSkills.splice(insertAt, 0, "Condition");
 }
+
+Hooks.on("hm3.onActorPrepareBaseData", actor => {
+  repairUninitializedConditionEndurance(actor);
+});
