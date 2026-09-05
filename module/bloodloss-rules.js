@@ -32,6 +32,11 @@ export function bloodlossIsFatal(bloodloss, endurance) {
   return Math.max(0, Number(bloodloss) || 0) > Math.max(0, Number(endurance) || 0);
 }
 
+/** Return the H6 × Endurance target for a Blood Regeneration test. */
+export function bloodRegenerationTarget(endurance) {
+  return BLOODLOSS_HEAL_RATE * Math.max(0, Number(endurance) || 0);
+}
+
 /**
  * Return the Blood Point reduction produced by a Blood Regeneration result.
  * Accept both the historical upper-case hook result codes and lower-case rule
