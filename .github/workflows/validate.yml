@@ -72,8 +72,10 @@ jobs:
           test -f module/shock-workflow-v14.js
           test -f module/shock-api-v14.js
           test -f module/shock-turn-v14.js
+          test -f module/shock-out-of-combat-v14.js
           test -f templates/chat/shock-consequence-card.html
           test -f templates/chat/shock-recovery-reminder-card.html
+          test -f templates/chat/shock-out-of-combat-reminder-card.html
           test -d templates
           test -d packs
           node <<'NODE'
@@ -97,7 +99,8 @@ jobs:
             "module/document-defaults-v14.js",
             "module/blood-regeneration-v14.js",
             "module/shock-api-v14.js",
-            "module/shock-turn-v14.js"
+            "module/shock-turn-v14.js",
+            "module/shock-out-of-combat-v14.js"
           ]) {
             if (!manifest.esmodules?.includes(modulePath)) {
               throw new Error(`${modulePath} is not loaded by system.json`);
@@ -106,8 +109,9 @@ jobs:
           const hm3Index = manifest.esmodules.indexOf("module/hm3.js");
           const shockApiIndex = manifest.esmodules.indexOf("module/shock-api-v14.js");
           const shockTurnIndex = manifest.esmodules.indexOf("module/shock-turn-v14.js");
-          if (shockApiIndex <= hm3Index || shockTurnIndex <= shockApiIndex) {
-            throw new Error("Shock API/turn modules have an invalid load order");
+          const shockOutIndex = manifest.esmodules.indexOf("module/shock-out-of-combat-v14.js");
+          if (shockApiIndex <= hm3Index || shockTurnIndex <= shockApiIndex || shockOutIndex <= shockTurnIndex) {
+            throw new Error("Shock API/turn/out-of-combat modules have an invalid load order");
           }
 
           const config = fs.readFileSync("module/config.js", "utf8");
@@ -124,8 +128,10 @@ jobs:
 
           const combatConsequences = fs.readFileSync("module/combat-consequences-v14.js", "utf8");
           if (!combatConsequences.includes('from "./shock-workflow-v14.js"')
-            || !combatConsequences.includes('data-action="shock-recovery"')) {
-            throw new Error("combat Shock consequences/reminders are not routed through shock-workflow-v14.js");
+            || !combatConsequences.includes('data-action="shock-recovery"')
+            || !combatConsequences.includes('data-action="shock-out-of-combat-recover"')
+            || !combatConsequences.includes('data-action="shock-clear"')) {
+            throw new Error("Shock consequence/reminder actions are not fully wired");
           }
 
           const actorCombat = fs.readFileSync("module/actor/actor-combat-v2.js", "utf8");
@@ -138,5 +144,12 @@ jobs:
             || !shockTurn.includes("playerOwners(actor)")
             || !shockTurn.includes("shockRoll(true, actor)")) {
             throw new Error("turn-based Shock recovery automation is incomplete");
+          }
+
+          const shockOut = fs.readFileSync("module/shock-out-of-combat-v14.js", "utf8");
+          if (!shockOut.includes('Hooks.on("updateWorldTime"')
+            || !shockOut.includes('Hooks.on("deleteCombat"')
+            || !shockOut.includes("completeOutOfCombatShockRecovery(actor, true)")) {
+            throw new Error("out-of-combat Shock recovery automation is incomplete");
           }
           NODE
