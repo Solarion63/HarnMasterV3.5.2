@@ -143,8 +143,7 @@ async function resolveInitial(actor, result) {
     await postConsequence(actor, {
       title: "Shock Roll Failed",
       result: "Unconscious and Prone",
-      detail: "In combat, make another Shock Roll on a subsequent turn to recover consciousness.",
-      nextAction: "Shock Recovery Roll"
+      detail: "In combat, recovery is attempted on the character's subsequent turns."
     });
   } else {
     await ShockService.clearTransientShockState(actor);
@@ -164,8 +163,7 @@ async function resolveRecovery(actor, result, noDialog) {
     await postConsequence(actor, {
       title: "Shock Recovery Failed",
       result: "Remains Unconscious",
-      detail: "Try another Shock Recovery Roll on a subsequent combat turn.",
-      nextAction: "Shock Recovery Roll"
+      detail: "Another recovery attempt is due on the character's next combat turn."
     });
     return outcome;
   }
@@ -199,7 +197,7 @@ async function resolveFollowUp(actor, result) {
     await postConsequence(actor, {
       title: "Shock",
       result: "Character Enters Shock",
-      detail: `${injury?.name ?? "Shock"} injury added at H5 with Injury Level 0. Shock recovery is handled separately.`
+      detail: `${injury?.name ?? "Shock"} injury added at H5 with Injury Level 0. Recovery is tested every four hours.`
     });
   } else {
     await ShockService.clearTransientShockState(actor);
@@ -222,7 +220,7 @@ export async function shockRoll(noDialog = false, myActor = null) {
 
   const state = ShockService.workflowState(actor);
   if (state === SHOCK_STATES.SHOCK) {
-    ui.notifications.warn(`${actor.name} is already in Shock. Shock recovery is handled separately.`);
+    ui.notifications.warn(`${actor.name} is already in Shock. Recovery is tested every four hours.`);
     return null;
   }
 
