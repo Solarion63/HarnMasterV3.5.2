@@ -33,20 +33,6 @@ Planned scope:
 - Preserve the existing no-target Physician skill-roll behavior; ordinary Physician rolls without a treatment target should continue to work normally.
 - Preserve the existing ownership/socket authority model for treatment updates.
 
-### Blood Regeneration
-
-**Status:** Ready for implementation
-
-Authoritative HârnMaster behavior confirmed:
-
-- Bloodloss has Healing Rate **H6**.
-- Test `HR × Endurance` once per 5 days.
-- Marginal Success reduces Bloodloss by 1 BP.
-- Critical Success reduces Bloodloss by 2 BP.
-- Marginal Failure and Critical Failure have no effect.
-
-Future implementation should reuse the existing single Bloodloss Injury and system-owned Bloodloss service and should not create a parallel wound-healing scheduler.
-
 ### Physician Rules Gaps
 
 **Status:** Deferred rules-completion work
@@ -141,3 +127,5 @@ The following backlog items have been completed and removed from active work:
 - **Condition Skill with ML 0 Collapses Endurance and Physical Abilities** — fixed in PR #14; ML 0 Condition no longer replaces valid ability-derived Endurance.
 - **Initialize Newly Added Skills to Opening Mastery Level** — implemented in PR #15 with generic normal-OML initialization and preservation of established ML values.
 - **CSS build-toolchain modernization / Dependabot dependency cleanup** — completed in PR #16 with a modern Node 22-compatible toolchain, regenerated lockfile, reproducible build validation, and zero high-severity npm audit findings at merge time.
+- **Blood Regeneration** — implemented in PR #18 using the system-owned Bloodloss Injury and Bloodloss service. Bloodloss now uses H6, regeneration tests `6 × Endurance` once per five days, MS/CS reduce Bloodloss by 1/2 BP, failed rolls have no effect, resolved Bloodloss Injuries are removed at 0 BP, and owners/GMs receive a one-time private reminder when a new regeneration roll becomes available.
+- **Legacy ActorDelta migration operators** — fixed in PR #20; pre-v14 `-=field` / `==field` operator keys in unlinked Token ActorDeltas are normalized before base Actor updates, preventing Foundry v14 migration warnings while preserving token-specific overrides.
