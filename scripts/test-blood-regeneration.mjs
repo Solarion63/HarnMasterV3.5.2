@@ -4,6 +4,7 @@ import {
   BLOOD_REGENERATION_INTERVAL_SECONDS,
   bloodRegenerationEligibility,
   bloodRegenerationReduction,
+  bloodRegenerationTarget,
   resolveBloodRegeneration
 } from "../module/bloodloss-rules.js";
 
@@ -12,6 +13,11 @@ assert.equal(
   BLOOD_REGENERATION_INTERVAL_SECONDS,
   5 * 24 * 60 * 60,
   "Blood Regeneration must use a five-day interval"
+);
+assert.equal(
+  bloodRegenerationTarget(12),
+  72,
+  "Blood Regeneration target must be H6 × Endurance"
 );
 
 assert.equal(bloodRegenerationReduction("CS"), 2, "Critical Success must regenerate 2 BP");
