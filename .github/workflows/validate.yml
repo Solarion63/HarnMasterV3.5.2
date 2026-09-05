@@ -45,6 +45,9 @@ jobs:
       - name: Run Skill opening mastery regression tests
         run: node scripts/test-skill-opening.mjs
 
+      - name: Run Blood Regeneration regression tests
+        run: node scripts/test-blood-regeneration.mjs
+
       - name: Verify required system files
         shell: bash
         run: |
@@ -55,6 +58,8 @@ jobs:
           test -f module/config-v14-overrides.js
           test -f module/document-defaults-v14.js
           test -f module/hm3.js
+          test -f module/blood-regeneration-v14.js
+          test -f templates/chat/blood-regeneration-card.html
           test -d templates
           test -d packs
           node <<'NODE'
@@ -78,6 +83,9 @@ jobs:
           }
           if (!manifest.esmodules?.includes("module/document-defaults-v14.js")) {
             throw new Error("document-defaults-v14.js is not loaded by system.json");
+          }
+          if (!manifest.esmodules?.includes("module/blood-regeneration-v14.js")) {
+            throw new Error("blood-regeneration-v14.js is not loaded by system.json");
           }
 
           const config = fs.readFileSync("module/config.js", "utf8");
