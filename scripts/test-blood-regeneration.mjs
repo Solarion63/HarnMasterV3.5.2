@@ -4,6 +4,7 @@ import {
   BLOOD_REGENERATION_INTERVAL_SECONDS,
   bloodRegenerationEligibility,
   bloodRegenerationReduction,
+  bloodRegenerationReminderNeeded,
   bloodRegenerationTarget,
   resolveBloodRegeneration
 } from "../module/bloodloss-rules.js";
@@ -73,6 +74,47 @@ assert.deepEqual(
   bloodRegenerationEligibility({ availableAt: 1500, worldTime: 1000 }),
   { eligible: false, remainingSeconds: 500 },
   "a future availability time must report the remaining cooldown"
+);
+
+assert.deepEqual(
+  bloodRegenerationReminderNeeded({
+    bloodloss: 4,
+    availableAt: 1000,
+    lastReminderFor: null,
+    worldTime: 1000
+  }),
+  { needed: true, windowKey: "1000" },
+  "an eligible Bloodloss Injury must produce one reminder for its current window"
+);
+assert.deepEqual(
+  bloodRegenerationReminderNeeded({
+    bloodloss: 4,
+    availableAt: 1000,
+    lastReminderFor: "1000",
+    worldTime: 1200
+  }),
+  { needed: false, windowKey: "1000" },
+  "the same regeneration window must not produce duplicate reminders"
+);
+assert.deepEqual(
+  bloodRegenerationReminderNeeded({
+    bloodloss: 4,
+    availableAt: 2000,
+    lastReminderFor: "1000",
+    worldTime: 2000
+  }),
+  { needed: true, windowKey: "2000" },
+  "a later completed roll must permit a new reminder at the next five-day window"
+);
+assert.deepEqual(
+  bloodRegenerationReminderNeeded({
+    bloodloss: 0,
+    availableAt: 1000,
+    lastReminderFor: null,
+    worldTime: 1000
+  }),
+  { needed: false, windowKey: null },
+  "zero Bloodloss must never generate a regeneration reminder"
 );
 
 console.log("Blood Regeneration regression tests passed.");
