@@ -53,7 +53,13 @@ function managedStatusMatches(effect, statusName) {
 
 async function ensureStatus(actor, statusName) {
   const existing = actor.effects.find(effect => statusMatches(effect, statusName));
-  if (existing) return existing;
+  if (existing) {
+    if (managedStatusMatches(existing, statusName)
+      && Number(existing.showIcon) !== CONST.ACTIVE_EFFECT_SHOW_ICON.ALWAYS) {
+      await existing.update({ showIcon: CONST.ACTIVE_EFFECT_SHOW_ICON.ALWAYS });
+    }
+    return existing;
+  }
 
   const configured = configuredStatus(statusName);
   const fallback = STATUS_DEFINITIONS[statusName] ?? {
@@ -67,6 +73,7 @@ async function ensureStatus(actor, statusName) {
   const created = await actor.createEmbeddedDocuments("ActiveEffect", [{
     name: effectName || fallback.name,
     img: configured?.img ?? configured?.icon ?? fallback.img,
+    showIcon: CONST.ACTIVE_EFFECT_SHOW_ICON.ALWAYS,
     statuses: [statusId],
     disabled: false,
     changes: [],
@@ -143,7 +150,7 @@ export class ShockService {
         injuryLevel: 0,
         healRate: SHOCK_INJURY_HEAL_RATE,
         isBleeder: false,
-        notes: "Shock injury (H5). Shock recovery automation is handled separately."
+        notes: "Shock injury (H5). Recovery is tested every four hours."
       },
       flags: {
         hm3: {
