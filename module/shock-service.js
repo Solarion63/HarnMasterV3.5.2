@@ -3,6 +3,8 @@ import { SHOCK_INJURY_HEAL_RATE, SHOCK_STATES } from "./shock-rules.js";
 const STATE_FLAG = "shockState";
 const SHOCK_ITEM_FLAG = "isShock";
 const MANAGED_STATUS_FLAG = "shockManagedStatus";
+const RECOVERY_AVAILABLE_FLAG = "shockRecoveryAvailableAt";
+const RECOVERY_REMINDER_FLAG = "shockRecoveryReminderFor";
 
 const STATUS_DEFINITIONS = Object.freeze({
   unconscious: {
@@ -95,6 +97,11 @@ async function removeManagedStatus(actor, statusName) {
   if (ids.length) await actor.deleteEmbeddedDocuments("ActiveEffect", ids);
 }
 
+async function clearRecoveryFlags(actor) {
+  await actor.unsetFlag("hm3", RECOVERY_AVAILABLE_FLAG);
+  await actor.unsetFlag("hm3", RECOVERY_REMINDER_FLAG);
+}
+
 export class ShockService {
   static state(actor) {
     const state = actor?.getFlag?.("hm3", STATE_FLAG) ?? actor?.flags?.hm3?.[STATE_FLAG] ?? null;
@@ -112,6 +119,29 @@ export class ShockService {
     }
     await actor.setFlag("hm3", STATE_FLAG, state);
     return state;
+  }
+
+  static recoveryAvailableAt(actor) {
+    const value = Number(actor?.getFlag?.("hm3", RECOVERY_AVAILABLE_FLAG));
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  static async scheduleOutOfCombatRecovery(actor, availableAt) {
+    const numeric = Number(availableAt);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      throw new Error("Shock recovery availability must be a positive world-time value.");
+    }
+    await actor.setFlag("hm3", RECOVERY_AVAILABLE_FLAG, numeric);
+    await actor.unsetFlag("hm3", RECOVERY_REMINDER_FLAG);
+    return numeric;
+  }
+
+  static recoveryReminderFor(actor) {
+    return actor?.getFlag?.("hm3", RECOVERY_REMINDER_FLAG) ?? null;
+  }
+
+  static async markRecoveryReminder(actor, key) {
+    await actor.setFlag("hm3", RECOVERY_REMINDER_FLAG, String(key));
   }
 
   static shockInjury(actor) {
@@ -167,16 +197,19 @@ export class ShockService {
   static async enterUnconscious(actor) {
     await ensureStatus(actor, "unconscious");
     await ensureStatus(actor, "prone");
+    await clearRecoveryFlags(actor);
     await this.setState(actor, SHOCK_STATES.UNCONSCIOUS);
   }
 
   static async markFollowUp(actor) {
     await removeManagedStatus(actor, "unconscious");
+    await clearRecoveryFlags(actor);
     await this.setState(actor, SHOCK_STATES.FOLLOW_UP);
   }
 
   static async enterShock(actor) {
     await removeManagedStatus(actor, "unconscious");
+    await clearRecoveryFlags(actor);
     const injury = await this.ensureShockInjury(actor);
     await ensureStatus(actor, "shocked");
     await this.setState(actor, SHOCK_STATES.SHOCK);
@@ -185,6 +218,13 @@ export class ShockService {
 
   static async clearTransientShockState(actor) {
     await removeManagedStatus(actor, "unconscious");
+    await clearRecoveryFlags(actor);
     await this.setState(actor, null);
+  }
+
+  static async cancelUnconsciousRecovery(actor) {
+    if (this.state(actor) !== SHOCK_STATES.UNCONSCIOUS) return false;
+    await this.clearTransientShockState(actor);
+    return true;
   }
 }
