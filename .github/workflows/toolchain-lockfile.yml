@@ -1,0 +1,54 @@
+name: Generate Toolchain Lockfile
+
+on:
+  push:
+    branches:
+      - chore/modernize-build-toolchain
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Regenerate package lockfile
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Compile CSS
+        run: npm run build
+
+      - name: Record CSS changes
+        shell: bash
+        run: |
+          git diff -- css > css-build.diff || true
+          if test -s css-build.diff; then
+            echo "Modern toolchain changes committed CSS output."
+          else
+            echo "Modern toolchain reproduces committed CSS output."
+          fi
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Upload generated files
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-generated-files
+          path: |
+            package-lock.json
+            css-build.diff
+          if-no-files-found: error
