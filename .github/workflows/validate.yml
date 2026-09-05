@@ -48,6 +48,9 @@ jobs:
       - name: Run Blood Regeneration regression tests
         run: node scripts/test-blood-regeneration.mjs
 
+      - name: Run ActorDelta migration regression tests
+        run: node scripts/test-migration-operators.mjs
+
       - name: Verify required system files
         shell: bash
         run: |
@@ -57,6 +60,7 @@ jobs:
           test -f module/config.js
           test -f module/config-v14-overrides.js
           test -f module/document-defaults-v14.js
+          test -f module/migration-rules.js
           test -f module/hm3.js
           test -f module/blood-regeneration-v14.js
           test -f templates/chat/blood-regeneration-card.html
