@@ -100,28 +100,42 @@ section.highlight {
 .flex-group-center,
 .flex-group-left,
 .flex-group-right {
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
   justify-content: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   text-align: center;
 }
 
 .flex-group-left {
+  -webkit-box-pack: start;
+  -ms-flex-pack: start;
   justify-content: flex-start;
   text-align: left;
 }
 
 .flex-group-right {
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
   justify-content: flex-end;
   text-align: right;
 }
 
 .flex-center {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
   justify-content: center;
   text-align: center;
 }
 
 .flex-between {
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
   justify-content: space-between;
 }
 
@@ -138,6 +152,8 @@ section.highlight {
   color: #111;
 }
 .chat-card .card-header h3 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   margin: 0;
   line-height: 25px;
@@ -147,6 +163,8 @@ section.highlight {
   color: #4b4a44;
 }
 .chat-card .card-header h4 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   margin: 0;
   line-height: 20px;
@@ -249,7 +267,7 @@ section.highlight {
   font-size: 12px;
   visibility: hidden;
   width: 240px;
-  background-color: #d8bd24;
+  background-color: rgb(216, 189, 36);
   color: #111;
   text-align: left;
   border-radius: 6px;
@@ -269,7 +287,7 @@ section.highlight {
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: #d8bd24 transparent transparent transparent;
+  border-color: rgb(216, 189, 36) transparent transparent transparent;
 }
 
 .tooltip:hover .tooltiptext {
@@ -278,6 +296,8 @@ section.highlight {
 
 .sheet nav.sheet-tabs {
   height: 32px;
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 32px;
   flex: 0 0 32px;
   margin: 4px 0;
   line-height: 32px;
@@ -310,6 +330,7 @@ section.highlight {
 .hm3 input[type=text]:focus,
 .hm3 input[type=number]:focus {
   border: 1px solid #111;
+  -webkit-box-shadow: 0 0 8px red;
   box-shadow: 0 0 8px red;
 }
 .hm3 input:disabled,
@@ -323,6 +344,7 @@ section.highlight {
 .hm3 input:disabled:focus,
 .hm3 select:disabled:focus,
 .hm3 textarea:disabled:focus {
+  -webkit-box-shadow: none !important;
   box-shadow: none !important;
   border: 1px solid transparent !important;
   outline: none !important;
@@ -332,6 +354,8 @@ section.highlight {
   border: 2px groove #eeede0;
 }
 .hm3 label.checkbox {
+  -webkit-box-flex: 1;
+  -ms-flex: auto;
   flex: auto;
   padding: 0;
   margin: 0;
@@ -350,6 +374,8 @@ section.highlight {
   margin: 0 0 0 2px;
 }
 .hm3 label.init-checkbox {
+  -webkit-box-flex: 1;
+  -ms-flex: auto;
   flex: auto;
   padding: 0;
   margin: 0 0 0 2px;
@@ -370,6 +396,7 @@ section.highlight {
 .hm3 .sheet .window-content .tab {
   height: 100%;
   overflow-y: hidden;
+  -ms-flex-line-pack: start;
   align-content: flex-start;
 }
 .hm3 .sheet input[type=text],
@@ -384,6 +411,8 @@ section.highlight {
   border: 1px solid #111;
 }
 .hm3 .sheet select {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   font-size: 12px;
   height: 22px;
@@ -395,6 +424,8 @@ section.highlight {
   cursor: pointer;
 }
 .hm3 .sheet span.sep {
+  -webkit-box-flex: 0;
+  -ms-flex: none;
   flex: none;
   margin: 0 1px;
   display: inline;
@@ -414,6 +445,8 @@ section.highlight {
   font-weight: 700;
 }
 .hm3 .sheet .sheet-header h1 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   border-bottom: none;
   height: 60px;
@@ -427,14 +460,19 @@ section.highlight {
   margin: 0;
 }
 .hm3 .sheet .sheet-header img.profile {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 100px;
   flex: 0 0 100px;
   max-width: 100px;
   height: 100px;
+  -o-object-fit: contain;
   object-fit: contain;
   border: none;
   border-right: 2px groove #eeede0;
 }
 .hm3 .sheet .sheet-header .summary {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 100%;
   flex: 0 0 100%;
   height: 40px;
   margin: 0;
@@ -456,6 +494,8 @@ section.highlight {
   border-right: none;
 }
 .hm3 .sheet .sheet-navigation {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   margin-bottom: 5px;
   font-size: 20px;
@@ -476,10 +516,14 @@ section.highlight {
 .hm3 .sheet-body .macro .command textarea {
   width: 100%;
   height: 100%;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
 }
 .hm3 .facade img.facade-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
+  -o-object-fit: contain;
   object-fit: contain;
   background: white;
 }
@@ -490,19 +534,32 @@ section.highlight {
   font-family: "Signika", sans-serif;
 }
 .hm3 .sheet .sheet-header-character {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 120px;
   flex: 0 0 120px;
   overflow: hidden;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
   flex-direction: row;
+  -ms-flex-wrap: wrap;
   flex-wrap: wrap;
+  -webkit-box-pack: start;
+  -ms-flex-pack: start;
   justify-content: flex-start;
   margin-bottom: 10px;
   border-bottom: 2px groove #eeede0;
 }
 .hm3 .sheet .sheet-header-character .profile-img {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 120px;
   flex: 0 0 120px;
   height: 120px;
   margin-right: 10px;
+  -o-object-fit: contain;
   object-fit: contain;
 }
 .hm3 .sheet .sheet-header-character .header-fields .name-attribute {
@@ -520,12 +577,16 @@ section.highlight {
   margin: 0;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-stat-block {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 140px;
   flex: 0 0 140px;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-stat-block .penalties {
   padding: 0 0 5px;
   font-size: 12px;
   font-weight: bold;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-stat-block .penalties .capacity-value {
@@ -534,6 +595,8 @@ section.highlight {
 .hm3 .sheet .sheet-header-character .header-fields .header-stat-block .penalties .capacity-label {
   text-transform: uppercase;
   font-size: 14px;
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 100px;
   flex: 0 0 100px;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-stat-block .penalties .stat {
@@ -557,6 +620,8 @@ section.highlight {
   font-weight: bold;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-stat-block .endbar {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 8px;
   flex: 0 0 8px;
   width: 100%;
   margin-bottom: 5px;
@@ -596,18 +661,26 @@ section.highlight {
   height: calc(100% - 6px);
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .species {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 100px;
   flex: 0 0 100px;
   border-right: 2px groove #eeede0;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .creature-species {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 100px;
   flex: 1 0 100px;
   border-right: 2px groove #eeede0;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .gender {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 100px;
   flex: 0 0 100px;
   border-right: 2px groove #eeede0;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .move {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 80px;
   flex: 0 0 80px;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .move .label {
@@ -618,6 +691,8 @@ section.highlight {
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .move .move-values {
   font-size: 19px;
   text-align: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .move .move-values .move-eff {
@@ -627,27 +702,45 @@ section.highlight {
   padding: 0 0 0 6px;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .move .move-values .move-base {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 30px;
   flex: 1 0 30px;
 }
 .hm3 .sheet .sheet-header-character .header-fields .header-attributes .occupation {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   border-right: 2px groove #eeede0;
 }
 .hm3 .sheet-header-creature {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
   overflow: hidden;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
   flex-direction: row;
+  -ms-flex-wrap: wrap;
   flex-wrap: wrap;
+  -webkit-box-pack: start;
+  -ms-flex-pack: start;
   justify-content: flex-start;
   margin-bottom: 10px;
 }
 .hm3 .sheet-header-creature .profile-img {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 160px;
   flex: 0 0 160px;
   height: 160px;
   margin-right: 10px;
 }
 .hm3 .sheet-header-creature .header-fields {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
 }
 .hm3 .sheet-header-creature h1.charname {
@@ -662,6 +755,8 @@ section.highlight {
   margin: 0;
 }
 .hm3 .sheet-header-creature .ability-scores {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 110px;
   flex: 0 0 110px;
   gap: 0;
   margin: 10px;
@@ -671,21 +766,29 @@ section.highlight {
   padding: 3px;
 }
 .hm3 .sheet-header-creature .ability-scores .ability-scores-column .ability {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   text-align: center;
   padding: 3px 0 0 0;
   border-bottom: 2px groove #eeede0;
 }
 .hm3 .sheet-header-creature .ability-scores .ability-scores-column .ability .label {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   font-weight: bold;
   text-transform: uppercase;
 }
 .hm3 .sheet-header-creature .ability-scores .ability-scores-column .ability .value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   font-size: 20pt;
 }
 .hm3 .sheet-tabs {
+  -webkit-box-flex: 0;
+  -ms-flex: 0;
   flex: 0;
 }
 .hm3 .sheet-body,
@@ -702,9 +805,13 @@ section.highlight {
 }
 .hm3 .artifact {
   padding-top: 5px;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
 }
 .hm3 .tabs {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   margin-bottom: 5px;
   font-family: "Modesto Condensed", "Palatino Linotype", serif;
@@ -726,6 +833,8 @@ section.highlight {
   margin-right: 5px;
 }
 .hm3 .items h2 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   margin: 0;
   line-height: 36px;
@@ -750,6 +859,8 @@ section.highlight {
 .hm3 .items .items-list .items-header {
   margin: 2px 0;
   padding: 0;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   background: rgba(0, 0, 0, 0.05);
   border: 2px groove #eeede0;
@@ -783,6 +894,8 @@ section.highlight {
   border-bottom: 1px solid #c9c7b8;
 }
 .hm3 .items .items-list .item .item-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   background-size: 30px;
   margin-right: 5px;
@@ -812,6 +925,8 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .items .items-list .item-dice {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   color: #b5b3a4;
   text-align: center;
@@ -820,16 +935,22 @@ section.highlight {
   color: #4b4a44;
 }
 .hm3 .items .items-list .item-ele {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
   border-left: 1px solid #c9c7b8;
   border-right: 1px solid #c9c7b8;
 }
 .hm3 .items .items-list .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: right;
 }
 .hm3 .items .items-list .item-controls .item-control {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 22px;
   flex: 0 0 22px;
   font-size: 12px;
   text-align: right;
@@ -845,10 +966,14 @@ section.highlight {
   color: #4b4a44;
 }
 .hm3 .items .items-list .item-controls-wide {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 65px;
   flex: 0 0 65px;
   text-align: right;
 }
 .hm3 .items .items-list .item-controls-wide .item-control {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 22px;
   flex: 0 0 22px;
   font-size: 12px;
   text-align: right;
@@ -879,6 +1004,8 @@ section.highlight {
   border-bottom: 1px solid #BBB;
 }
 .hm3 .items-list .item .item-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -889,10 +1016,14 @@ section.highlight {
   margin: 0;
 }
 .hm3 .items-list .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 55px;
   flex: 0 0 55px;
   text-align: right;
 }
 .hm3 .combat h2 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   margin: 0;
   line-height: 36px;
@@ -910,21 +1041,31 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .combat .combat-stats .combat-stat {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
 }
 .hm3 .combat .combat-stats .combat-stat .combat-eff-fatigue {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
 }
 .hm3 .combat .combat-stats .combat-stat .combat-fatigue-input {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .combat .combat-stats .combat-stat .combat-stat-label {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 55px;
   flex: 0 0 55px;
   font-weight: bold;
   text-transform: uppercase;
 }
 .hm3 .combat .combat-stats .combat-stat .combat-stat-value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   background: #bbb;
   padding: 2px;
@@ -953,6 +1094,8 @@ section.highlight {
   background-position: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -960,6 +1103,8 @@ section.highlight {
   display: block;
 }
 .hm3 .combat .weapons-list .weapon .weapon-damage {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 35px;
   flex: 0 0 35px;
   text-align: center;
 }
@@ -970,46 +1115,66 @@ section.highlight {
   color: #4b4a44;
 }
 .hm3 .combat .weapons-list .weapon .weapon-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 150px;
   flex: 0 0 150px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .combat .weapons-list .weapon .weapon-name-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .combat .weapons-list .weapon .weapon-qty {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-weight {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-qty-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-weight-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-quality {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-atkdef {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-atkmod {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-blunt {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
@@ -1021,6 +1186,8 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .weapons-list .weapon .weapon-edged {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
@@ -1032,6 +1199,8 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .weapons-list .weapon .weapon-piercing {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
@@ -1043,10 +1212,14 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .weapons-list .weapon .weapon-value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .combat .weapons-list .weapon .weapon-attack {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   text-align: center;
 }
@@ -1058,6 +1231,8 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .weapons-list .weapon .weapon-defense {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   text-align: center;
 }
@@ -1069,6 +1244,8 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .weapons-list .weapon .weapon-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 75px;
   flex: 1 0 75px;
   padding-left: 10px;
   text-overflow: ellipsis;
@@ -1076,10 +1253,14 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .combat .weapons-list .weapon .item-controls-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 55px;
   flex: 0 0 55px;
   text-align: right;
 }
 .hm3 .combat .weapons-list .weapon .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 70px;
   flex: 0 0 70px;
   text-align: right;
 }
@@ -1118,6 +1299,8 @@ section.highlight {
   background-position: center;
 }
 .hm3 .combat .missiles-list .missile .missile-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -1125,6 +1308,8 @@ section.highlight {
   display: block;
 }
 .hm3 .combat .missiles-list .missile .missile-damage {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 35px;
   flex: 0 0 35px;
   text-align: center;
 }
@@ -1135,34 +1320,48 @@ section.highlight {
   color: #4b4a44;
 }
 .hm3 .combat .missiles-list .missile .missile-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 130px;
   flex: 0 0 130px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .combat .missiles-list .missile .missile-name-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .combat .missiles-list .missile .missile-qty {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .combat .missiles-list .missile .missile-weight {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   text-align: center;
 }
 .hm3 .combat .missiles-list .missile .missile-qty-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .combat .missiles-list .missile .missile-weight-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .combat .missiles-list .missile .missile-skill {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 75px;
   flex: 0 0 75px;
   text-align: left;
   text-overflow: ellipsis;
@@ -1171,6 +1370,8 @@ section.highlight {
   padding-left: 3px;
 }
 .hm3 .combat .missiles-list .missile .missile-short {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: center;
 }
@@ -1182,6 +1383,8 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .missiles-list .missile .missile-medium {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: center;
 }
@@ -1193,6 +1396,8 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .missiles-list .missile .missile-long {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: center;
 }
@@ -1204,6 +1409,8 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .missiles-list .missile .missile-extreme {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: center;
 }
@@ -1215,10 +1422,14 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .missiles-list .missile .missile-value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .combat .missiles-list .missile .missile-attack {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   text-align: center;
 }
@@ -1230,6 +1441,8 @@ section.highlight {
   color: black;
 }
 .hm3 .combat .missiles-list .missile .missile-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 50px;
   flex: 1 0 50px;
   padding-left: 10px;
   text-overflow: ellipsis;
@@ -1237,10 +1450,14 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .combat .missiles-list .missile .item-controls-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 55px;
   flex: 0 0 55px;
   text-align: right;
 }
 .hm3 .combat .missiles-list .missile .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 70px;
   flex: 0 0 70px;
   text-align: right;
 }
@@ -1257,16 +1474,22 @@ section.highlight {
   font-weight: bold;
 }
 .hm3 .range-table .range-label {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 50px;
   flex: 0 0 50px;
   font-weight: bold;
   text-align: left;
 }
 .hm3 .range-table .range-value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 60px;
   flex: 0 0 60px;
   margin: 0 2px;
   text-align: center;
 }
 .hm3 .inventory h2 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   margin: 0;
   line-height: 36px;
@@ -1280,6 +1503,8 @@ section.highlight {
   padding: 5px;
 }
 .hm3 .inventory .weight {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 440px;
   flex: 0 0 440px;
 }
 .hm3 .inventory .weight .weight-header {
@@ -1300,52 +1525,80 @@ section.highlight {
 .hm3 .inventory .weight .title {
   color: #4b4a44;
   font-weight: bold;
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 65px;
   flex: 0 0 65px;
 }
 .hm3 .inventory .weight .weapon {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 65px;
   flex: 0 0 65px;
 }
 .hm3 .inventory .weight .missile {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 65px;
   flex: 0 0 65px;
 }
 .hm3 .inventory .weight .armor {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 65px;
   flex: 0 0 65px;
 }
 .hm3 .inventory .weight .misc-gear {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 75px;
   flex: 0 0 75px;
 }
 .hm3 .inventory .weight .total {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 65px;
   flex: 0 0 65px;
   text-align: center;
 }
 .hm3 .inventory .weight .buf {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
 }
 .hm3 .inventory .inv-stats .inv-stat {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
 }
 .hm3 .inventory .inv-stats .inv-stat .inv-stat-label {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 135px;
   flex: 0 0 135px;
   font-weight: bold;
   text-transform: uppercase;
 }
 .hm3 .inventory .inv-stats .inv-stat .inv-stat-value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   background: #bbb;
   padding: 2px;
   text-align: center;
 }
 .hm3 .sheet-body .ability-scores {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 80px;
   flex: 0 0 80px;
   gap: 0;
   margin: 0;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
   justify-content: center;
 }
 .hm3 .sheet-body .ability-scores .ability {
   display: block;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   text-align: center;
   padding: 3px 0 0 0;
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 80px;
   flex: 0 0 80px;
   border: 2px groove #eeede0;
 }
@@ -1362,15 +1615,21 @@ section.highlight {
   border-top: 1px solid black;
 }
 .hm3 .sheet-body .ability-scores .ability .label {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   font-weight: bold;
   text-transform: uppercase;
 }
 .hm3 .sheet-body .ability-scores .ability .value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   font-size: 20pt;
 }
 .hm3 .sheet-body .traits h2 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   margin: 0;
   line-height: 36px;
@@ -1390,9 +1649,13 @@ section.highlight {
   overflow-y: hidden;
 }
 .hm3 .sheet-body .traits .traits-list .trait .trait-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 150px;
   flex: 0 0 150px;
 }
 .hm3 .sheet-body .traits .traits-list .trait .trait-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 50px;
   flex: 1 0 50px;
   text-align: left;
   padding-left: 5px;
@@ -1400,17 +1663,23 @@ section.highlight {
   border-right: 1px solid #c9c7b8;
 }
 .hm3 .sheet-body .traits .traits-list .trait .trait-ele {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
   border-left: 1px solid #c9c7b8;
   border-right: 1px solid #c9c7b8;
 }
 .hm3 .sheet-body .traits .traits-list .trait .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: right;
   padding-right: 5px;
 }
 .hm3 .sheet-body .traits .traits-list .trait .item-controls .item-control {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 22px;
   flex: 0 0 22px;
   font-size: 12px;
   text-align: center;
@@ -1418,10 +1687,16 @@ section.highlight {
 }
 .hm3 .sheet-body .profile-params {
   margin-top: 5px;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
+  -webkit-box-flex: 0;
+  -ms-flex: 0 1 10px;
   flex: 0 1 10px;
 }
 .hm3 .sheet-body .profile-params .profile-item {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   border-top: 2px groove #eeede0;
   border-bottom: 2px groove #eeede0;
@@ -1429,9 +1704,13 @@ section.highlight {
   padding: 5px 0;
 }
 .hm3 .sheet-body .profile-params .profile-item .attribute {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
 }
 .hm3 .sheet-body .profile-params .profile-item .attribute .label {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 60px;
   flex: 0 0 60px;
   font-weight: bold;
   text-transform: uppercase;
@@ -1439,6 +1718,8 @@ section.highlight {
   padding-right: 4px;
 }
 .hm3 .sheet-body .profile-params .profile-item .attribute .value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 150px;
   flex: 0 0 150px;
 }
 .hm3 .sheet-body .profile-desc {
@@ -1449,6 +1730,8 @@ section.highlight {
   font-family: "Modesto Condensed", "Palatino Linotype", serif;
   font-size: 16px;
   margin: 2px 0;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   background: rgba(0, 0, 0, 0.05);
   border: 2px groove #eeede0;
@@ -1463,7 +1746,10 @@ section.highlight {
   margin-left: 5px;
 }
 .hm3 .sheet-body .profile img.bio-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
+  -o-object-fit: contain;
   object-fit: contain;
   background: white;
 }
@@ -1480,6 +1766,8 @@ section.highlight {
   border-bottom: 1px solid #BBB;
 }
 .hm3 .injuries-list .injury .injury-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -1487,9 +1775,13 @@ section.highlight {
   display: block;
 }
 .hm3 .injuries-list .injury-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
 }
 .hm3 .injuries-list .injury-location {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: right;
   text-overflow: ellipsis;
@@ -1497,6 +1789,8 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .injuries-list .injury-healrate {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   text-align: center;
 }
@@ -1506,14 +1800,20 @@ section.highlight {
   color: black;
 }
 .hm3 .injuries-list .injury-severity {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 50px;
   flex: 0 0 50px;
   text-align: center;
 }
 .hm3 .injuries-list .injury-level {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 40px;
   flex: 1 0 40px;
   text-align: center;
 }
 .hm3 .injuries-list .injury-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 200px;
   flex: 1 0 200px;
   padding-left: 10px;
   text-overflow: ellipsis;
@@ -1521,10 +1821,14 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .injuries-list .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: right;
 }
 .hm3.actor .skills h2 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   margin: 0;
   line-height: 36px;
@@ -1555,9 +1859,13 @@ section.highlight {
   overflow-y: hidden;
 }
 .hm3.actor .skills .skills-list .skill .skill-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
 }
 .hm3.actor .skills .skills-list .skill .skill-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 100px;
   flex: 1 0 100px;
   text-align: left;
   padding-left: 5px;
@@ -1565,30 +1873,42 @@ section.highlight {
   border-right: 1px solid #c9c7b8;
 }
 .hm3.actor .skills .skills-list .skill .skill-ele {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
   border-left: 1px solid #c9c7b8;
   border-right: 1px solid #c9c7b8;
 }
 .hm3.actor .skills .skills-list .skill .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: right;
 }
 .hm3.actor .skills .skills-list .skill .item-controls .item-control {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 22px;
   flex: 0 0 22px;
   font-size: 12px;
   text-align: center;
   color: #4b4a44;
 }
 .hm3.item .skill-header img.profile-img {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 85px;
   flex: 0 0 85px;
   height: 85px;
   margin-right: 6px;
 }
 .hm3.item .skill-header .header-fields .skill-type {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
 }
 .hm3.item .skill-header .header-fields .skill-type .label {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   padding-left: 8px;
   font-family: "Modesto Condensed", "Palatino Linotype", serif;
@@ -1596,10 +1916,14 @@ section.highlight {
   font-size: 19px;
 }
 .hm3.item .skill-header .header-fields .skill-type .value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 110px;
   flex: 0 0 110px;
   font-size: 14px;
 }
 .hm3 .esoteric h2 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   margin: 0;
   line-height: 36px;
@@ -1631,6 +1955,8 @@ section.highlight {
   background-image: url("../../../icons/svg/d20-black.svg") !important;
 }
 .hm3 .esoteric .spells-list .spell .spell-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -1638,12 +1964,16 @@ section.highlight {
   display: block;
 }
 .hm3 .esoteric .spells-list .spell-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .esoteric .spells-list .spell-convocation {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 80px;
   flex: 0 0 80px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1651,14 +1981,20 @@ section.highlight {
   padding-left: 3px;
 }
 .hm3 .esoteric .spells-list .spell-level {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .esoteric .spells-list .spell-eml {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .esoteric .spells-list .spell-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 150px;
   flex: 1 0 150px;
   padding-left: 10px;
   text-overflow: ellipsis;
@@ -1666,6 +2002,8 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .esoteric .spells-list .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: right;
 }
@@ -1691,6 +2029,8 @@ section.highlight {
   background-image: url("../../../icons/svg/d20-black.svg") !important;
 }
 .hm3 .esoteric .psionics-list .psionic .psionic-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -1698,28 +2038,40 @@ section.highlight {
   display: block;
 }
 .hm3 .esoteric .psionics-list .psionic-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .esoteric .psionics-list .psionic-fatigue {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 50px;
   flex: 0 0 50px;
   text-align: center;
 }
 .hm3 .esoteric .psionics-list .psionic-sb {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 35px;
   flex: 0 0 35px;
   text-align: center;
 }
 .hm3 .esoteric .psionics-list .psionic-ml {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 35px;
   flex: 0 0 35px;
   text-align: center;
 }
 .hm3 .esoteric .psionics-list .psionic-eml {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .esoteric .psionics-list .psionic-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 150;
   flex: 1 0 150;
   padding-left: 10px;
   text-overflow: ellipsis;
@@ -1727,6 +2079,8 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .esoteric .psionics-list .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: right;
 }
@@ -1734,7 +2088,11 @@ section.highlight {
   color: #4b4a44;
 }
 .hm3 .armorlocation .adv-setting {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
   height: 26px;
 }
@@ -1754,6 +2112,8 @@ section.highlight {
   border-bottom: 1px solid #BBB;
 }
 .hm3 .armorlocations-list .armorlocation .armorlocation-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -1761,12 +2121,16 @@ section.highlight {
   display: block;
 }
 .hm3 .armorlocations-list .armorlocation-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 115px;
   flex: 0 0 115px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .armorlocations-list .armorlocation-layers {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 120px;
   flex: 0 0 120px;
   text-align: left;
   padding: 3px;
@@ -1775,26 +2139,38 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .armorlocations-list .armorlocation-quality {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .armorlocations-list .armorlocation-blunt {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .armorlocations-list .armorlocation-edged {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .armorlocations-list .armorlocation-piercing {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .armorlocations-list .armorlocation-fire {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 25px;
   flex: 0 0 25px;
   text-align: center;
 }
 .hm3 .armorlocations-list .armorlocation-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 150px;
   flex: 1 0 150px;
   padding-left: 10px;
   text-overflow: ellipsis;
@@ -1802,6 +2178,8 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .armorlocations-list .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 86px;
   flex: 0 0 86px;
   text-align: right;
 }
@@ -1818,6 +2196,8 @@ section.highlight {
   border-bottom: 1px solid #bbb;
 }
 .hm3 .armor-list .armor .armor-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -1825,22 +2205,30 @@ section.highlight {
   display: block;
 }
 .hm3 .armor-list .armor-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 150px;
   flex: 0 0 150px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .armor-list .armor-name-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .armor-list .armor-qty {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .armor-list .armor-material {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 80px;
   flex: 0 0 80px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1848,18 +2236,26 @@ section.highlight {
   padding-left: 3px;
 }
 .hm3 .armor-list .armor-quality {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .armor-list .armor-weight {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .armor-list .armor-value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .armor-list .armor-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 50px;
   flex: 1 0 50px;
   padding-left: 10px;
   text-overflow: ellipsis;
@@ -1867,6 +2263,8 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .armor-list .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 70px;
   flex: 0 0 70px;
   text-align: right;
 }
@@ -1906,6 +2304,8 @@ section.highlight {
   border-bottom: 1px solid #bbb;
 }
 .hm3 .gear-list .gear .gear-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 24px;
   flex: 0 0 24px;
   margin-right: 5px;
 }
@@ -1913,34 +2313,48 @@ section.highlight {
   display: block;
 }
 .hm3 .gear-list .gear-name {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .gear-list .gear-name-inv {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 200px;
   flex: 0 0 200px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .gear-list .gear-type {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 80px;
   flex: 0 0 80px;
   text-align: center;
 }
 .hm3 .gear-list .gear-qty {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .gear-list .gear-weight {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .gear-list .gear-value {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 40px;
   flex: 0 0 40px;
   text-align: center;
 }
 .hm3 .gear-list .gear-capacity {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 140px;
   flex: 0 0 140px;
   text-align: right;
   padding-right: 10px;
@@ -1953,6 +2367,8 @@ section.highlight {
   font-weight: bold;
 }
 .hm3 .gear-list .gear-notes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 60px;
   flex: 1 0 60px;
   padding-left: 10px;
   text-overflow: ellipsis;
@@ -1960,6 +2376,8 @@ section.highlight {
   overflow: hidden;
 }
 .hm3 .gear-list .item-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 55px;
   flex: 0 0 55px;
   text-align: right;
 }
@@ -1974,18 +2392,26 @@ section.highlight {
 }
 .hm3 .armorgear-location {
   height: 31px;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
 }
 .hm3 .armorgear-location label {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 60px;
   flex: 0 0 60px;
   font-weight: bold;
   text-transform: uppercase;
   padding-right: 5px;
 }
 .hm3 .armorgear-location select {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 60px;
   flex: 0 0 60px;
 }
 .hm3 .armorgear-location .armorgear-location-add {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   font-weight: bold;
   padding: 2px 0 0 5px;
@@ -2012,6 +2438,8 @@ section.highlight {
 .hm3 .effects .effects-list .effects-header {
   margin: 2px 0;
   padding: 0;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   background: rgba(0, 0, 0, 0.05);
   border: 2px groove #eeede0;
@@ -2035,6 +2463,8 @@ section.highlight {
   padding-left: 5px;
 }
 .hm3 .effects .effects-list .effects-header .effect-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: right;
   padding-right: 5px;
@@ -2054,6 +2484,8 @@ section.highlight {
   border-bottom: 1px solid #c9c7b8;
 }
 .hm3 .effects .effects-list .effect .effect-image {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 30px;
   flex: 0 0 30px;
   background-size: 30px;
   margin-right: 5px;
@@ -2088,28 +2520,38 @@ section.highlight {
   border-right: 1px solid #c9c7b8;
 }
 .hm3 .effects .effects-list .effect-duration {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 100px;
   flex: 0 0 100px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .effects .effects-list .effect-source {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 100px;
   flex: 0 0 100px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .effects .effects-list .effect-changes {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 0 60px;
   flex: 1 0 60px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 .hm3 .effects .effects-list .effect-controls {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 45px;
   flex: 0 0 45px;
   text-align: right;
 }
 .hm3 .effects .effects-list .effect-controls .effect-control {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 22px;
   flex: 0 0 22px;
   font-size: 12px;
   text-align: right;
@@ -2122,10 +2564,14 @@ section.highlight {
   color: #4b4a44;
 }
 .hm3 .effects .effects-list .effect-controls-wide {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 65px;
   flex: 0 0 65px;
   text-align: right;
 }
 .hm3 .effects .effects-list .effect-controls-wide .effect-control {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 22px;
   flex: 0 0 22px;
   font-size: 12px;
   text-align: right;
@@ -2148,5 +2594,3 @@ section.highlight {
   border: 2px groove #eeede0;
   margin-top: 5px;
 }
-
-/*# sourceMappingURL=hm3.css.map */
