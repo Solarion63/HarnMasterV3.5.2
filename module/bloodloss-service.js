@@ -1,8 +1,17 @@
-import { bloodlossIsFatal, elapsedBleeding } from "./bloodloss-rules.js";
+import {
+  BLOODLOSS_HEAL_RATE,
+  BLOOD_REGENERATION_INTERVAL_SECONDS,
+  bloodRegenerationEligibility,
+  bloodlossIsFatal,
+  elapsedBleeding,
+  resolveBloodRegeneration
+} from "./bloodloss-rules.js";
 
 const BLEEDING_EFFECT_FLAG = "bleedingInjury";
 const BLOODLOSS_ITEM_FLAG = "bloodloss";
 const DEFAULT_BLEED_RATE = 1;
+const REGEN_AVAILABLE_FLAG = "bloodRegenerationAvailableAt";
+const REGEN_LAST_ROLL_FLAG = "bloodRegenerationLastRolledAt";
 let worldTimeProcessing = Promise.resolve();
 
 function activeGmOwnsProcessing() {
@@ -117,23 +126,39 @@ async function markSourceInjuryNotBleeding(actor, effect) {
   });
 }
 
+async function normalizeBloodlossItem(item) {
+  if (!item) return null;
+  const update = {};
+  if (Number(item.system.healRate) !== BLOODLOSS_HEAL_RATE) {
+    update["system.healRate"] = BLOODLOSS_HEAL_RATE;
+  }
+  if (item.system.isBloodloss !== true) update["system.isBloodloss"] = true;
+  if (item.getFlag("hm3", BLOODLOSS_ITEM_FLAG) !== true) {
+    update[`flags.hm3.${BLOODLOSS_ITEM_FLAG}`] = true;
+  }
+  if (Object.keys(update).length) await item.update(update);
+  return item;
+}
+
 async function ensureBloodlossItem(actor) {
   const existing = bloodlossItem(actor);
-  if (existing) return existing;
+  if (existing) return normalizeBloodlossItem(existing);
 
+  const worldTime = Number(game.time?.worldTime) || 0;
   const created = await actor.createEmbeddedDocuments("Item", [{
     name: "Bloodloss",
     type: "injury",
     system: {
       severity: "",
       injuryLevel: 0,
-      healRate: 0,
+      healRate: BLOODLOSS_HEAL_RATE,
       isBloodloss: true,
       notes: "Accumulated Blood Points from bleeding injuries."
     },
     flags: {
       hm3: {
-        [BLOODLOSS_ITEM_FLAG]: true
+        [BLOODLOSS_ITEM_FLAG]: true,
+        [REGEN_AVAILABLE_FLAG]: worldTime + BLOOD_REGENERATION_INTERVAL_SECONDS
       }
     }
   }]);
@@ -161,6 +186,80 @@ export class BloodlossService {
 
   static bleedingEffects(actor) {
     return bleedingEffects(actor);
+  }
+
+  /**
+   * Ensure the system-owned Bloodloss Injury carries the authoritative H6
+   * Healing Rate. Existing worlds are normalized lazily without inventing a
+   * cooldown flag; legacy Bloodloss Injuries are therefore immediately
+   * eligible for their first automated regeneration roll after upgrade.
+   */
+  static async prepareBloodRegeneration(actor) {
+    const item = bloodlossItem(actor);
+    if (!item) return null;
+    return normalizeBloodlossItem(item);
+  }
+
+  static regenerationEligibility(actor, worldTime = Number(game.time?.worldTime) || 0) {
+    const item = bloodlossItem(actor);
+    if (!item) return { eligible: false, remainingSeconds: 0, item: null };
+    const eligibility = bloodRegenerationEligibility({
+      availableAt: item.getFlag("hm3", REGEN_AVAILABLE_FLAG),
+      worldTime
+    });
+    return { ...eligibility, item };
+  }
+
+  /**
+   * Apply one completed Blood Regeneration roll to the canonical Bloodloss
+   * Injury. Every completed roll consumes the five-day interval, including
+   * failed rolls, while successful rolls reduce Blood Points according to the
+   * HM3 result table.
+   */
+  static async applyRegeneration(actor, resultCode, worldTime = Number(game.time?.worldTime) || 0) {
+    const item = await BloodlossService.prepareBloodRegeneration(actor);
+    if (!item) {
+      return { applied: false, reason: "no-bloodloss", totalBloodloss: 0, reduction: 0 };
+    }
+
+    const now = Number(worldTime);
+    const normalizedWorldTime = Number.isFinite(now) ? now : 0;
+    const eligibility = bloodRegenerationEligibility({
+      availableAt: item.getFlag("hm3", REGEN_AVAILABLE_FLAG),
+      worldTime: normalizedWorldTime
+    });
+    if (!eligibility.eligible) {
+      return {
+        applied: false,
+        reason: "cooldown",
+        remainingSeconds: eligibility.remainingSeconds,
+        totalBloodloss: Math.max(0, Number(item.system.injuryLevel) || 0),
+        reduction: 0
+      };
+    }
+
+    const resolution = resolveBloodRegeneration({
+      bloodloss: item.system.injuryLevel,
+      resultCode
+    });
+    const availableAt = normalizedWorldTime + BLOOD_REGENERATION_INTERVAL_SECONDS;
+
+    await item.update({
+      "system.injuryLevel": resolution.totalBloodloss,
+      "system.healRate": BLOODLOSS_HEAL_RATE,
+      "system.isBloodloss": true,
+      [`flags.hm3.${BLOODLOSS_ITEM_FLAG}`]: true,
+      [`flags.hm3.${REGEN_LAST_ROLL_FLAG}`]: normalizedWorldTime,
+      [`flags.hm3.${REGEN_AVAILABLE_FLAG}`]: availableAt
+    });
+
+    return {
+      applied: true,
+      reason: "resolved",
+      resultCode: String(resultCode ?? "").toUpperCase(),
+      availableAt,
+      ...resolution
+    };
   }
 
   static async startBleeding(actor, injury, { rate = DEFAULT_BLEED_RATE } = {}) {
@@ -248,6 +347,7 @@ export class BloodlossService {
     const totalBloodloss = current + bloodlossAdded;
     await item.update({
       "system.injuryLevel": totalBloodloss,
+      "system.healRate": BLOODLOSS_HEAL_RATE,
       "system.isBloodloss": true,
       "flags.hm3.bloodloss": true
     });
