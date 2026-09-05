@@ -1,5 +1,9 @@
 import * as macros from "./macros.js";
-import { shockRoll } from "./shock-workflow-v14.js";
+import {
+  completeOutOfCombatShockRecovery,
+  shockRoll
+} from "./shock-workflow-v14.js";
+import { ShockService } from "./shock-service.js";
 
 function rootsFromRender(html) {
   if (!html) return [];
@@ -44,6 +48,17 @@ function resolveActor(button) {
 async function performConsequence(button) {
   const actor = resolveActor(button);
   if (!actor) return null;
+
+  if (button.dataset.action === "shock-clear") {
+    if (!game.user.isGM) {
+      ui.notifications.warn("Only a GM may clear an automated Shock recovery state.");
+      return null;
+    }
+    const cleared = await ShockService.cancelUnconsciousRecovery(actor);
+    if (cleared) ui.notifications.info(`${actor.name}'s automated Shock recovery state was cleared.`);
+    return cleared;
+  }
+
   if (!actor.isOwner) {
     ui.notifications.warn(`You do not have permission to roll this consequence for ${actor.name}.`);
     return null;
@@ -53,6 +68,8 @@ async function performConsequence(button) {
     case "shock":
     case "shock-recovery":
       return shockRoll(false, actor);
+    case "shock-out-of-combat-recover":
+      return completeOutOfCombatShockRecovery(actor, false);
     case "stumble":
       return macros.stumbleRoll(false, actor);
     case "fumble":
@@ -77,7 +94,7 @@ function bindConsequenceButton(button) {
     performConsequence(button)
       .catch(error => {
         console.error(`HM3 | ${label} consequence failed`, error);
-        ui.notifications.error(`${label} roll failed. See the console for details.`);
+        ui.notifications.error(`${label} failed. See the console for details.`);
       })
       .finally(() => {
         button.disabled = false;
@@ -90,7 +107,7 @@ function bindConsequenceButton(button) {
 Hooks.on("renderChatMessageHTML", (_message, html) => {
   for (const root of rootsFromRender(html)) {
     for (const button of root.querySelectorAll(
-      '.hm3.chat-card button[data-action="shock"], .hm3.chat-card button[data-action="shock-recovery"], .hm3.chat-card button[data-action="stumble"], .hm3.chat-card button[data-action="fumble"]'
+      '.hm3.chat-card button[data-action="shock"], .hm3.chat-card button[data-action="shock-recovery"], .hm3.chat-card button[data-action="shock-out-of-combat-recover"], .hm3.chat-card button[data-action="shock-clear"], .hm3.chat-card button[data-action="stumble"], .hm3.chat-card button[data-action="fumble"]'
     )) {
       bindConsequenceButton(button);
     }
