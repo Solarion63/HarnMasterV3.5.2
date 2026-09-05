@@ -82,3 +82,35 @@ export function bloodRegenerationEligibility({ availableAt, worldTime }) {
     remainingSeconds: Math.max(0, next - now)
   };
 }
+
+/**
+ * Determine whether an eligibility reminder should be emitted for the current
+ * Blood Regeneration window. The window key is stable until another completed
+ * roll schedules a new five-day interval, which prevents reminder spam while
+ * still allowing one new reminder for each future window.
+ */
+export function bloodRegenerationReminderNeeded({
+  bloodloss,
+  availableAt,
+  lastReminderFor,
+  worldTime
+}) {
+  if (Math.max(0, Number(bloodloss) || 0) <= 0) {
+    return { needed: false, windowKey: null };
+  }
+
+  const eligibility = bloodRegenerationEligibility({ availableAt, worldTime });
+  if (!eligibility.eligible) {
+    return { needed: false, windowKey: null };
+  }
+
+  const numericAvailableAt = Number(availableAt);
+  const windowKey = Number.isFinite(numericAvailableAt)
+    ? String(numericAvailableAt)
+    : "legacy-immediate";
+
+  return {
+    needed: String(lastReminderFor ?? "") !== windowKey,
+    windowKey
+  };
+}
