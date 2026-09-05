@@ -10,6 +10,15 @@ function rootsFromRender(html) {
 }
 
 function resolveActor(button) {
+  if (button.dataset.actorUuid) {
+    const actor = fromUuidSync(button.dataset.actorUuid);
+    if (!actor) {
+      ui.notifications.warn("The actor for this Shock recovery could not be found.");
+      return null;
+    }
+    return actor;
+  }
+
   if (button.dataset.tokenId) {
     const token = canvas.tokens.get(button.dataset.tokenId);
     if (!token) {
@@ -42,6 +51,7 @@ async function performConsequence(button) {
 
   switch (button.dataset.action) {
     case "shock":
+    case "shock-recovery":
       return shockRoll(false, actor);
     case "stumble":
       return macros.stumbleRoll(false, actor);
@@ -60,7 +70,10 @@ function bindConsequenceButton(button) {
     event.stopImmediatePropagation();
     button.disabled = true;
 
-    const label = button.dataset.action[0].toUpperCase() + button.dataset.action.slice(1);
+    const label = button.dataset.action
+      .split("-")
+      .map(part => part[0].toUpperCase() + part.slice(1))
+      .join(" ");
     performConsequence(button)
       .catch(error => {
         console.error(`HM3 | ${label} consequence failed`, error);
@@ -77,7 +90,7 @@ function bindConsequenceButton(button) {
 Hooks.on("renderChatMessageHTML", (_message, html) => {
   for (const root of rootsFromRender(html)) {
     for (const button of root.querySelectorAll(
-      '.hm3.chat-card button[data-action="shock"], .hm3.chat-card button[data-action="stumble"], .hm3.chat-card button[data-action="fumble"]'
+      '.hm3.chat-card button[data-action="shock"], .hm3.chat-card button[data-action="shock-recovery"], .hm3.chat-card button[data-action="stumble"], .hm3.chat-card button[data-action="fumble"]'
     )) {
       bindConsequenceButton(button);
     }
