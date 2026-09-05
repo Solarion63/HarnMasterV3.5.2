@@ -1,20 +1,27 @@
 import assert from "node:assert/strict";
 import {
   SHOCK_INJURY_HEAL_RATE,
+  SHOCK_OUT_OF_COMBAT_RECOVERY_FORMULA,
   SHOCK_PHASES,
   SHOCK_STATES,
   resolveShockOutcome,
   shockDiceCount,
-  shockPhaseForState
+  shockPhaseForState,
+  shockRecoveryAvailableAt
 } from "../module/shock-rules.js";
 
 assert.equal(SHOCK_INJURY_HEAL_RATE, 5);
+assert.equal(SHOCK_OUT_OF_COMBAT_RECOVERY_FORMULA, "2d6");
 
 assert.equal(shockDiceCount(3), 3);
 assert.equal(shockDiceCount(2.9), 2);
 assert.equal(shockDiceCount(0), 0);
 assert.equal(shockDiceCount(-4), 0);
 assert.equal(shockDiceCount("bad"), 0);
+
+assert.equal(shockRecoveryAvailableAt(1000, 7), 1420);
+assert.equal(shockRecoveryAvailableAt(-10, 2), 120);
+assert.equal(shockRecoveryAvailableAt(1000, -4), 1000);
 
 assert.equal(shockPhaseForState(null), SHOCK_PHASES.INITIAL);
 assert.equal(shockPhaseForState(SHOCK_STATES.UNCONSCIOUS), SHOCK_PHASES.RECOVERY);
