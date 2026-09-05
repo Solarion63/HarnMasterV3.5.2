@@ -1,11 +1,13 @@
 import { DiceHM3 } from "./dice-hm3.js";
 import { callOnHooks, shockRoll as legacyShockRoll } from "./macros.js";
 import {
+  SHOCK_OUT_OF_COMBAT_RECOVERY_FORMULA,
   SHOCK_PHASES,
   SHOCK_STATES,
   resolveShockOutcome,
   shockDiceCount,
-  shockPhaseForState
+  shockPhaseForState,
+  shockRecoveryAvailableAt
 } from "./shock-rules.js";
 import { ShockService } from "./shock-service.js";
 
@@ -136,15 +138,43 @@ async function performShockTest(actor, phase, noDialog) {
   return result;
 }
 
+export async function scheduleOutOfCombatShockRecovery(actor) {
+  if (!actor || ShockService.workflowState(actor) !== SHOCK_STATES.UNCONSCIOUS) return null;
+  const existing = ShockService.recoveryAvailableAt(actor);
+  if (existing) return existing;
+
+  const durationRoll = await new Roll(SHOCK_OUT_OF_COMBAT_RECOVERY_FORMULA).evaluate();
+  const durationMinutes = Math.max(1, Number(durationRoll.total) || 1);
+  const availableAt = shockRecoveryAvailableAt(game.time?.worldTime, durationMinutes);
+  await ShockService.scheduleOutOfCombatRecovery(actor, availableAt);
+
+  await durationRoll.toMessage({
+    speaker: speakerForActor(actor),
+    flavor: `<b>Shock Unconscious Duration</b><br>${durationMinutes} minutes`
+  });
+  await postConsequence(actor, {
+    title: "Out-of-Combat Shock Recovery",
+    result: `Unconscious for ${durationMinutes} minutes`,
+    detail: "When that time has passed, the character regains consciousness and must make the required follow-up Shock Roll.",
+    clearAction: "Clear Shock Recovery"
+  });
+  return availableAt;
+}
+
 async function resolveInitial(actor, result) {
   const outcome = resolveShockOutcome(SHOCK_PHASES.INITIAL, result.isSuccess);
   if (outcome.nextState === SHOCK_STATES.UNCONSCIOUS) {
     await ShockService.enterUnconscious(actor);
-    await postConsequence(actor, {
-      title: "Shock Roll Failed",
-      result: "Unconscious and Prone",
-      detail: "In combat, recovery is attempted on the character's subsequent turns."
-    });
+    if (!game.combat?.started) {
+      await scheduleOutOfCombatShockRecovery(actor);
+    } else {
+      await postConsequence(actor, {
+        title: "Shock Roll Failed",
+        result: "Unconscious and Prone",
+        detail: "In combat, recovery is attempted on the character's subsequent turns.",
+        clearAction: "Clear Shock Recovery"
+      });
+    }
   } else {
     await ShockService.clearTransientShockState(actor);
     await postConsequence(actor, {
@@ -163,7 +193,8 @@ async function resolveRecovery(actor, result, noDialog) {
     await postConsequence(actor, {
       title: "Shock Recovery Failed",
       result: "Remains Unconscious",
-      detail: "Another recovery attempt is due on the character's next combat turn."
+      detail: "Another recovery attempt is due on the character's next combat turn.",
+      clearAction: "Clear Shock Recovery"
     });
     return outcome;
   }
@@ -208,6 +239,22 @@ async function resolveFollowUp(actor, result) {
     });
   }
   return outcome;
+}
+
+export async function completeOutOfCombatShockRecovery(actor, noDialog = false) {
+  if (!actor || ShockService.workflowState(actor) !== SHOCK_STATES.UNCONSCIOUS) return null;
+
+  await ShockService.markFollowUp(actor);
+  await postConsequence(actor, {
+    title: "Consciousness Regained",
+    result: "Follow-up Shock Roll Required",
+    detail: "The out-of-combat unconscious period has ended. The character regains consciousness and must make the required follow-up Shock Roll."
+  });
+
+  const followUp = await performShockTest(actor, SHOCK_PHASES.FOLLOW_UP, noDialog);
+  if (!followUp) return null;
+  await resolveFollowUp(actor, followUp);
+  return followUp;
 }
 
 export async function shockRoll(noDialog = false, myActor = null) {
