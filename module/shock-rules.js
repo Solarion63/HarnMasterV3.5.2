@@ -1,4 +1,5 @@
 export const SHOCK_INJURY_HEAL_RATE = 5;
+export const SHOCK_OUT_OF_COMBAT_RECOVERY_FORMULA = "2d6";
 
 export const SHOCK_STATES = Object.freeze({
   UNCONSCIOUS: "unconscious",
@@ -27,6 +28,12 @@ export function shockPhaseForState(state) {
     default:
       return SHOCK_PHASES.INITIAL;
   }
+}
+
+export function shockRecoveryAvailableAt(worldTime, durationMinutes) {
+  const now = Math.max(0, Number(worldTime) || 0);
+  const minutes = Math.max(0, Number(durationMinutes) || 0);
+  return now + (minutes * 60);
 }
 
 export function resolveShockOutcome(phase, isSuccess) {
