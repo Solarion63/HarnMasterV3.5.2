@@ -70,6 +70,7 @@ jobs:
           test -f module/shock-rules.js
           test -f module/shock-service.js
           test -f module/shock-workflow-v14.js
+          test -f module/shock-api-v14.js
           test -f templates/chat/shock-consequence-card.html
           test -d templates
           test -d packs
@@ -97,6 +98,14 @@ jobs:
           }
           if (!manifest.esmodules?.includes("module/blood-regeneration-v14.js")) {
             throw new Error("blood-regeneration-v14.js is not loaded by system.json");
+          }
+          if (!manifest.esmodules?.includes("module/shock-api-v14.js")) {
+            throw new Error("shock-api-v14.js is not loaded by system.json");
+          }
+          const hm3Index = manifest.esmodules.indexOf("module/hm3.js");
+          const shockApiIndex = manifest.esmodules.indexOf("module/shock-api-v14.js");
+          if (shockApiIndex <= hm3Index) {
+            throw new Error("shock-api-v14.js must load after module/hm3.js");
           }
 
           const config = fs.readFileSync("module/config.js", "utf8");
