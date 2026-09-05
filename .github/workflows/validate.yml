@@ -48,6 +48,9 @@ jobs:
       - name: Run Blood Regeneration regression tests
         run: node scripts/test-blood-regeneration.mjs
 
+      - name: Run Shock rules regression tests
+        run: node scripts/test-shock-rules.mjs
+
       - name: Run ActorDelta migration regression tests
         run: node scripts/test-migration-operators.mjs
 
@@ -64,6 +67,10 @@ jobs:
           test -f module/hm3.js
           test -f module/blood-regeneration-v14.js
           test -f templates/chat/blood-regeneration-card.html
+          test -f module/shock-rules.js
+          test -f module/shock-service.js
+          test -f module/shock-workflow-v14.js
+          test -f templates/chat/shock-consequence-card.html
           test -d templates
           test -d packs
           node <<'NODE'
@@ -105,5 +112,15 @@ jobs:
             if (!config.includes(marker)) {
               throw new Error(`module/config.js is missing required section: ${marker}`);
             }
+          }
+
+          const combatConsequences = fs.readFileSync("module/combat-consequences-v14.js", "utf8");
+          if (!combatConsequences.includes('from "./shock-workflow-v14.js"')) {
+            throw new Error("combat Shock consequences are not routed through shock-workflow-v14.js");
+          }
+
+          const actorCombat = fs.readFileSync("module/actor/actor-combat-v2.js", "utf8");
+          if (!actorCombat.includes('from "../shock-workflow-v14.js"')) {
+            throw new Error("Actor-sheet Shock rolls are not routed through shock-workflow-v14.js");
           }
           NODE
