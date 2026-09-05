@@ -35,6 +35,7 @@
     "module/hm3.js",
     "module/shock-api-v14.js",
     "module/shock-turn-v14.js",
+    "module/shock-out-of-combat-v14.js",
     "module/blood-regeneration-v14.js",
     "module/blood-regeneration-reminder-v14.js",
     "module/macro-create-v14.js"
@@ -75,7 +76,7 @@
   },
   "packFolders": [
     {
-      "name": "H\u00e2rnMaster 3 System",
+      "name": "HârnMaster 3 System",
       "sorting": "m",
       "packs": ["character", "possessions", "esoteric", "system-help"],
       "folders": []
@@ -102,8 +103,8 @@
       "label": "Esoterics",
       "type": "Item",
       "name": "esoteric",
-      "system": "hm3",
       "path": "packs/esoteric",
+      "system": "hm3",
       "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
