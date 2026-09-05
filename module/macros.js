@@ -180,9 +180,9 @@ export async function testAbilityD6Roll(ability, noDialog = false, myActor = nul
     if (!actorInfo) return null;
 
     let abilities;
-    if (actorInfo.actor.type === "character") abilities = Object.keys(game.model.Actor.character.abilities);
-    else if (actorInfo.actor.type === "creature") abilities = Object.keys(game.model.Actor.creature.abilities);
-    else {
+    if (["character", "creature"].includes(actorInfo.actor.type)) {
+        abilities = Object.keys(actorInfo.actor.system?.abilities ?? {});
+    } else {
         ui.notifications.warn(`${actorInfo.actor.name} does not have ability scores.`);
         return null;
     }
@@ -215,9 +215,9 @@ export async function testAbilityD100Roll(ability, noDialog = false, myActor = n
     if (!actorInfo) return null;
 
     let abilities;
-    if (actorInfo.actor.type === "character") abilities = Object.keys(game.model.Actor.character.abilities);
-    else if (actorInfo.actor.type === "creature") abilities = Object.keys(game.model.Actor.creature.abilities);
-    else {
+    if (["character", "creature"].includes(actorInfo.actor.type)) {
+        abilities = Object.keys(actorInfo.actor.system?.abilities ?? {});
+    } else {
         ui.notifications.warn(`${actorInfo.actor.name} does not have ability scores.`);
         return null;
     }
@@ -272,7 +272,7 @@ export async function weaponDamageRoll(itemName, aspect = null, myActor = null) 
 
     if (!Hooks.call("hm3.preDamageRoll", rollData, actor)) return null;
     const result = await DiceHM3.damageRoll(rollData);
-    if (result) callOnHooks("hm3.onDamageRoll", actor, result, rollData);
+    if (result) callOnHooks("hm3.onDamageRoll", actorInfo.actor, result, rollData);
     return result;
 }
 
