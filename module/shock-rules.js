@@ -31,7 +31,8 @@ export function shockPhaseForState(state) {
 }
 
 export function shockRecoveryAvailableAt(worldTime, durationMinutes) {
-  const now = Math.max(0, Number(worldTime) || 0);
+  const numericWorldTime = Number(worldTime);
+  const now = Number.isFinite(numericWorldTime) ? numericWorldTime : 0;
   const minutes = Math.max(0, Number(durationMinutes) || 0);
   return now + (minutes * 60);
 }
