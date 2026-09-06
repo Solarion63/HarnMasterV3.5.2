@@ -165,7 +165,7 @@ async function resolveInitial(actor, result) {
   const outcome = resolveShockOutcome(SHOCK_PHASES.INITIAL, result.isSuccess);
   if (outcome.nextState === SHOCK_STATES.UNCONSCIOUS) {
     await ShockService.enterUnconscious(actor);
-    if (!game.combat?.started) {
+    if (!ShockService.isInStartedCombat(actor)) {
       await scheduleOutOfCombatShockRecovery(actor);
     } else {
       await postConsequence(actor, {
@@ -190,12 +190,16 @@ async function resolveRecovery(actor, result, noDialog) {
   const outcome = resolveShockOutcome(SHOCK_PHASES.RECOVERY, result.isSuccess);
   if (outcome.nextState === SHOCK_STATES.UNCONSCIOUS) {
     await ShockService.enterUnconscious(actor);
-    await postConsequence(actor, {
-      title: "Shock Recovery Failed",
-      result: "Remains Unconscious",
-      detail: "Another recovery attempt is due on the character's next combat turn.",
-      clearAction: "Clear Shock Recovery"
-    });
+    if (!ShockService.isInStartedCombat(actor)) {
+      await scheduleOutOfCombatShockRecovery(actor);
+    } else {
+      await postConsequence(actor, {
+        title: "Shock Recovery Failed",
+        result: "Remains Unconscious",
+        detail: "Another recovery attempt is due on the character's next combat turn.",
+        clearAction: "Clear Shock Recovery"
+      });
+    }
     return outcome;
   }
 
