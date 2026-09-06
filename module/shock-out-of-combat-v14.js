@@ -74,10 +74,20 @@ async function postPlayerReminder(actor, availableAt) {
   return true;
 }
 
+async function ensureRecoverySchedule(actor, worldTime) {
+  if (ShockService.recoveryAvailableAt(actor)) return;
+  if (ShockService.isInStartedCombat(actor)) return;
+
+  console.warn(`HM3 | ${actor.name} is unconscious from Shock without an out-of-combat recovery schedule; creating one now.`);
+  await scheduleOutOfCombatShockRecovery(actor);
+}
+
 async function processActor(actor, worldTime) {
   if (!["character", "creature"].includes(actor.type)) return;
   if (ShockService.workflowState(actor) !== SHOCK_STATES.UNCONSCIOUS) return;
+  if (ShockService.isInStartedCombat(actor)) return;
 
+  await ensureRecoverySchedule(actor, worldTime);
   const availableAt = ShockService.recoveryAvailableAt(actor);
   if (!availableAt || worldTime < availableAt) return;
 
@@ -91,7 +101,6 @@ async function processActor(actor, worldTime) {
 async function process(worldTime = Number(game.time?.worldTime) || 0) {
   if (!game.settings.get("hm3", "automateShockEffects")) return;
   if (!authoritativeGm()) return;
-  if (game.combat?.started) return;
 
   for (const actor of actorsForProcessing()) {
     try {
@@ -103,13 +112,21 @@ async function process(worldTime = Number(game.time?.worldTime) || 0) {
 }
 
 function queueProcess(worldTime) {
+  const numericWorldTime = Number(worldTime);
+  const effectiveWorldTime = Number.isFinite(numericWorldTime)
+    ? numericWorldTime
+    : Number(game.time?.worldTime) || 0;
+
   processing = processing
-    .then(() => process(worldTime))
+    .then(() => process(effectiveWorldTime))
     .catch(error => console.error("HM3 | Out-of-combat Shock processing failed.", error));
 }
 
 Hooks.once("ready", () => queueProcess(Number(game.time?.worldTime) || 0));
-Hooks.on("updateWorldTime", worldTime => queueProcess(worldTime));
+Hooks.on("updateWorldTime", (...args) => {
+  const worldTime = args.find(value => Number.isFinite(Number(value)));
+  queueProcess(worldTime);
+});
 
 Hooks.on("deleteCombat", combat => {
   if (!game.settings.get("hm3", "automateShockEffects")) return;
