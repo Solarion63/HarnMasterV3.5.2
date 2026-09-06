@@ -1,5 +1,6 @@
 import * as macros from "../macros.js";
 import { performAutomatedAttack } from "../combat-attack-v14.js";
+import { shockRoll } from "../shock-workflow-v14.js";
 
 function itemFromControl(sheet, control) {
   const row = control.closest(".item");
@@ -60,7 +61,7 @@ async function automatedAttack(sheet, control, expectedType) {
 
 function bindCombatControls(sheet, root) {
   bind(root, ".dodge-roll", "Dodge roll", event => macros.dodgeRoll(fastForward(event), sheet.actor));
-  bind(root, ".shock-roll", "Shock roll", event => macros.shockRoll(fastForward(event), sheet.actor));
+  bind(root, ".shock-roll", "Shock roll", event => shockRoll(fastForward(event), sheet.actor));
   bind(root, ".stumble-roll", "Stumble roll", event => macros.stumbleRoll(fastForward(event), sheet.actor));
   bind(root, ".fumble-roll", "Fumble roll", event => macros.fumbleRoll(fastForward(event), sheet.actor));
   bind(root, ".damage-roll", "Generic damage roll", () => macros.genericDamageRoll(sheet.actor));

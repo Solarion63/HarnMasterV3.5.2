@@ -1,0 +1,22 @@
+<div class="hm3 chat-card shock-recovery-reminder-card">
+  <header class="card-header flexrow">
+    <h3>Shock Recovery Required</h3>
+  </header>
+  <div class="card-content">
+    <p><strong>{{actorName}}</strong> is unconscious and must make a Shock Recovery Roll this turn.</p>
+    <div><strong>Roll:</strong> {{diceCount}}d6</div>
+    <div><strong>Target:</strong> Endurance {{endurance}}</div>
+  </div>
+  <div class="card-buttons">
+    <button type="button"
+            data-action="shock-recovery"
+            data-actor-uuid="{{actorUuid}}">
+      Make Shock Recovery Roll
+    </button>
+    <button type="button"
+            data-action="shock-clear"
+            data-actor-uuid="{{actorUuid}}">
+      Clear Shock Recovery
+    </button>
+  </div>
+</div>

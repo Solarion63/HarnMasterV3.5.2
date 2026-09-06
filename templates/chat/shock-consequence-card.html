@@ -1,0 +1,30 @@
+<div class="hm3 chat-card shock-consequence-card">
+  <header class="card-header flexrow">
+    <h3>{{title}}</h3>
+  </header>
+  <div class="card-content">
+    <div><strong>Actor:</strong> {{actorName}}</div>
+    <div><strong>Result:</strong> {{result}}</div>
+    <div>{{detail}}</div>
+  </div>
+  {{#if nextAction}}
+  <div class="card-buttons">
+    <button type="button"
+            data-action="shock"
+            {{#if tokenId}}data-token-id="{{tokenId}}"{{else}}data-actor-id="{{actorId}}"{{/if}}
+            data-visible-actor-id="{{visibleActorId}}">
+      {{nextAction}}
+    </button>
+  </div>
+  {{/if}}
+  {{#if clearAction}}
+  <div class="card-buttons">
+    <button type="button"
+            data-action="shock-clear"
+            {{#if tokenId}}data-token-id="{{tokenId}}"{{else}}data-actor-id="{{actorId}}"{{/if}}
+            data-visible-actor-id="{{visibleActorId}}">
+      {{clearAction}}
+    </button>
+  </div>
+  {{/if}}
+</div>

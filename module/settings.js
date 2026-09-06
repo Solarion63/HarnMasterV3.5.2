@@ -62,6 +62,15 @@ export const registerSystemSettings = function () {
         type: Boolean
     });
 
+    game.settings.register("hm3", "automateShockEffects", {
+        name: "Automate Shock Effects",
+        hint: "Automatically apply HarnMaster Shock Roll consequences, unconscious recovery, and creation of the H5 Shock injury. Shock recovery after entering Shock is handled separately.",
+        scope: "world",
+        config: true,
+        default: false,
+        type: Boolean
+    });
+
     game.settings.register("hm3", "advancedPhysicianAutomation", {
         name: "Advanced Physician Automation",
         hint: "Enable context-sensitive Physician treatment automation from the Physician skill, including treatment of bleeding wounds and cross-owner patient updates through the HM3 system socket.",
