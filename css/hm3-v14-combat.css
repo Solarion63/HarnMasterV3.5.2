@@ -1,0 +1,258 @@
+/* Foundry VTT v14 Combat-tab refinements. */
+
+.application.hm3.sheet.actor .tab.combat {
+  font-size: 13px;
+}
+
+.application.hm3.sheet.actor .tab.combat > .items-list:first-child {
+  margin: 0 0 6px;
+}
+
+.application.hm3.sheet.actor .tab.combat > .items-list:first-child .items-header {
+  min-height: 28px;
+  border: 1px solid #7a7971;
+  border-bottom: 1px solid #8b1a12;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.application.hm3.sheet.actor .tab.combat > .items-list:first-child .item-name {
+  margin: 0;
+  padding: 0 6px;
+  font-family: "Modesto Condensed", "Palatino Linotype", serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 27px;
+  text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .tab.combat .combat-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 0 6px;
+}
+
+.application.hm3.sheet.actor .tab.combat .combat-stat {
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.combat .combat-stat .item-dice {
+  flex: 0 0 20px;
+  width: 20px;
+  text-align: center;
+}
+
+.application.hm3.sheet.actor .tab.combat .combat-stat-label {
+  flex: 0 1 auto;
+  margin-right: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .tab.combat .combat-stat-value,
+.application.hm3.sheet.actor .tab.combat .combat-eff-fatigue,
+.application.hm3.sheet.actor .tab.combat .combat-fatigue-input {
+  flex: 0 0 auto;
+  min-width: 42px;
+  height: 24px;
+  padding: 2px 5px;
+  border: 0;
+  background: rgba(70, 70, 70, 0.14);
+  line-height: 20px;
+  text-align: center;
+}
+
+.application.hm3.sheet.actor .tab.combat .combat-fatigue-input {
+  width: 30px;
+  min-width: 30px;
+}
+
+.application.hm3.sheet.actor .tab.combat .items-list {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.application.hm3.sheet.actor .tab.combat .items-header {
+  min-height: 28px;
+  border: 1px solid #7a7971;
+  border-bottom-color: #8b1a12;
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 26px;
+}
+
+.application.hm3.sheet.actor .tab.combat .items-header h3 {
+  margin: 0;
+  font-family: "Modesto Condensed", "Palatino Linotype", serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 26px;
+  text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .tab.combat .item-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.application.hm3.sheet.actor .tab.combat .item {
+  min-height: 30px;
+  border-bottom: 1px solid rgba(122, 121, 113, 0.28);
+  align-items: center;
+}
+
+.application.hm3.sheet.actor .tab.combat .item-name {
+  min-width: 0;
+  align-items: center;
+}
+
+.application.hm3.sheet.actor .tab.combat .item-name .item-image {
+  display: block;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin-right: 5px;
+  border: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.application.hm3.sheet.actor .tab.combat .item-name h4 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 28px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.combat .item-detail,
+.application.hm3.sheet.actor .tab.combat .weapon-notes,
+.application.hm3.sheet.actor .tab.combat .injury-notes,
+.application.hm3.sheet.actor .tab.combat .armor-notes {
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 28px;
+  text-align: center;
+}
+
+.application.hm3.sheet.actor .tab.combat .weapon-notes,
+.application.hm3.sheet.actor .tab.combat .injury-notes,
+.application.hm3.sheet.actor .tab.combat .armor-notes {
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.combat .weapon-name {
+  flex: 1 1 150px;
+  min-width: 135px;
+}
+
+.application.hm3.sheet.actor .tab.combat .weapon-qty,
+.application.hm3.sheet.actor .tab.combat .weapon-quality,
+.application.hm3.sheet.actor .tab.combat .weapon-atkmod,
+.application.hm3.sheet.actor .tab.combat .weapon-blunt,
+.application.hm3.sheet.actor .tab.combat .weapon-edged,
+.application.hm3.sheet.actor .tab.combat .weapon-piercing,
+.application.hm3.sheet.actor .tab.combat .weapon-attack,
+.application.hm3.sheet.actor .tab.combat .weapon-defense {
+  flex: 0 0 34px;
+}
+
+.application.hm3.sheet.actor .tab.combat .weapon-atkdef {
+  flex: 0 0 46px;
+  min-width: 46px;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.combat .weapon-notes {
+  flex: 2 1 140px;
+}
+
+.application.hm3.sheet.actor .tab.combat .missile-name {
+  flex: 1 1 130px;
+  min-width: 115px;
+}
+
+.application.hm3.sheet.actor .tab.combat .missile-qty,
+.application.hm3.sheet.actor .tab.combat .missile-skill,
+.application.hm3.sheet.actor .tab.combat .missile-short,
+.application.hm3.sheet.actor .tab.combat .missile-medium,
+.application.hm3.sheet.actor .tab.combat .missile-long,
+.application.hm3.sheet.actor .tab.combat .missile-extreme,
+.application.hm3.sheet.actor .tab.combat .missile-attack {
+  flex: 0 0 50px;
+}
+
+.application.hm3.sheet.actor .tab.combat .missile-notes {
+  flex: 2 1 140px;
+}
+
+.application.hm3.sheet.actor .tab.combat .injury-name,
+.application.hm3.sheet.actor .tab.combat .armor-name {
+  flex: 1 1 200px;
+  min-width: 180px;
+}
+
+.application.hm3.sheet.actor .tab.combat .injury-healrate,
+.application.hm3.sheet.actor .tab.combat .injury-level,
+.application.hm3.sheet.actor .tab.combat .armor-blunt,
+.application.hm3.sheet.actor .tab.combat .armor-edged,
+.application.hm3.sheet.actor .tab.combat .armor-piercing,
+.application.hm3.sheet.actor .tab.combat .armor-fire {
+  flex: 0 0 42px;
+}
+
+.application.hm3.sheet.actor .tab.combat .armor-layers {
+  flex: 1 1 120px;
+  text-align: left;
+}
+
+.application.hm3.sheet.actor .tab.combat .item-controls-wide,
+.application.hm3.sheet.actor .tab.combat .item-controls {
+  flex: 0 0 64px;
+  justify-content: flex-end;
+  padding-right: 4px;
+  text-align: right;
+}
+
+.application.hm3.sheet.actor .tab.combat .item-control {
+  display: inline-flex;
+  width: 20px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.application.hm3.sheet.actor .tab.combat .item-create {
+  width: auto;
+  padding: 0 4px;
+}
+
+.application.hm3.sheet.actor .tab.combat .rollable:hover,
+.application.hm3.sheet.actor .tab.combat .melee-weapon-attack:hover,
+.application.hm3.sheet.actor .tab.combat .missile-weapon-attack:hover,
+.application.hm3.sheet.actor .tab.combat .weapon-attack-roll:hover,
+.application.hm3.sheet.actor .tab.combat .weapon-defend-roll:hover,
+.application.hm3.sheet.actor .tab.combat .weapon-damage-roll:hover,
+.application.hm3.sheet.actor .tab.combat .missile-attack-roll:hover,
+.application.hm3.sheet.actor .tab.combat .missile-damage-roll:hover {
+  color: #000;
+  text-shadow: 0 0 8px red;
+  cursor: pointer;
+}

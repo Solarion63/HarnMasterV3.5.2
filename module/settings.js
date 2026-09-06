@@ -1,3 +1,19 @@
+function registerCombatSoundSetting(key, name, hint) {
+    game.settings.register("hm3", key, {
+        name,
+        hint,
+        scope: "world",
+        config: true,
+        default: "",
+        type: new foundry.data.fields.FilePathField({
+            categories: ["AUDIO"],
+            nullable: false,
+            blank: true,
+            initial: ""
+        })
+    });
+}
+
 export const registerSystemSettings = function () {
     // Track the system version which a migration was last applied
 
@@ -39,10 +55,19 @@ export const registerSystemSettings = function () {
 
     game.settings.register("hm3", "bloodloss", {
         name: "Bloodloss",
-        hint: "Enable optional combat rule that tracks bloodloss as an injury (Combat 14) (partially implemented)",
+        hint: "Enable optional combat rule that tracks bleeding wounds and accumulated Bloodloss (Combat 14)",
         scope: "world",
         config: true,
         default: false,
+        type: Boolean
+    });
+
+    game.settings.register("hm3", "advancedPhysicianAutomation", {
+        name: "Advanced Physician Automation",
+        hint: "Enable context-sensitive Physician treatment automation from the Physician skill, including treatment of bleeding wounds and cross-owner patient updates through the HM3 system socket.",
+        scope: "world",
+        config: true,
+        default: true,
         type: Boolean
     });
 
@@ -95,6 +120,27 @@ export const registerSystemSettings = function () {
         default: true,
         type: Boolean
     });
+
+    registerCombatSoundSetting(
+        "combatSoundAttack",
+        "Combat Sound: Attack",
+        "Optional custom attack sound. Leave blank to use a Foundry core sound."
+    );
+    registerCombatSoundSetting(
+        "combatSoundDodge",
+        "Combat Sound: Dodge",
+        "Optional custom dodge sound. Leave blank to use a Foundry core sound."
+    );
+    registerCombatSoundSetting(
+        "combatSoundBlock",
+        "Combat Sound: Block",
+        "Optional custom block sound. Leave blank to use a Foundry core sound."
+    );
+    registerCombatSoundSetting(
+        "combatSoundInjury",
+        "Combat Sound: Injury",
+        "Optional custom injury sound. Leave blank to use a Foundry core sound."
+    );
 
     game.settings.register("hm3", "distanceUnits", {
         name: "Distance Units",

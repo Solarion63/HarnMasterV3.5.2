@@ -1,22 +1,30 @@
 // Import Modules
 import { HarnMasterActor } from "./actor/actor.js";
-import { HarnMasterCharacterSheet } from "./actor/character-sheet.js";
-import { HarnMasterCreatureSheet } from "./actor/creature-sheet.js"
-import { HarnMasterContainerSheet } from "./actor/container-sheet.js"
+import {
+    HarnMasterCharacterSheetV2,
+    HarnMasterCreatureSheetV2,
+    HarnMasterContainerSheetV2
+} from "./actor/actor-sheet-v2.js";
 import { HarnMasterCombat } from "./hm3-combat.js";
 import { HarnMasterItem } from "./item/item.js";
-import { HarnMasterItemSheet } from "./item/item-sheet.js";
+import { HM3_ITEM_SHEETS_V2 } from "./item/item-sheet-v2.js";
 import { HM3ActiveEffectConfig } from "./hm3-active-effect-config.js";
 import { HM3 } from "./config.js";
 import { registerSystemSettings } from "./settings.js";
 import * as migrations from "./migrations.js";
 import * as macros from "./macros.js";
-import * as combat from "./combat.js";
-import * as effect from "./effect.js";
+import * as combatApi from "./combat-api.js";
 import { DiceHM3 } from "./dice-hm3.js";
+import { MedicalService } from "./medical-service.js";
+import { physicianTreatment } from "./physician-workflow-v14.js";
 
-Hooks.once('init', async function () {
+const { DialogV2 } = foundry.applications.api;
+const { renderTemplate } = foundry.applications.handlebars;
+const { DocumentSheetConfig } = foundry.applications.apps;
+const { ActiveEffectConfig, ActorSheetV2, ItemSheetV2 } = foundry.applications.sheets;
+const { ActiveEffect, Actor, Item } = foundry.documents;
 
+Hooks.once("init", async function () {
     console.log(`HM3 | Initializing the HM3 Game System\n${HM3.ASCII}`);
 
     game.hm3 = {
@@ -24,33 +32,33 @@ Hooks.once('init', async function () {
         HarnMasterItem,
         DiceHM3,
         config: HM3,
-        macros: macros,
-        migrations: migrations
+        macros: {
+            ...macros,
+            ...combatApi
+        },
+        medical: {
+            physicianTreatment,
+            stopBleeding: options => MedicalService.stopBleeding(options)
+        },
+        migrations
     };
 
-    /**
-     * Set an initiative formula for the system
-     * @type {String}
-     */
     CONFIG.Combat.initiative = {
         formula: "@initiative",
         decimals: 2
     };
 
-    // Set Combat Time Length
     CONFIG.time.roundTime = 10;
     CONFIG.time.turnTime = 0;
-
-    // Set System Globals
     CONFIG.HM3 = HM3;
 
-    // Register system settings
+    // Let Foundry v14's ActiveEffect registry own expiry processing. HM3 uses
+    // deletion for expired temporary effects so stale disabled rows do not
+    // accumulate, including on synthetic/unlinked-token Actors.
+    CONFIG.ActiveEffect.expiryAction = "delete";
+
     registerSystemSettings();
 
-    // Define custom ActiveEffect class
-    //CONFIG.ActiveEffect.sheetClass = HM3ActiveEffectConfig;
-
-    // Define custom Document classes
     CONFIG.Actor.documentClass = HarnMasterActor;
     CONFIG.Actor.typeLabels = {
         base: "Base",
@@ -58,6 +66,7 @@ Hooks.once('init', async function () {
         creature: "Creature",
         container: "Container"
     };
+
     CONFIG.Item.documentClass = HarnMasterItem;
     CONFIG.Item.typeLabels = {
         base: "Base",
@@ -72,29 +81,23 @@ Hooks.once('init', async function () {
         miscgear: "Misc. Gear",
         injury: "Injury",
         armorlocation: "Armor Location",
-        trait: "Trait"    
+        trait: "Trait"
     };
-    CONFIG.Combat.documentClass = HarnMasterCombat;
-    CONFIG.TinyMCE.style_formats[0].items.push({
-        title: 'Highlight',
-        block: 'section',
-        classes: 'highlight',
-        wrapper: true
-    })
 
-    // Register sheet application classes
-    Actors.unregisterSheet("core", ActorSheet);
-    Actors.registerSheet("hm3", HarnMasterCharacterSheet, {
+    CONFIG.Combat.documentClass = HarnMasterCombat;
+
+    DocumentSheetConfig.unregisterSheet(Actor, "core", ActorSheetV2);
+    DocumentSheetConfig.registerSheet(Actor, "hm3", HarnMasterCharacterSheetV2, {
         types: ["character"],
         makeDefault: true,
         label: "Default HarnMaster Character Sheet"
     });
-    Actors.registerSheet("hm3", HarnMasterCreatureSheet, {
+    DocumentSheetConfig.registerSheet(Actor, "hm3", HarnMasterCreatureSheetV2, {
         types: ["creature"],
         makeDefault: true,
         label: "Default HarnMaster Creature Sheet"
     });
-    Actors.registerSheet("hm3", HarnMasterContainerSheet, {
+    DocumentSheetConfig.registerSheet(Actor, "hm3", HarnMasterContainerSheetV2, {
         types: ["container"],
         makeDefault: true,
         label: "Default HarnMaster Container Sheet"
@@ -106,167 +109,189 @@ Hooks.once('init', async function () {
         label: "Default HarnMaster Active Effect Sheet"
     });
 
-    Items.unregisterSheet("core", ItemSheet);
-    Items.registerSheet("hm3", HarnMasterItemSheet, { makeDefault: true });
-
-    // If you need to add Handlebars helpers, here are a few useful examples:
-    Handlebars.registerHelper('concat', function () {
-        var outStr = '';
-        for (var arg in arguments) {
-            if (typeof arguments[arg] != 'object') {
-                outStr += arguments[arg];
-            }
-        }
-        return outStr;
-    });
-
-    Handlebars.registerHelper('toLowerCase', function (str) {
-        return str.toLowerCase();
-    });
-
-    // Add a font selector dropdown to the TineMCE editor
-    //CONFIG.TinyMCE.toolbar = "styleselect forecolor backcolor bullist numlist image table hr link removeformat code fontselect fontsizeselect save";
-    //CONFIG.TinyMCE.toolbar = "styles bullist numlist image table hr link removeformat code fontselect save";
-    // Register the Hârnic fonts with Foundry and TinyMCE
-    // These are the default fonts for browsers
-    let defaultFonts = "Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Signika=Signika,sans-serif;Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
-    // These are the fonts we add
-    let extraFonts = "Martel=Martel;Roboto=Roboto;Lakise=Lakise;Runic=Runic;Lankorian Blackhand=Lankorian Blackhand";
-    // Configure the TinyMCE font drop-down (note: Monk's Enhanced Journal will overwrite this)
-    CONFIG.TinyMCE.font_formats = (CONFIG.TinyMCE.font_formats?CONFIG.TinyMCE.font_formats:defaultFonts) + ";"+extraFonts;
-    // Register the extra fonts within Foundry itsel (e.g. Text drawing tool)
-//    let fontFamilies = extraFonts.split(";").map(f => f.split("=")[0]).filter(f => f.length);
-//    fontFamilies.forEach(f => CONFIG.fontFamilies.push(f));
-    Object.assign(CONFIG.fontDefinitions, {
-        "Lakise": {editor: true, fonts: [{urls: ['./systems/hm3/fonts/Harn-Lakise-Normal.otf']}]},
-        "Runic": {editor: true, fonts: [{urls: ['./systems/hm3/fonts/Harn-Runic-Normal.otf']}]},
-        "Lankorian Blackhand": {editor: true, fonts: [{urls: ['./systems/hm3/fonts/Lankorian-Blackhand.otf']}]}
-    });
-
-});
-
-Hooks.on("renderChatMessage", (app, html, data) => {
-    // Display action buttons
-    combat.displayChatActionButtons(app, html, data);
-});
-Hooks.on('renderChatLog', (app, html, data) => HarnMasterActor.chatListeners(html));
-Hooks.on('renderChatPopout', (app, html, data) => HarnMasterActor.chatListeners(html));
-
-/**
- * Active Effects need to expire at certain times, so keep track of that here
- */
-Hooks.on('updateWorldTime', async (currentTime, change) => {
-    // Disable any expired active effects (WorldTime-based durations).
-    await effect.checkExpiredActiveEffects();
-});
-
-Hooks.on('updateCombat', async (combat, updateData) => {
-    // Called when the combat object is updated.  Possibly because of a change in round
-    // or turn. updateData will have specifics of what changed.
-    await effect.checkExpiredActiveEffects();
-});
-
-/**
- * Once the entire VTT framework is initialized, check to see if
- * we should perform a data migration.
- */
-Hooks.once("ready", function () {
-    // Determine whether a system migration is required
-    const currentMigrationVersion = game.settings.get("hm3", "systemMigrationVersion");
-    const NEEDS_MIGRATION_VERSION = "1.2.19";  // Anything older than this must be migrated
-
-    if (currentMigrationVersion) {
-        let needMigration = foundry.utils.isNewerVersion(NEEDS_MIGRATION_VERSION, currentMigrationVersion);
-        if (needMigration && game.user.isGM) {
-            migrations.migrateWorld();
-        }
-    } else {
-        game.settings.set("hm3", "systemMigrationVersion", game.system.data.version);
-    }
-
-    Hooks.on("hotbarDrop", (bar, data, slot) => macros.createHM3Macro(data, slot));
-    HM3.ready = true;
-    if (game.settings.get("hm3", "showWelcomeDialog")) {
-        welcomeDialog().then(showAgain => {
-            game.settings.set("hm3", "showWelcomeDialog", showAgain);
+    DocumentSheetConfig.unregisterSheet(Item, "core", ItemSheetV2);
+    for (const [type, SheetClass] of Object.entries(HM3_ITEM_SHEETS_V2)) {
+        DocumentSheetConfig.registerSheet(Item, "hm3", SheetClass, {
+            types: [type],
+            makeDefault: true,
+            label: `HarnMaster ${CONFIG.Item.typeLabels[type] ?? type} Item Sheet`
         });
     }
 
+    Handlebars.registerHelper("concat", function () {
+        let output = "";
+        for (const argument of arguments) {
+            if (typeof argument !== "object") output += argument;
+        }
+        return output;
+    });
+
+    Handlebars.registerHelper("toLowerCase", value => value.toLowerCase());
+
+    Handlebars.registerHelper("select", function (selectedValue, options) {
+        const rendered = options.fn(this);
+        const escapedValue = String(selectedValue ?? "")
+            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const optionPattern = new RegExp(
+            `(<option\\b[^>]*\\bvalue=(?:"${escapedValue}"|'${escapedValue}')[^>]*)(>)`,
+            "i"
+        );
+        return new Handlebars.SafeString(
+            rendered.replace(optionPattern, "$1 selected$2")
+        );
+    });
+
+    Object.assign(CONFIG.fontDefinitions, {
+        Lakise: {
+            editor: true,
+            fonts: [{ urls: ["./systems/hm3/fonts/Harn-Lakise-Normal.otf"] }]
+        },
+        Runic: {
+            editor: true,
+            fonts: [{ urls: ["./systems/hm3/fonts/Harn-Runic-Normal.otf"] }]
+        },
+        "Lankorian Blackhand": {
+            editor: true,
+            fonts: [{ urls: ["./systems/hm3/fonts/Lankorian-Blackhand.otf"] }]
+        }
+    });
+});
+
+function chatRenderRoots(html) {
+    if (!html) return [];
+    if (html instanceof HTMLElement || html instanceof DocumentFragment) return [html];
+    if (Array.isArray(html)) return html.filter(root => root?.querySelectorAll);
+    if (typeof html.length === "number") {
+        return Array.from(html).filter(root => root?.querySelectorAll);
+    }
+    return html.querySelectorAll ? [html] : [];
+}
+
+function bindHm3ChatButtons(message, html) {
+    const roots = chatRenderRoots(html);
+    if (!roots.length) return;
+
+    for (const root of roots) {
+        if (!game.user.isGM) {
+            for (const button of root.querySelectorAll(".hm3.chat-card button[data-action]")) {
+                const actor = button.dataset.visibleActorId
+                    ? game.actors.get(button.dataset.visibleActorId)
+                    : null;
+                if (!actor?.isOwner) button.style.display = "none";
+            }
+        }
+
+        for (const button of root.querySelectorAll(".hm3.chat-card .card-buttons button")) {
+            if (button.dataset.hm3Bound === "1") continue;
+
+            button.addEventListener("click", event => {
+                HarnMasterActor._onChatCardAction({
+                    preventDefault: () => event.preventDefault(),
+                    currentTarget: event.currentTarget,
+                    target: event.target
+                });
+            });
+
+            button.dataset.hm3Bound = "1";
+        }
+    }
+}
+
+Hooks.on("renderChatMessageHTML", bindHm3ChatButtons);
+
+Hooks.once("ready", async function () {
+    MedicalService.registerSocket();
+
+    const currentMigrationVersion = String(
+        game.settings.get("hm3", "systemMigrationVersion") || "0"
+    );
+    const targetMigrationVersion = game.system.version;
+    const needsMigration = foundry.utils.isNewerVersion(
+        targetMigrationVersion,
+        currentMigrationVersion
+    );
+
+    if (needsMigration && game.user.isGM) {
+        await migrations.migrateWorld();
+    }
+
+    Hooks.on("hotbarDrop", (bar, data, slot) => game.hm3.macros.createHM3Macro(data, slot));
+    HM3.ready = true;
+
+    if (game.settings.get("hm3", "showWelcomeDialog")) {
+        const showAgain = await welcomeDialog();
+        await game.settings.set("hm3", "showWelcomeDialog", showAgain);
+    }
+
     if (!game.user.can("MACRO_SCRIPT")) {
-        ui.notifications.warn('You do not have permission to run JavaScript macros, so all skill and esoterics macros have been disabled.');
+        ui.notifications.warn(
+            "You do not have permission to run JavaScript macros, so all skill and esoterics macros have been disabled."
+        );
     }
 });
 
-// Since HM3 does not have the concept of rolling for initiative,
-// this hook simply prepopulates the initiative value. This ensures
-// that no die roll is needed.
-Hooks.on('preCreateCombatant', (combat, combatant, options, id) => {
-    if (!combatant.initiative) {
-        let token = canvas.tokens.get(combatant.tokenId);
-        combatant.initiative = token.actor.system.initiative;
+Hooks.on("preCreateCombatant", combatant => {
+    if (combatant.initiative != null) return;
+
+    const token = canvas.tokens.get(combatant.tokenId);
+    if (token?.actor) {
+        combatant.updateSource({ initiative: token.actor.system.initiative });
     }
 });
 
-Hooks.on('renderSceneConfig', (app, html, data) => {
-    const scene = app.object;
+Hooks.on("renderSceneConfig", async (app, html) => {
+    const scene = app.document ?? app.object;
     if (app.renderTOTMScene) return;
     app.renderTOTMScene = true;
-    
-    let isTotm = scene.getFlag('hm3', 'isTotm');
-    if (typeof isTotm === 'undefined') {
-        if (!scene.compendium) {
-            scene.setFlag('hm3', 'isTotm', false);
-        }
+
+    let isTotm = scene.getFlag("hm3", "isTotm");
+    if (typeof isTotm === "undefined") {
+        if (!scene.compendium) await scene.setFlag("hm3", "isTotm", false);
         isTotm = false;
     }
 
-    const totmHtml = `
-    <div class="form-group">
-        <label>Theatre of the Mind</label>
-        <input id="hm3-totm" type="checkbox" name="hm3Totm" data-dtype="Boolean" ${isTotm ? 'checked' : ''}>
-        <p class="notes">Configure scene for Theatre of the Mind (e.g., no range calcs).</p>
-    </div>
-    `;
+    const root = html instanceof HTMLElement ? html : html?.[0];
+    const gridInput = root?.querySelector("input[name='gridAlpha']");
+    const formGroup = gridInput?.closest(".form-group");
 
-    const totmFind = html.find("input[name = 'gridAlpha']");
-    const formGroup = totmFind.closest(".form-group");
-    formGroup.after(totmHtml);
+    if (!formGroup || root.querySelector("#hm3-totm")) return;
+
+    formGroup.insertAdjacentHTML(
+        "afterend",
+        `<div class="form-group">
+            <label>Theatre of the Mind</label>
+            <input id="hm3-totm" type="checkbox" name="hm3Totm" data-dtype="Boolean" ${isTotm ? "checked" : ""}>
+            <p class="notes">Configure scene for Theatre of the Mind (for example, disable range calculations).</p>
+        </div>`
+    );
 });
 
-Hooks.on('closeSceneConfig', (app, html, data) => {
-    const scene = app.object;
+Hooks.on("closeSceneConfig", async (app, html) => {
+    const scene = app.document ?? app.object;
     app.renderTOTMScene = false;
-    if (!scene.compendium) {
-        scene.setFlag('hm3', 'isTotm', html.find("input[name='hm3Totm']").is(":checked"));
-    }
+
+    if (scene.compendium) return;
+
+    const root = html instanceof HTMLElement ? html : html?.[0];
+    const checkbox = root?.querySelector("input[name='hm3Totm']");
+    await scene.setFlag("hm3", "isTotm", Boolean(checkbox?.checked));
 });
 
 async function welcomeDialog() {
-    const dlgTemplate = 'systems/hm3/templates/dialog/welcome.html';
-    const html = await renderTemplate(dlgTemplate, {});
+    const content = await renderTemplate("systems/hm3/templates/dialog/welcome.html", {});
 
-    // Create the dialog window
-    return Dialog.prompt({
-        title: 'Welcome!',
-        content: html,
-        label: 'OK',
-        callback: html => {
-            const form = html.querySelector("#welcome");
-            const fd = new FormDataExtended(form);
-            const data = fd.object;
-            return data.showOnStartup;
+    return DialogV2.prompt({
+        window: { title: "Welcome!" },
+        content,
+        ok: {
+            label: "OK",
+            callback: (_event, _button, dialog) => Boolean(
+                dialog.element?.querySelector('[name="showOnStartup"]')?.checked
+            )
         },
-        options: { jQuery: false }
+        rejectClose: false
     });
 }
 
-/*-------------------------------------------------------*/
-/*            Handlebars FUNCTIONS                       */
-/*-------------------------------------------------------*/
-Handlebars.registerHelper("multiply", function (op1, op2) {
-    return op1 * op2;
-});
-
-Handlebars.registerHelper("endswith", function (op1, op2) {
-    return op1.endsWith(op2);
-});
+Handlebars.registerHelper("multiply", (left, right) => left * right);
+Handlebars.registerHelper("endswith", (value, suffix) => value.endsWith(suffix));

@@ -1,0 +1,181 @@
+name: Rebuild Compendiums
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/rebuild-compendiums.yml"
+      - "packs/character/_source/**"
+      - "packs/possessions/_source/**"
+      - "packs/esoteric/_source/**"
+      - "packs/system-help/_source/**"
+      - "scripts/prepare-system-help.mjs"
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/foundry-v14-master
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Foundry CLI without changing project dependencies
+        run: npm install --no-save --ignore-scripts @foundryvtt/foundryvtt-cli@3.0.4
+
+      - name: Verify source documents are present
+        shell: bash
+        run: |
+          character_count=$(find packs/character/_source -maxdepth 1 -type f -name '*.json' | wc -l)
+          possessions_count=$(find packs/possessions/_source -maxdepth 1 -type f -name '*.json' | wc -l)
+          esoteric_count=$(find packs/esoteric/_source -maxdepth 1 -type f -name '*.json' | wc -l)
+          help_count=$(find packs/system-help/_source -maxdepth 1 -type f -name '*.json' | wc -l)
+
+          echo "Character source documents: ${character_count}"
+          echo "Possessions source documents: ${possessions_count}"
+          echo "Esoterics source documents: ${esoteric_count}"
+          echo "System Help source documents: ${help_count}"
+
+          test "${character_count}" -eq 105
+          test "${possessions_count}" -eq 125
+          test "${esoteric_count}" -eq 424
+          test "${help_count}" -eq 20
+
+      - name: Prepare System Help for Foundry v14
+        shell: bash
+        run: |
+          node scripts/prepare-system-help.mjs packs/system-help/_source .tmp/system-help-v14
+
+      - name: Rebuild all compendium packs
+        shell: bash
+        run: |
+          for pack in character possessions esoteric system-help; do
+            find "packs/${pack}" -maxdepth 1 -type f -delete
+          done
+
+          node --input-type=module <<'NODE'
+          import { compilePack } from "@foundryvtt/foundryvtt-cli";
+
+          await compilePack("packs/character/_source", "packs/character", { log: true });
+          await compilePack("packs/possessions/_source", "packs/possessions", { log: true });
+          await compilePack("packs/esoteric/_source", "packs/esoteric", { log: true });
+          await compilePack(".tmp/system-help-v14", "packs/system-help", { log: true });
+          NODE
+
+      - name: Verify compiled document counts
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { ClassicLevel } from "classic-level";
+
+          const packs = [
+            ["character", ["!items!", "!folders!"], 105],
+            ["possessions", ["!items!", "!folders!"], 125],
+            ["esoteric", ["!items!", "!folders!"], 424],
+            ["system-help", ["!journal!", "!folders!"], 20]
+          ];
+
+          for (const [name, prefixes, expected] of packs) {
+            const db = new ClassicLevel(`packs/${name}`, { valueEncoding: "utf8" });
+            await db.open();
+
+            let count = 0;
+            for await (const [key] of db.iterator()) {
+              const keyText = String(key);
+              if (prefixes.some((prefix) => keyText.startsWith(prefix))) count += 1;
+            }
+
+            await db.close();
+            console.log(`${name} compiled top-level documents: ${count}`);
+
+            if (count !== expected) {
+              throw new Error(`${name} compiled top-level document count ${count} did not match expected ${expected}`);
+            }
+          }
+          NODE
+
+      - name: Verify compiled Welcome link content
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { ClassicLevel } from "classic-level";
+
+          const db = new ClassicLevel("packs/system-help", { valueEncoding: "utf8" });
+          await db.open();
+
+          const welcomePageKeyPrefix = "!journal.pages!CT4P5XgVp0c0oz2a.";
+          const expectedLink = "@UUID[Compendium.hm3.system-help.JournalEntry.BvmWEdDHSifdaM0z]{@JournalEntry[Characters]}";
+          let welcomeText = null;
+
+          for await (const [key, value] of db.iterator()) {
+            if (!String(key).startsWith(welcomePageKeyPrefix)) continue;
+            if (!String(value).includes("Table Of Contents")) continue;
+            welcomeText = String(value);
+            break;
+          }
+
+          await db.close();
+
+          if (!welcomeText) {
+            throw new Error("Compiled Welcome text page was not found in System Help LevelDB.");
+          }
+
+          if (!welcomeText.includes(expectedLink)) {
+            console.error(welcomeText);
+            throw new Error(`Compiled Welcome page does not contain expected Foundry serialization: ${expectedLink}`);
+          }
+
+          console.log(`Verified compiled Welcome link: ${expectedLink}`);
+          NODE
+
+      - name: Verify generated databases are populated
+        shell: bash
+        run: |
+          for pack in character possessions esoteric system-help; do
+            bytes=$(find "packs/${pack}" -maxdepth 1 -type f -printf '%s\n' | awk '{ total += $1 } END { print total + 0 }')
+            echo "${pack} LevelDB bytes: ${bytes}"
+            test "${bytes}" -gt 5000
+          done
+
+      - name: Remove non-deterministic LevelDB diagnostic logs
+        shell: bash
+        run: |
+          # LevelDB LOG/LOG.old are human-readable diagnostic logs containing
+          # timestamps and thread IDs. They are not database state and cause
+          # otherwise-identical rebuilds to produce noisy bot commits.
+          for pack in character possessions esoteric system-help; do
+            rm -f "packs/${pack}/LOG" "packs/${pack}/LOG.old"
+          done
+
+      - name: Commit rebuilt pack databases
+        shell: bash
+        run: |
+          git add -f packs/character packs/possessions packs/esoteric packs/system-help
+          if git diff --cached --quiet; then
+            echo "Compendium databases are already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: compile all Foundry v14 compendiums"
+
+          git pull --rebase origin feature/foundry-v14-master
+          git push origin HEAD:feature/foundry-v14-master
+
+  package:
+    needs: rebuild
+    uses: ./.github/workflows/package-release.yml
+    with:
+      ref: feature/foundry-v14-master

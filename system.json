@@ -1,50 +1,82 @@
 {
   "id": "hm3",
-  "title": "HarnMaster 3 V13",
-  "description": "The HarnMaster system for FoundryVTT!",
-  "version": "1.6.3",
+  "title": "HarnMaster 3",
+  "description": "The HarnMaster 3 game system for Foundry Virtual Tabletop.",
+  "version": "2.0.0-rc.3",
   "authors": [
-    {
-      "name": "Toasty",
-      "discord": "toasty#8538",
-      "flags": {}
-    }
+    { "name": "Toasty", "flags": {} },
+    { "name": "Valcorin", "flags": {} }
   ],
-  "url": "https://github.com/toastygm/HarnMaster-3-FoundryVTT/",
+  "url": "https://github.com/Solarion63/HarnMasterV3.5.2",
   "license": "LICENSE",
   "readme": "README.md",
-  "bugs": "https://github.com/toastygm/HarnMaster-3-FoundryVTT/issues",
-  "flags": {
-    "allowBugReporter": true
-  },
-  "compatibility": {
-    "minimum": "13",
-    "verified": "13.351"
-  },
+  "bugs": "https://github.com/Solarion63/HarnMasterV3.5.2/issues",
+  "manifest": "https://github.com/Solarion63/HarnMasterV3.5.2/releases/download/hm3-prerelease-channel/system.json",
+  "download": "https://github.com/Solarion63/HarnMasterV3.5.2/releases/download/v2.0.0-rc.3/hm3-2.0.0-rc.3.zip",
+  "flags": { "allowBugReporter": true },
+  "compatibility": { "minimum": "14", "verified": "14.365" },
   "esmodules": [
-    "module/hm3.js"
+    "module/config-v14-overrides.js",
+    "module/document-defaults-v14.js",
+    "module/dice-v14.js",
+    "module/injury-v14.js",
+    "module/damage-v14.js",
+    "module/missile-rolls-v14.js",
+    "module/combat-defense-v14.js",
+    "module/combat-counterstrike-v14.js",
+    "module/weapon-break-v14.js",
+    "module/combat-consequences-v14.js",
+    "module/combat-dta-v14.js",
+    "module/chat-actions-v14.js",
+    "module/actor/actor-combat-v2.js",
+    "module/actor/actor-create-dialog-v14.js",
+    "module/actor/actor-interactions-v14.js",
+    "module/physician-diagnosis-presentation-v14.js",
+    "module/hm3.js",
+    "module/blood-regeneration-v14.js",
+    "module/blood-regeneration-reminder-v14.js",
+    "module/macro-create-v14.js"
   ],
   "styles": [
-    "css/hm3.css"
+    "css/hm3.css",
+    "css/hm3-v14.css",
+    "css/hm3-v14-items.css",
+    "css/hm3-v14-actor.css",
+    "css/hm3-v14-actor-inventory.css",
+    "css/hm3-v14-skills.css",
+    "css/hm3-v14-esoterics.css",
+    "css/hm3-v14-combat.css"
   ],
   "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json",
-      "flags": {}
-    }
+    { "lang": "en", "name": "English", "path": "lang/en.json", "flags": {} }
   ],
+  "documentTypes": {
+    "Actor": {
+      "character": {},
+      "creature": {},
+      "container": {}
+    },
+    "Item": {
+      "skill": {},
+      "spell": {},
+      "invocation": {},
+      "psionic": {},
+      "weapongear": {},
+      "containergear": {},
+      "missilegear": {},
+      "armorgear": {},
+      "miscgear": {},
+      "injury": {},
+      "armorlocation": {},
+      "trait": {}
+    }
+  },
   "packFolders": [
     {
-      "name": "HârnMaster 3 System",
+      "name": "H\u00e2rnMaster 3 System",
       "sorting": "m",
-      "packs": [
-        "character",
-        "possessions",
-        "esoteric",
-        "system-help"
-      ]
+      "packs": ["character", "possessions", "esoteric", "system-help"],
+      "folders": []
     }
   ],
   "packs": [
@@ -54,11 +86,7 @@
       "name": "character",
       "system": "hm3",
       "path": "packs/character",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      },
-      "flags": {}
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
       "label": "Possessions",
@@ -66,43 +94,26 @@
       "name": "possessions",
       "system": "hm3",
       "path": "packs/possessions",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      },
-      "flags": {}
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
-      "label": "Esoteric",
+      "label": "Esoterics",
       "type": "Item",
       "name": "esoteric",
       "system": "hm3",
       "path": "packs/esoteric",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      },
-      "flags": {}
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     },
     {
       "label": "System Help",
+      "type": "JournalEntry",
       "name": "system-help",
       "path": "packs/system-help",
       "system": "hm3",
-      "type": "JournalEntry",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER"
-      },
-      "flags": {}
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER" }
     }
   ],
   "socket": true,
-  "manifest": "https://github.com/toastygm/HarnMaster-3-FoundryVTT/releases/latest/download/system.json",
-  "download": "https://github.com/toastygm/HarnMaster-3-FoundryVTT/releases/download/v1.6.3/system.zip",
-  "grid": {
-    "distance": 5,
-    "units": "ft"
-  },
+  "grid": { "distance": 5, "units": "ft" },
   "primaryTokenAttribute": "shockIndex"
 }
