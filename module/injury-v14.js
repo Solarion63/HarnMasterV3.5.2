@@ -123,17 +123,17 @@ export async function injuryDialog(dialogOptions) {
     hitLocations: dialogOptions.hitLocations
   });
 
-  // DialogV2.input owns the surrounding form and returns FormDataExtended.
-  // The template therefore contains fields only, not a nested <form> element.
-  const formData = await DialogV2.input({
+  // Foundry v14 DialogV2.input returns a plain object whose keys are the
+  // submitted field names. The template therefore contains fields only,
+  // leaving DialogV2 to own the surrounding form.
+  const data = await DialogV2.input({
     window: { title: dialogOptions.label ?? `${dialogOptions.name} Injury` },
     content: content.trim(),
     ok: { label: "Determine Injury" },
     rejectClose: false
   });
-  if (!formData) return null;
+  if (!data) return null;
 
-  const data = formData.object ?? Object.fromEntries(formData.entries());
   const location = data.location ?? "Random";
   const impact = Number(data.impact) || 0;
   const aspect = data.aspect ?? "Blunt";
