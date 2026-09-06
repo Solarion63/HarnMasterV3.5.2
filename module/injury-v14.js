@@ -23,6 +23,12 @@ function injuryRandom() {
   return foundry.dice.MersenneTwister.random();
 }
 
+function armorLocationNames(items) {
+  return Array.from(items ?? [])
+    .filter(item => item.type === "armorlocation")
+    .map(item => item.name);
+}
+
 function injuryDescription(result) {
   const injuryDesc = {
     Blunt: { M: "Bruise", S: "Fracture", G: "Crush" },
@@ -112,6 +118,13 @@ async function createUnrecordedBleedingEffect(actor, result) {
 }
 
 export async function injuryDialog(dialogOptions) {
+  const availableLocations = armorLocationNames(dialogOptions.items);
+  if (!availableLocations.length) {
+    throw new Error(
+      `Cannot determine an injury for ${dialogOptions.name}: the Actor has no armorlocation Items.`
+    );
+  }
+
   const recordInjury = game.settings.get("hm3", "addInjuryToActorSheet");
   const askRecordInjury = recordInjury === "ask";
   const content = await renderTemplate("systems/hm3/templates/dialog/injury-dialog.html", {
@@ -123,9 +136,8 @@ export async function injuryDialog(dialogOptions) {
     hitLocations: dialogOptions.hitLocations
   });
 
-  // Foundry v14 DialogV2.input returns a plain object whose keys are the
-  // submitted field names. The template therefore contains fields only,
-  // leaving DialogV2 to own the surrounding form.
+  // DialogV2.input returns a flat object keyed by each submitted field's name.
+  // DialogV2 owns the surrounding form; the template contains only the fields.
   const data = await DialogV2.input({
     window: { title: dialogOptions.label ?? `${dialogOptions.name} Injury` },
     content: content.trim(),
@@ -134,15 +146,22 @@ export async function injuryDialog(dialogOptions) {
   });
   if (!data) return null;
 
-  const location = data.location ?? "Random";
+  const location = String(data.location ?? "Random");
   const impact = Number(data.impact) || 0;
-  const aspect = data.aspect ?? "Blunt";
-  const aim = data.aim ?? "Mid";
+  const aspect = String(data.aspect ?? "Blunt");
+  const aim = String(data.aim ?? "Mid");
   const addToCharSheet = askRecordInjury
     ? Boolean(data.addToCharSheet)
     : recordInjury === "enable";
 
-  return calculateInjury({
+  if (location !== "Random" && !availableLocations.includes(location)) {
+    throw new Error(
+      `Cannot determine an injury for ${dialogOptions.name}: submitted location "${location}" `
+      + `does not match an armorlocation Item. Available locations: ${availableLocations.join(", ")}.`
+    );
+  }
+
+  const result = calculateInjury({
     location,
     impact,
     aspect,
@@ -153,6 +172,14 @@ export async function injuryDialog(dialogOptions) {
     rules: injuryRuleSettings(),
     random: injuryRandom
   });
+
+  if (!result) {
+    throw new Error(
+      `Cannot determine an injury for ${dialogOptions.name}: no hit location resolved `
+      + `(location=${location}, aim=${aim}, armorLocations=${availableLocations.length}).`
+    );
+  }
+  return result;
 }
 
 export async function injuryRoll(rollData) {
