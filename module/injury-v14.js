@@ -23,6 +23,12 @@ function injuryRandom() {
   return foundry.dice.MersenneTwister.random();
 }
 
+function armorLocationNames(items) {
+  return Array.from(items ?? [])
+    .filter(item => item.type === "armorlocation")
+    .map(item => item.name);
+}
+
 function injuryDescription(result) {
   const injuryDesc = {
     Blunt: { M: "Bruise", S: "Fracture", G: "Crush" },
@@ -112,10 +118,17 @@ async function createUnrecordedBleedingEffect(actor, result) {
 }
 
 export async function injuryDialog(dialogOptions) {
+  const availableLocations = armorLocationNames(dialogOptions.items);
+  if (!availableLocations.length) {
+    throw new Error(
+      `Cannot determine an injury for ${dialogOptions.name}: the Actor has no armorlocation Items.`
+    );
+  }
+
   const recordInjury = game.settings.get("hm3", "addInjuryToActorSheet");
   const askRecordInjury = recordInjury === "ask";
   const content = await renderTemplate("systems/hm3/templates/dialog/injury-dialog.html", {
-    aim: "mid",
+    aim: "Mid",
     location: "Random",
     impact: 0,
     aspect: "Blunt",
@@ -123,36 +136,50 @@ export async function injuryDialog(dialogOptions) {
     hitLocations: dialogOptions.hitLocations
   });
 
-  return DialogV2.prompt({
+  // DialogV2.input returns a flat object keyed by each submitted field's name.
+  // DialogV2 owns the surrounding form; the template contains only the fields.
+  const data = await DialogV2.input({
     window: { title: dialogOptions.label ?? `${dialogOptions.name} Injury` },
     content: content.trim(),
-    ok: {
-      label: "Determine Injury",
-      callback: (_event, _button, dialog) => {
-        const root = dialog.element;
-        const location = root?.querySelector('[name="location"]')?.value ?? "Random";
-        const impact = Number(root?.querySelector('[name="impact"]')?.value) || 0;
-        const aspect = root?.querySelector('[name="aspect"]')?.value ?? "Blunt";
-        const aim = root?.querySelector('[name="aim"]')?.value ?? "Mid";
-        const addToCharSheet = askRecordInjury
-          ? Boolean(root?.querySelector('[name="addToCharSheet"]')?.checked)
-          : recordInjury === "enable";
-
-        return calculateInjury({
-          location,
-          impact,
-          aspect,
-          addToCharSheet,
-          aim,
-          name: dialogOptions.name,
-          items: dialogOptions.items,
-          rules: injuryRuleSettings(),
-          random: injuryRandom
-        });
-      }
-    },
+    ok: { label: "Determine Injury" },
     rejectClose: false
   });
+  if (!data) return null;
+
+  const location = String(data.location ?? "Random");
+  const impact = Number(data.impact) || 0;
+  const aspect = String(data.aspect ?? "Blunt");
+  const aim = String(data.aim ?? "Mid");
+  const addToCharSheet = askRecordInjury
+    ? Boolean(data.addToCharSheet)
+    : recordInjury === "enable";
+
+  if (location !== "Random" && !availableLocations.includes(location)) {
+    throw new Error(
+      `Cannot determine an injury for ${dialogOptions.name}: submitted location "${location}" `
+      + `does not match an armorlocation Item. Available locations: ${availableLocations.join(", ")}.`
+    );
+  }
+
+  const result = calculateInjury({
+    location,
+    impact,
+    aspect,
+    addToCharSheet,
+    aim,
+    name: dialogOptions.name,
+    items: dialogOptions.items,
+    rules: injuryRuleSettings(),
+    random: injuryRandom
+  });
+
+  if (!result) {
+    throw new Error(
+      `Cannot determine an injury for ${dialogOptions.name}: no hit location resolved `
+      + `(location=${location}, aim=${aim}, armorLocations=${availableLocations.length}).`
+    );
+  }
+  return result;
 }
 
 export async function injuryRoll(rollData) {
@@ -182,6 +209,9 @@ export async function injuryRoll(rollData) {
   }
 
   if (!result) return null;
+  if (typeof result !== "object" || Array.isArray(result)) {
+    throw new Error("HM3 injury dialog returned an invalid result.");
+  }
 
   const actorId = rollData.actor.id;
   const tokenId = rollData.tokenId ?? rollData.actor.token?.id ?? null;
@@ -193,12 +223,13 @@ export async function injuryRoll(rollData) {
     await createUnrecordedBleedingEffect(rollData.actor, result);
   }
 
-  const templateData = foundry.utils.mergeObject({
+  const templateData = {
+    ...result,
     title: `${rollData.actor.token ? rollData.actor.token.name : rollData.actor.name} Injury`,
     actorId,
     tokenId,
     visibleActorId: actorId
-  }, result);
+  };
 
   const content = await renderTemplate("systems/hm3/templates/chat/injury-card.html", templateData);
   await ChatMessage.create({
