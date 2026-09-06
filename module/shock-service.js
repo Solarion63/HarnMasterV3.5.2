@@ -102,6 +102,23 @@ async function clearRecoveryFlags(actor) {
   await actor.unsetFlag("hm3", RECOVERY_REMINDER_FLAG);
 }
 
+function sameCombatActor(actor, combatant, combat) {
+  const combatActor = combatant?.actor;
+  if (!actor || !combatActor) return false;
+  if (combatActor.uuid && actor.uuid && combatActor.uuid === actor.uuid) return true;
+
+  if (actor.isToken) {
+    const actorToken = actor.token;
+    const tokenId = actorToken?.id;
+    const sceneId = actorToken?.parent?.id ?? actorToken?.parent?.uuid?.split(".")?.[1];
+    if (tokenId && combatant.tokenId === tokenId) {
+      return !sceneId || !combat?.scene?.id || combat.scene.id === sceneId;
+    }
+  }
+
+  return !actor.isToken && !combatActor.isToken && actor.id === combatActor.id;
+}
+
 export class ShockService {
   static state(actor) {
     const state = actor?.getFlag?.("hm3", STATE_FLAG) ?? actor?.flags?.hm3?.[STATE_FLAG] ?? null;
@@ -119,6 +136,17 @@ export class ShockService {
     }
     await actor.setFlag("hm3", STATE_FLAG, state);
     return state;
+  }
+
+  static isInStartedCombat(actor) {
+    if (!actor) return false;
+    for (const combat of game.combats ?? []) {
+      if (!combat?.started) continue;
+      for (const combatant of combat.combatants ?? []) {
+        if (sameCombatActor(actor, combatant, combat)) return true;
+      }
+    }
+    return false;
   }
 
   static recoveryAvailableAt(actor) {
