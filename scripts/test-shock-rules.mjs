@@ -20,8 +20,9 @@ assert.equal(shockDiceCount(-4), 0);
 assert.equal(shockDiceCount("bad"), 0);
 
 assert.equal(shockRecoveryAvailableAt(1000, 7), 1420);
-assert.equal(shockRecoveryAvailableAt(-10, 2), 120);
+assert.equal(shockRecoveryAvailableAt(-10, 2), 110);
 assert.equal(shockRecoveryAvailableAt(1000, -4), 1000);
+assert.equal(shockRecoveryAvailableAt("bad", 2), 120);
 
 assert.equal(shockPhaseForState(null), SHOCK_PHASES.INITIAL);
 assert.equal(shockPhaseForState(SHOCK_STATES.UNCONSCIOUS), SHOCK_PHASES.RECOVERY);
