@@ -128,14 +128,15 @@ export async function injuryDialog(dialogOptions) {
     content: content.trim(),
     ok: {
       label: "Determine Injury",
-      callback: (_event, _button, dialog) => {
-        const root = dialog.element;
-        const location = root?.querySelector('[name="location"]')?.value ?? "Random";
-        const impact = Number(root?.querySelector('[name="impact"]')?.value) || 0;
-        const aspect = root?.querySelector('[name="aspect"]')?.value ?? "Blunt";
-        const aim = root?.querySelector('[name="aim"]')?.value ?? "Mid";
+      callback: async (_event, button) => {
+        const form = button.form;
+        const elements = form?.elements;
+        const location = elements?.namedItem("location")?.value ?? "Random";
+        const impact = Number(elements?.namedItem("impact")?.value) || 0;
+        const aspect = elements?.namedItem("aspect")?.value ?? "Blunt";
+        const aim = elements?.namedItem("aim")?.value ?? "Mid";
         const addToCharSheet = askRecordInjury
-          ? Boolean(root?.querySelector('[name="addToCharSheet"]')?.checked)
+          ? Boolean(elements?.namedItem("addToCharSheet")?.checked)
           : recordInjury === "enable";
 
         return calculateInjury({
@@ -182,6 +183,9 @@ export async function injuryRoll(rollData) {
   }
 
   if (!result) return null;
+  if (typeof result !== "object" || Array.isArray(result)) {
+    throw new Error("HM3 injury dialog returned an invalid result.");
+  }
 
   const actorId = rollData.actor.id;
   const tokenId = rollData.tokenId ?? rollData.actor.token?.id ?? null;
@@ -193,12 +197,16 @@ export async function injuryRoll(rollData) {
     await createUnrecordedBleedingEffect(rollData.actor, result);
   }
 
-  const templateData = foundry.utils.mergeObject({
+  // Foundry v14's mergeObject only accepts plain Objects. DialogV2 callback
+  // results should not need framework-specific merging, so use a shallow data
+  // composition here and keep HM3's authoritative card metadata last.
+  const templateData = {
+    ...result,
     title: `${rollData.actor.token ? rollData.actor.token.name : rollData.actor.name} Injury`,
     actorId,
     tokenId,
     visibleActorId: actorId
-  }, result);
+  };
 
   const content = await renderTemplate("systems/hm3/templates/chat/injury-card.html", templateData);
   await ChatMessage.create({
