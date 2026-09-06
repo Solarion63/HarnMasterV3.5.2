@@ -115,7 +115,7 @@ export async function injuryDialog(dialogOptions) {
   const recordInjury = game.settings.get("hm3", "addInjuryToActorSheet");
   const askRecordInjury = recordInjury === "ask";
   const content = await renderTemplate("systems/hm3/templates/dialog/injury-dialog.html", {
-    aim: "mid",
+    aim: "Mid",
     location: "Random",
     impact: 0,
     aspect: "Blunt",
@@ -123,36 +123,35 @@ export async function injuryDialog(dialogOptions) {
     hitLocations: dialogOptions.hitLocations
   });
 
-  return DialogV2.prompt({
+  // DialogV2.input owns the surrounding form and returns FormDataExtended.
+  // The template therefore contains fields only, not a nested <form> element.
+  const formData = await DialogV2.input({
     window: { title: dialogOptions.label ?? `${dialogOptions.name} Injury` },
     content: content.trim(),
-    ok: {
-      label: "Determine Injury",
-      callback: async (_event, button) => {
-        const form = button.form;
-        const elements = form?.elements;
-        const location = elements?.namedItem("location")?.value ?? "Random";
-        const impact = Number(elements?.namedItem("impact")?.value) || 0;
-        const aspect = elements?.namedItem("aspect")?.value ?? "Blunt";
-        const aim = elements?.namedItem("aim")?.value ?? "Mid";
-        const addToCharSheet = askRecordInjury
-          ? Boolean(elements?.namedItem("addToCharSheet")?.checked)
-          : recordInjury === "enable";
-
-        return calculateInjury({
-          location,
-          impact,
-          aspect,
-          addToCharSheet,
-          aim,
-          name: dialogOptions.name,
-          items: dialogOptions.items,
-          rules: injuryRuleSettings(),
-          random: injuryRandom
-        });
-      }
-    },
+    ok: { label: "Determine Injury" },
     rejectClose: false
+  });
+  if (!formData) return null;
+
+  const data = formData.object ?? Object.fromEntries(formData.entries());
+  const location = data.location ?? "Random";
+  const impact = Number(data.impact) || 0;
+  const aspect = data.aspect ?? "Blunt";
+  const aim = data.aim ?? "Mid";
+  const addToCharSheet = askRecordInjury
+    ? Boolean(data.addToCharSheet)
+    : recordInjury === "enable";
+
+  return calculateInjury({
+    location,
+    impact,
+    aspect,
+    addToCharSheet,
+    aim,
+    name: dialogOptions.name,
+    items: dialogOptions.items,
+    rules: injuryRuleSettings(),
+    random: injuryRandom
   });
 }
 
@@ -197,9 +196,6 @@ export async function injuryRoll(rollData) {
     await createUnrecordedBleedingEffect(rollData.actor, result);
   }
 
-  // Foundry v14's mergeObject only accepts plain Objects. DialogV2 callback
-  // results should not need framework-specific merging, so use a shallow data
-  // composition here and keep HM3's authoritative card metadata last.
   const templateData = {
     ...result,
     title: `${rollData.actor.token ? rollData.actor.token.name : rollData.actor.name} Injury`,
