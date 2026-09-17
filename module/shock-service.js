@@ -1,10 +1,11 @@
-import { SHOCK_INJURY_HEAL_RATE, SHOCK_STATES } from "./shock-rules.js";
+import { SHOCK_INJURY_HEAL_RATE, SHOCK_STATES, shockDiceCount } from "./shock-rules.js";
 
 const STATE_FLAG = "shockState";
 const SHOCK_ITEM_FLAG = "isShock";
 const MANAGED_STATUS_FLAG = "shockManagedStatus";
 const RECOVERY_AVAILABLE_FLAG = "shockRecoveryAvailableAt";
 const RECOVERY_REMINDER_FLAG = "shockRecoveryReminderFor";
+const RECOVERY_DICE_FLAG = "shockRecoveryDice";
 
 const STATUS_DEFINITIONS = Object.freeze({
   unconscious: {
@@ -97,9 +98,14 @@ async function removeManagedStatus(actor, statusName) {
   if (ids.length) await actor.deleteEmbeddedDocuments("ActiveEffect", ids);
 }
 
-async function clearRecoveryFlags(actor) {
+async function clearRecoveryTimingFlags(actor) {
   await actor.unsetFlag("hm3", RECOVERY_AVAILABLE_FLAG);
   await actor.unsetFlag("hm3", RECOVERY_REMINDER_FLAG);
+}
+
+async function clearRecoveryStateFlags(actor) {
+  await clearRecoveryTimingFlags(actor);
+  await actor.unsetFlag("hm3", RECOVERY_DICE_FLAG);
 }
 
 function sameCombatActor(actor, combatant, combat) {
@@ -174,6 +180,32 @@ export class ShockService {
     await actor.setFlag("hm3", RECOVERY_REMINDER_FLAG, String(key));
   }
 
+  static recoveryDiceCount(actor) {
+    const raw = actor?.getFlag?.("hm3", RECOVERY_DICE_FLAG)
+      ?? actor?.flags?.hm3?.[RECOVERY_DICE_FLAG]
+      ?? null;
+    const diceCount = shockDiceCount(raw);
+    return diceCount > 0 ? diceCount : null;
+  }
+
+  static async setRecoveryDiceCount(actor, diceCount) {
+    const normalizedDiceCount = shockDiceCount(diceCount);
+    if (normalizedDiceCount < 1) {
+      throw new Error("Shock recovery dice count must be at least 1d6.");
+    }
+    await actor.setFlag("hm3", RECOVERY_DICE_FLAG, normalizedDiceCount);
+    return normalizedDiceCount;
+  }
+
+  static async ensureRecoveryDiceCount(actor, fallbackUniversalPenalty) {
+    const storedDiceCount = this.recoveryDiceCount(actor);
+    if (storedDiceCount != null) return storedDiceCount;
+
+    const fallbackDiceCount = shockDiceCount(fallbackUniversalPenalty);
+    if (fallbackDiceCount < 1) return 0;
+    return this.setRecoveryDiceCount(actor, fallbackDiceCount);
+  }
+
   static shockInjury(actor) {
     if (!actor) return null;
     return actor.items.find(item =>
@@ -229,22 +261,25 @@ export class ShockService {
     return injury;
   }
 
-  static async enterUnconscious(actor) {
+  static async enterUnconscious(actor, recoveryDiceCount = null) {
     await ensureStatus(actor, "unconscious");
     await ensureStatus(actor, "prone");
-    await clearRecoveryFlags(actor);
+    await clearRecoveryTimingFlags(actor);
+    if (recoveryDiceCount != null) {
+      await this.setRecoveryDiceCount(actor, recoveryDiceCount);
+    }
     await this.setState(actor, SHOCK_STATES.UNCONSCIOUS);
   }
 
   static async markFollowUp(actor) {
     await removeManagedStatus(actor, "unconscious");
-    await clearRecoveryFlags(actor);
+    await clearRecoveryStateFlags(actor);
     await this.setState(actor, SHOCK_STATES.FOLLOW_UP);
   }
 
   static async enterShock(actor) {
     await removeManagedStatus(actor, "unconscious");
-    await clearRecoveryFlags(actor);
+    await clearRecoveryStateFlags(actor);
     const injury = await this.ensureShockInjury(actor);
     await ensureStatus(actor, "shocked");
     await this.setState(actor, SHOCK_STATES.SHOCK);
@@ -253,7 +288,7 @@ export class ShockService {
 
   static async clearTransientShockState(actor) {
     await removeManagedStatus(actor, "unconscious");
-    await clearRecoveryFlags(actor);
+    await clearRecoveryStateFlags(actor);
     await this.setState(actor, null);
   }
 

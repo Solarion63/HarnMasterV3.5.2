@@ -106,8 +106,10 @@ async function automaticSuccess(actor, rollData) {
   return result;
 }
 
-async function performShockTest(actor, phase, noDialog) {
-  const numdice = shockDiceCount(actor.system?.universalPenalty);
+async function performShockTest(actor, phase, noDialog, diceCount = null) {
+  const numdice = diceCount == null
+    ? shockDiceCount(actor.system?.universalPenalty)
+    : shockDiceCount(diceCount);
   const target = Number(actor.system?.endurance) || 0;
   const label = phaseLabel(phase);
   const rollData = {
@@ -161,17 +163,17 @@ export async function scheduleOutOfCombatShockRecovery(actor) {
   return availableAt;
 }
 
-async function resolveInitial(actor, result) {
+async function resolveInitial(actor, result, initialDiceCount) {
   const outcome = resolveShockOutcome(SHOCK_PHASES.INITIAL, result.isSuccess);
   if (outcome.nextState === SHOCK_STATES.UNCONSCIOUS) {
-    await ShockService.enterUnconscious(actor);
+    await ShockService.enterUnconscious(actor, initialDiceCount);
     if (!ShockService.isInStartedCombat(actor)) {
       await scheduleOutOfCombatShockRecovery(actor);
     } else {
       await postConsequence(actor, {
         title: "Shock Roll Failed",
         result: "Unconscious and Prone",
-        detail: "In combat, recovery is attempted on the character's subsequent turns.",
+        detail: `In combat, recovery is attempted on subsequent turns using the same ${initialDiceCount}d6 as this failed Shock Roll.`,
         clearAction: "Clear Shock Recovery"
       });
     }
@@ -189,6 +191,7 @@ async function resolveInitial(actor, result) {
 async function resolveRecovery(actor, result, noDialog) {
   const outcome = resolveShockOutcome(SHOCK_PHASES.RECOVERY, result.isSuccess);
   if (outcome.nextState === SHOCK_STATES.UNCONSCIOUS) {
+    const recoveryDiceCount = ShockService.recoveryDiceCount(actor);
     await ShockService.enterUnconscious(actor);
     if (!ShockService.isInStartedCombat(actor)) {
       await scheduleOutOfCombatShockRecovery(actor);
@@ -196,7 +199,9 @@ async function resolveRecovery(actor, result, noDialog) {
       await postConsequence(actor, {
         title: "Shock Recovery Failed",
         result: "Remains Unconscious",
-        detail: "Another recovery attempt is due on the character's next combat turn.",
+        detail: recoveryDiceCount
+          ? `Another ${recoveryDiceCount}d6 recovery attempt is due on the character's next combat turn.`
+          : "Another recovery attempt is due on the character's next combat turn.",
         clearAction: "Clear Shock Recovery"
       });
     }
@@ -276,7 +281,10 @@ export async function shockRoll(noDialog = false, myActor = null) {
   }
 
   const phase = shockPhaseForState(state);
-  const result = await performShockTest(actor, phase, noDialog);
+  const diceCount = phase === SHOCK_PHASES.RECOVERY
+    ? await ShockService.ensureRecoveryDiceCount(actor, actor.system?.universalPenalty)
+    : shockDiceCount(actor.system?.universalPenalty);
+  const result = await performShockTest(actor, phase, noDialog, diceCount);
   if (!result) return null;
 
   switch (phase) {
@@ -287,7 +295,7 @@ export async function shockRoll(noDialog = false, myActor = null) {
       await resolveFollowUp(actor, result);
       break;
     default:
-      await resolveInitial(actor, result);
+      await resolveInitial(actor, result, diceCount);
       break;
   }
 

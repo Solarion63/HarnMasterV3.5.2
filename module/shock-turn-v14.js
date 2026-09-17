@@ -1,4 +1,4 @@
-import { SHOCK_STATES, shockDiceCount } from "./shock-rules.js";
+import { SHOCK_STATES } from "./shock-rules.js";
 import { ShockService } from "./shock-service.js";
 import { shockRoll } from "./shock-workflow-v14.js";
 
@@ -37,12 +37,16 @@ async function postPlayerReminder(actor, turnKey) {
   const recipients = whisperRecipients(actor);
   if (!recipients.length) return false;
 
+  const diceCount = await ShockService.ensureRecoveryDiceCount(
+    actor,
+    actor.system?.universalPenalty
+  );
   const content = await foundry.applications.handlebars.renderTemplate(
     "systems/hm3/templates/chat/shock-recovery-reminder-card.html",
     {
       actorName: actor.name,
       actorUuid: actor.uuid,
-      diceCount: shockDiceCount(actor.system?.universalPenalty),
+      diceCount,
       endurance: Number(actor.system?.endurance) || 0
     }
   );
