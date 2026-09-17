@@ -150,14 +150,16 @@ export class ShockService {
   }
 
   static recoveryAvailableAt(actor) {
-    const value = Number(actor?.getFlag?.("hm3", RECOVERY_AVAILABLE_FLAG));
-    return Number.isFinite(value) && value > 0 ? value : null;
+    const raw = actor?.getFlag?.("hm3", RECOVERY_AVAILABLE_FLAG);
+    if (raw === undefined || raw === null || raw === "") return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
   }
 
   static async scheduleOutOfCombatRecovery(actor, availableAt) {
     const numeric = Number(availableAt);
-    if (!Number.isFinite(numeric) || numeric <= 0) {
-      throw new Error("Shock recovery availability must be a positive world-time value.");
+    if (!Number.isFinite(numeric)) {
+      throw new Error("Shock recovery availability must be a finite Foundry world-time value.");
     }
     await actor.setFlag("hm3", RECOVERY_AVAILABLE_FLAG, numeric);
     await actor.unsetFlag("hm3", RECOVERY_REMINDER_FLAG);
