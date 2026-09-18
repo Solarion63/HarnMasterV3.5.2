@@ -279,9 +279,6 @@ export class ShockService {
       if (!flagValue(injury, SHOCK_ITEM_FLAG)) {
         update[`flags.hm3.${SHOCK_ITEM_FLAG}`] = true;
       }
-      if (flagValue(injury, SHOCK_CREATED_AT_FLAG) == null) {
-        update[`flags.hm3.${SHOCK_CREATED_AT_FLAG}`] = now;
-      }
       if (Object.keys(update).length) await injury.update(update);
       return injury;
     }
