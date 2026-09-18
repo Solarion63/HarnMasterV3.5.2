@@ -211,7 +211,7 @@ Hooks.on("deleteCombat", combat => {
 Hooks.on("deleteItem", item => {
   if (!ShockService.isShockInjury(item)) return;
   const actor = item.parent;
-  if (!actor || !authoritativeGm()) return;
+  if (!actor || !authoritativeGm() || ShockService.isShockCleanupInProgress(actor)) return;
 
   ShockService.clearShock(actor, { removeInjury: false })
     .catch(error => console.error("HM3 | Failed to clear Shock state after Shock injury deletion.", error));
@@ -220,7 +220,10 @@ Hooks.on("deleteItem", item => {
 Hooks.on("deleteActiveEffect", effect => {
   if (!ShockService.isManagedShockStatus(effect)) return;
   const actor = effect.parent;
-  if (!actor || !authoritativeGm() || !ShockService.isActiveShock(actor)) return;
+  if (!actor
+    || !authoritativeGm()
+    || ShockService.isShockCleanupInProgress(actor)
+    || !ShockService.isActiveShock(actor)) return;
 
   // Manually removing the system-managed Shocked status is treated as an
   // explicit GM override, matching the existing Unconscious override behavior.

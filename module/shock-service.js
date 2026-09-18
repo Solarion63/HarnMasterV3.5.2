@@ -17,6 +17,7 @@ const SHOCK_CREATED_AT_FLAG = "shockCreatedAt";
 const SHOCK_INJURY_RECOVERY_AVAILABLE_FLAG = "shockInjuryRecoveryAvailableAt";
 const SHOCK_INJURY_RECOVERY_REMINDER_FLAG = "shockInjuryRecoveryReminderFor";
 const SHOCK_INJURY_LAST_ROLL_FLAG = "shockInjuryRecoveryLastRolledAt";
+const SHOCK_CLEANUP_ACTORS = new WeakSet();
 
 const STATUS_DEFINITIONS = Object.freeze({
   unconscious: {
@@ -388,9 +389,7 @@ export class ShockService {
     });
 
     if (resolution.recovered) {
-      await actor.deleteEmbeddedDocuments("Item", [prepared.injury.id]);
-      await removeManagedStatus(actor, "shocked");
-      if (this.state(actor) === SHOCK_STATES.SHOCK) await this.setState(actor, null);
+      await this.clearShock(actor);
       return {
         applied: true,
         reason: "recovered",
@@ -470,19 +469,37 @@ export class ShockService {
     return injury;
   }
 
+  static isShockCleanupInProgress(actor) {
+    return Boolean(actor && SHOCK_CLEANUP_ACTORS.has(actor));
+  }
+
   static async clearShock(actor, { removeInjury = true } = {}) {
     if (!actor) return false;
-    const injury = this.shockInjury(actor);
-    const hadManagedStatus = actor.effects.some(effect => managedStatusMatches(effect, "shocked"));
-    const hadState = this.state(actor) === SHOCK_STATES.SHOCK;
+    if (this.isShockCleanupInProgress(actor)) return false;
 
-    if (removeInjury && injury) {
-      await actor.deleteEmbeddedDocuments("Item", [injury.id]);
+    SHOCK_CLEANUP_ACTORS.add(actor);
+    try {
+      const injury = this.shockInjury(actor);
+      const hadManagedStatus = actor.effects.some(effect => managedStatusMatches(effect, "shocked"));
+      const hadState = this.state(actor) === SHOCK_STATES.SHOCK;
+
+      // Clear workflow state before deleting embedded documents. Deleting either
+      // document fires Foundry hooks; the cleanup guard prevents those hooks
+      // from initiating a second, competing deletion of the same documents.
+      if (hadState) await this.setState(actor, null);
+      await removeManagedStatus(actor, "shocked");
+
+      if (removeInjury && injury) {
+        const currentInjury = this.shockInjury(actor);
+        if (currentInjury?.id === injury.id) {
+          await actor.deleteEmbeddedDocuments("Item", [injury.id]);
+        }
+      }
+
+      return Boolean(injury || hadManagedStatus || hadState);
+    } finally {
+      SHOCK_CLEANUP_ACTORS.delete(actor);
     }
-    await removeManagedStatus(actor, "shocked");
-    if (hadState) await this.setState(actor, null);
-
-    return Boolean(injury || hadManagedStatus || hadState);
   }
 
   static async clearTransientShockState(actor) {

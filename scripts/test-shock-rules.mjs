@@ -215,4 +215,68 @@ await assert.rejects(
   /at least 1d6/
 );
 
+function mockShockCleanupActor() {
+  const flags = new Map([["shockState", SHOCK_STATES.SHOCK]]);
+  const shockItem = {
+    id: "shock-injury",
+    name: "Shock",
+    type: "injury",
+    system: { injuryLevel: 0, healRate: 6 },
+    flags: { hm3: { isShock: true } },
+    getFlag(scope, key) {
+      assert.equal(scope, "hm3");
+      return this.flags.hm3[key];
+    }
+  };
+  const shockedEffect = {
+    id: "shocked-effect",
+    name: "Shocked",
+    flags: { hm3: { shockManagedStatus: "shocked" } },
+    statuses: new Set()
+  };
+  const deleted = { Item: [], ActiveEffect: [] };
+  const actor = {
+    flags: { hm3: {} },
+    items: [shockItem],
+    effects: [shockedEffect],
+    getFlag(scope, key) {
+      assert.equal(scope, "hm3");
+      return flags.get(key);
+    },
+    async setFlag(scope, key, value) {
+      assert.equal(scope, "hm3");
+      flags.set(key, value);
+      return value;
+    },
+    async unsetFlag(scope, key) {
+      assert.equal(scope, "hm3");
+      flags.delete(key);
+    },
+    async deleteEmbeddedDocuments(type, ids) {
+      deleted[type].push(...ids);
+      if (type === "Item") {
+        this.items = this.items.filter(item => !ids.includes(item.id));
+      } else if (type === "ActiveEffect") {
+        this.effects = this.effects.filter(effect => !ids.includes(effect.id));
+      }
+      return [];
+    }
+  };
+  return { actor, deleted };
+}
+
+const cleanup = mockShockCleanupActor();
+assert.equal(await ShockService.clearShock(cleanup.actor), true);
+assert.deepEqual(cleanup.deleted.ActiveEffect, ["shocked-effect"],
+  "Shock cleanup must delete the managed Shocked effect exactly once.");
+assert.deepEqual(cleanup.deleted.Item, ["shock-injury"],
+  "Shock cleanup must delete the Shock injury exactly once.");
+assert.equal(ShockService.state(cleanup.actor), null);
+assert.equal(ShockService.isShockCleanupInProgress(cleanup.actor), false,
+  "Shock cleanup guard must be released after cleanup completes.");
+assert.equal(await ShockService.clearShock(cleanup.actor), false,
+  "Repeated Shock cleanup must be harmless and not re-delete documents.");
+assert.deepEqual(cleanup.deleted.ActiveEffect, ["shocked-effect"]);
+assert.deepEqual(cleanup.deleted.Item, ["shock-injury"]);
+
 console.log("Shock rules regression tests passed.");
