@@ -130,7 +130,8 @@ jobs:
           if (!combatConsequences.includes('from "./shock-workflow-v14.js"')
             || !combatConsequences.includes('data-action="shock-recovery"')
             || !combatConsequences.includes('data-action="shock-out-of-combat-recover"')
-            || !combatConsequences.includes('data-action="shock-injury-recovery"')\n            || !combatConsequences.includes('data-action="shock-clear"')) {
+            || !combatConsequences.includes('data-action="shock-injury-recovery"')
+            || !combatConsequences.includes('data-action="shock-clear"')) {
             throw new Error("Shock consequence/reminder actions are not fully wired");
           }
 
@@ -149,7 +150,9 @@ jobs:
           const shockOut = fs.readFileSync("module/shock-out-of-combat-v14.js", "utf8");
           if (!shockOut.includes('Hooks.on("updateWorldTime"')
             || !shockOut.includes('Hooks.on("deleteCombat"')
-            || !shockOut.includes("completeOutOfCombatShockRecovery(actor, true)")\n            || !shockOut.includes("ShockService.prepareShockRecovery(actor, worldTime)")\n            || !shockOut.includes('Hooks.on("deleteItem"')) {
+            || !shockOut.includes("completeOutOfCombatShockRecovery(actor, true)")
+            || !shockOut.includes("ShockService.prepareShockRecovery(actor, worldTime)")
+            || !shockOut.includes('Hooks.on("deleteItem"')) {
             throw new Error("out-of-combat Shock recovery automation is incomplete");
           }
           NODE
