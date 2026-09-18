@@ -1,0 +1,188 @@
+/* Foundry VTT v14 Skills-tab refinements.
+ *
+ * Keep these rules scoped to the Skills tab because HM3 reuses the generic
+ * item-list classes throughout the Actor sheet.
+ */
+
+.application.hm3.sheet.actor .tab.skills {
+  padding-top: 6px;
+  font-family: "Roboto", sans-serif;
+  font-size: 13px;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-name-filter {
+  width: 100%;
+  height: 32px;
+  margin: 0 0 7px;
+  padding: 4px 8px 4px 40px;
+  border: 2px groove #eeede0;
+  border-radius: 0;
+  background-color: rgba(255, 255, 255, 0.18);
+  background-image: url("../images/png/searchicon.png");
+  background-position: 5px center;
+  background-repeat: no-repeat;
+  background-size: 27px 27px;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.application.hm3.sheet.actor .tab.skills .skills-list {
+  margin: 7px 0;
+  padding: 0;
+  overflow: visible;
+  list-style: none;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.application.hm3.sheet.actor .tab.skills .items-header.skill,
+.application.hm3.sheet.actor .tab.skills .skill-item {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  min-height: 30px;
+  margin: 0;
+  padding: 0;
+}
+
+.application.hm3.sheet.actor .tab.skills .items-header.skill {
+  min-height: 28px;
+  border: 1px solid #7a7971;
+  border-bottom-color: #8b1a12;
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.application.hm3.sheet.actor .tab.skills .items-header.skill h3 {
+  margin: 0;
+  padding: 0 5px;
+  border: 0;
+  font-family: "Modesto Condensed", "Palatino Linotype", serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 26px;
+  text-transform: uppercase;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-item {
+  border-bottom: 1px solid rgba(122, 121, 113, 0.22);
+  font-size: 13px;
+  line-height: 28px;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-item:hover {
+  background: rgba(0, 0, 0, 0.035);
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-name {
+  flex: 0 0 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 28px;
+  overflow: hidden;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-item .skill-name {
+  align-items: center;
+  cursor: pointer;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-item .skill-name h4 {
+  min-width: 0;
+  margin: 0;
+  padding: 0 4px;
+  overflow: hidden;
+  font-family: "Roboto", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 28px;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-item .item-image {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-ele {
+  flex: 0 0 40px;
+  min-width: 40px;
+  max-width: 40px;
+  min-height: 28px;
+  padding: 0;
+  border-right: 1px solid rgba(201, 199, 184, 0.7);
+  border-left: 1px solid rgba(201, 199, 184, 0.7);
+  font-size: 12px;
+  line-height: 28px;
+  text-align: center;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-notes {
+  flex: 1 1 100px;
+  min-width: 100px;
+  min-height: 28px;
+  padding: 0 5px;
+  overflow: hidden;
+  border-right: 1px solid rgba(201, 199, 184, 0.7);
+  border-left: 1px solid rgba(201, 199, 184, 0.7);
+  font-size: 12px;
+  line-height: 28px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.skills .item-controls-wide {
+  display: flex;
+  flex: 0 0 66px;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 66px;
+  max-width: 66px;
+  padding-right: 2px;
+  text-align: right;
+}
+
+.application.hm3.sheet.actor .tab.skills .items-header .item-controls-wide {
+  flex-basis: 66px;
+  font-size: 12px;
+  line-height: 26px;
+}
+
+.application.hm3.sheet.actor .tab.skills .item-controls-wide .item-control {
+  display: inline-flex;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 28px;
+  color: #4b4a44;
+  font-size: 12px;
+  line-height: 28px;
+}
+
+.application.hm3.sheet.actor .tab.skills .items-header .item-create {
+  flex-basis: auto;
+  width: auto;
+  padding: 0 3px;
+  white-space: nowrap;
+}
+
+.application.hm3.sheet.actor .tab.skills .skill-roll:hover h4,
+.application.hm3.sheet.actor .tab.skills .item-control:hover {
+  color: #000;
+  text-shadow: 0 0 8px red;
+}

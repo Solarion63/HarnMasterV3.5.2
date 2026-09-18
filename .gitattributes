@@ -1,0 +1,6 @@
+# Foundry VTT LevelDB compendium artifacts.
+# Keep JSON files under packs/*/_source diffable while preventing Git from
+# treating generated database records as text.
+packs/**/*.ldb binary
+packs/**/*.log binary
+packs/**/MANIFEST-* binary

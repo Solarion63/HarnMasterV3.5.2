@@ -1,0 +1,227 @@
+/* Foundry VTT v14 actor inventory compatibility.
+ * Uses exact character/creature template markup and intentionally overrides
+ * ApplicationV2 heading and flex defaults within the inventory tab only.
+ */
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list {
+  margin: 7px 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  list-style: none !important;
+  font-size: 13px !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .items-list.gear-list > .items-header.gear,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .item-list.gear-list > .item.gear-item {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 2px !important;
+  line-height: 30px !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .items-list.gear-list > .items-header.gear {
+  padding: 3px 0 !important;
+  border-bottom: 1px solid #bbb !important;
+  font-weight: 700 !important;
+  line-height: 24px !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .item-list.gear-list > .item.gear-item {
+  border-bottom: 1px solid #c9c7b8 !important;
+  font-family: "Roboto", sans-serif !important;
+  font-size: 13px !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-name.gear-name {
+  display: flex !important;
+  flex: 0 0 200px !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  max-width: 200px !important;
+  height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-right: 1px solid #c9c7b8 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-name.gear-name .item-image {
+  display: block !important;
+  flex: 0 0 30px !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  margin: 0 5px 0 0 !important;
+  padding: 0 !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 30px 30px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-name.gear-name h4 {
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  color: #191813 !important;
+  font-family: "Roboto", sans-serif !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  line-height: 30px !important;
+  text-align: left !important;
+  text-overflow: ellipsis !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-detail {
+  box-sizing: border-box !important;
+  height: 30px !important;
+  overflow: hidden !important;
+  border-right: 1px solid #c9c7b8 !important;
+  font-family: "Roboto", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 30px !important;
+  white-space: nowrap !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .gear-type {
+  flex: 0 0 80px !important;
+  width: 80px !important;
+  text-align: center !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .gear-qty,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .gear-weight,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .gear-value {
+  flex: 0 0 40px !important;
+  width: 40px !important;
+  text-align: center !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .gear-notes {
+  flex: 1 1 60px !important;
+  min-width: 60px !important;
+  padding-left: 10px !important;
+  text-overflow: ellipsis !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .gear-capacity {
+  flex: 0 0 140px !important;
+  width: 140px !important;
+  padding-right: 10px !important;
+  overflow: hidden !important;
+  font-family: "Roboto", sans-serif !important;
+  font-size: 12px !important;
+  line-height: 30px !important;
+  text-align: right !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-controls,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-controls-wide {
+  display: flex !important;
+  flex: 0 0 70px !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  width: 70px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-controls {
+  flex-basis: 55px !important;
+  width: 55px !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-control {
+  display: inline-flex !important;
+  flex: 0 0 17px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: 17px !important;
+  min-width: 17px !important;
+  max-width: 17px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #9a998f !important;
+  font-size: 12px !important;
+  line-height: 30px !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-control i {
+  display: block !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-control .active,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-list .item-control i.active {
+  color: #4b4a44 !important;
+}
+
+/* Preserve the v13 carried/equipped visual state contract. */
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item.nocarry .item-name.gear-name h4,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item.nocarry .item-detail {
+  color: #9a998f !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-equip,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-carry,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-equip i,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-carry i {
+  color: #9a998f !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-equip i.active,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-carry i.active {
+  color: #4b4a44 !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-edit i.active,
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] .gear-item .item-delete i.active {
+  color: #4b4a44 !important;
+}
+
+.application.hm3.sheet.actor .tab.inventory.items[data-tab="inventory"] input.gear-name-filter {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 31px !important;
+  margin-top: 5px !important;
+  padding: 5px 0 5px 40px !important;
+  border: 2px groove #eeede0 !important;
+  background-image: url("../images/png/searchicon.png") !important;
+  background-position: 5px -1px !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  font-size: 15px !important;
+}

@@ -1,23 +1,44 @@
 <form id="active-effect-start">
     <h2>Effect Start</h2>
 
-    <div class="form-group">
-        <label class="checkbox"><input type="radio" name="startType" value="unspecified"> Unspecified</label>
-        <label class="checkbox"><input type="radio" name="startType" value="nowGameTime" checked> Now (Game Time)</label>
+    <fieldset class="effect-start-options">
+        <legend>Start Time</legend>
+
+        <div class="effect-start-option-row">
+            <label class="effect-start-option">
+                <input type="radio" name="startType" value="unspecified">
+                <span>Unspecified</span>
+            </label>
+        </div>
+
+        <div class="effect-start-option-row">
+            <label class="effect-start-option">
+                <input type="radio" name="startType" value="nowGameTime" checked>
+                <span>Now (Game Time)</span>
+            </label>
+        </div>
+
         {{#if combatId}}
-        <label class="checkbox"><input type="radio" name="startType" value="nowCombat"> Now (Current Combat)</label>
+        <div class="effect-start-option-row">
+            <label class="effect-start-option">
+                <input type="radio" name="startType" value="nowCombat">
+                <span>Now (Current Combat Round)</span>
+            </label>
+        </div>
+        {{/if}}
+    </fieldset>
+
+    <div class="effect-start-summary">
+        <div class="effect-start-summary-row">
+            <strong>Current Game Time</strong>
+            <span>{{gameTime}}</span>
+        </div>
+
+        {{#if combatId}}
+        <div class="effect-start-summary-row">
+            <strong>Current Combat Round</strong>
+            <span>Round {{combatRound}}</span>
+        </div>
         {{/if}}
     </div>
-
-    <div class="form-group">
-        <label>Current Game Time:</label>
-        <span>{{gameTime}}</span>
-    </div>
-
-{{#if combatId}}
-    <div class="form-group">
-        <label>Current Combat Time:</label>
-        <span>Round {{combatRound}}, Turn {{combatTurn}}</span>
-    </div>
-{{/if}}
 </form>

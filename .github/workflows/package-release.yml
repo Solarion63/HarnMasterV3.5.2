@@ -1,0 +1,184 @@
+name: Package Release Candidate
+
+on:
+  push:
+    branches:
+      - feature/foundry-v14-master
+    paths:
+      - ".github/workflows/package-release.yml"
+      - "system.json"
+      - "CHANGELOG.md"
+      - "packs/**"
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Exact branch or commit to package
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out selected ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Record packaged source SHA
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha=$(git rev-parse HEAD)
+          echo "sha=${source_sha}" >> "$GITHUB_OUTPUT"
+          echo "Packaging source commit ${source_sha}"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install LevelDB verification dependency
+        run: npm install --no-save --ignore-scripts classic-level
+
+      - name: Read system version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./system.json").version')
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Packaging HarnMaster 3 ${version}"
+
+      - name: Verify compiled compendium document counts
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { ClassicLevel } from "classic-level";
+
+          const packs = [
+            ["character", ["!items!", "!folders!"], 105],
+            ["possessions", ["!items!", "!folders!"], 125],
+            ["esoteric", ["!items!", "!folders!"], 424],
+            ["system-help", ["!journal!", "!folders!"], 20]
+          ];
+
+          for (const [name, prefixes, expected] of packs) {
+            const db = new ClassicLevel(`packs/${name}`, { valueEncoding: "utf8" });
+            await db.open();
+
+            let count = 0;
+            for await (const [key] of db.iterator()) {
+              const keyText = String(key);
+              if (prefixes.some((prefix) => keyText.startsWith(prefix))) count += 1;
+            }
+
+            await db.close();
+            console.log(`${name} compiled top-level documents: ${count}`);
+
+            if (count !== expected) {
+              throw new Error(`${name} compiled top-level document count ${count} did not match expected ${expected}`);
+            }
+          }
+          NODE
+
+      - name: Stage release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/hm3-release"
+          rm -rf "$stage"
+          mkdir -p "$stage"
+
+          git archive --format=tar HEAD | tar -xf - -C "$stage"
+
+          # Remove repository/build-only material. Runtime LevelDB packs remain
+          # exactly as committed and already validated by the compendium job.
+          rm -rf "$stage/.github"
+          rm -f "$stage/.gitattributes"
+          rm -f "$stage/FOUNDRY-V14-MIGRATION.md"
+          rm -f "$stage/scripts/prepare-system-help.mjs"
+          find "$stage/packs" -type d -name _source -prune -exec rm -rf {} +
+
+          # Guard against accidentally shipping build-source compendium data.
+          if find "$stage/packs" -type d -name _source -print -quit | grep -q .; then
+            echo "Compendium _source directory remained in staged release." >&2
+            exit 1
+          fi
+
+          test -f "$stage/system.json"
+          test ! -f "$stage/template.json"
+          test -f "$stage/module/config.js"
+          test -f "$stage/module/config-v14-overrides.js"
+          test -f "$stage/module/document-defaults-v14.js"
+          test -d "$stage/module"
+          test -d "$stage/templates"
+          test -d "$stage/packs"
+
+          node - "$stage/system.json" "$stage/module/config.js" <<'NODE'
+          const fs = require("fs");
+          const manifest = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          if (!manifest.documentTypes?.Actor?.character || !manifest.documentTypes?.Item?.skill) {
+            throw new Error("Staged manifest is missing HM3 documentTypes.");
+          }
+          if (!manifest.esmodules?.includes("module/config-v14-overrides.js")) {
+            throw new Error("Staged manifest does not load config-v14-overrides.js.");
+          }
+
+          const config = fs.readFileSync(process.argv[3], "utf8");
+          const requiredConfigSections = [
+            "HM3.injuryLevels =",
+            "HM3.activeEffectKey =",
+            "HM3.meleeCombatTable =",
+            "HM3.missileCombatTable =",
+            "HM3.actorLabels =",
+            "HM3.itemLabels ="
+          ];
+          for (const marker of requiredConfigSections) {
+            if (!config.includes(marker)) {
+              throw new Error(`Staged module/config.js is missing required section: ${marker}`);
+            }
+          }
+          NODE
+
+          for pack in character possessions esoteric system-help; do
+            test -f "$stage/packs/${pack}/CURRENT"
+            test -n "$(find "$stage/packs/${pack}" -maxdepth 1 -type f \( -name '*.ldb' -o -name '*.log' \) -print -quit)"
+          done
+
+      - name: Create release ZIP, manifest, and provenance
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/hm3-release"
+          mkdir -p dist
+
+          (cd "$stage" && zip -qr "$GITHUB_WORKSPACE/dist/hm3-${VERSION}.zip" .)
+          cp "$stage/system.json" "dist/hm3-${VERSION}.json"
+          printf '%s\n' "$SOURCE_SHA" > "dist/hm3-${VERSION}.source-sha.txt"
+
+          unzip -t "dist/hm3-${VERSION}.zip"
+          unzip -l "dist/hm3-${VERSION}.zip" | grep -q 'system.json'
+          if unzip -l "dist/hm3-${VERSION}.zip" | grep -q '/_source/'; then
+            echo "Release ZIP unexpectedly contains compendium source files." >&2
+            exit 1
+          fi
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: hm3-${{ steps.version.outputs.version }}
+          path: |
+            dist/hm3-${{ steps.version.outputs.version }}.zip
+            dist/hm3-${{ steps.version.outputs.version }}.json
+            dist/hm3-${{ steps.version.outputs.version }}.source-sha.txt
+          if-no-files-found: error

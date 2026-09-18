@@ -1,25 +1,32 @@
-<div class="hm3 chat-card item-card" data-actor-id="{{actorId}}">
-    <header class="card-header flexrow">
+<div class="hm3 chat-card item-card weapon-break-card" data-actor-id="{{actorId}}">
+    <header class="card-header flexcol">
         <h3 class="title">{{title}}</h3>
         <h4 class="subtitle">{{tokenName}}'s {{weaponName}}</h4>
     </header>
 
-    <div class="grid grid-2col">
-        <div class="card-content center">
-            <div class="flexrow">
-                <span class="label">Weapon Quality / Roll:</span>
-                <span class="value">{{weaponQuality}} / {{rollValue}}</span>
-            </div>
+    <div class="card-content">
+        <div class="weapon-break-row">
+            <span class="label">Weapon Quality:</span>
+            <span class="value">{{weaponQuality}}</span>
+        </div>
+        <div class="weapon-break-row">
+            <span class="label">3d6 Roll:</span>
+            <span class="value">{{rollValue}}</span>
         </div>
     </div>
 
     {{#if weaponBroke}}
     <div class="card-content center">
         <span class="weapon-broke">{{tokenName}}'s {{weaponName}} broke!</span>
+        {{#if weaponUnequipped}}
+        <div class="weapon-break-status">Status: Unequipped</div>
+        {{else}}
+        <div class="weapon-break-status failure-text">Status: Could not confirm unequipped</div>
+        {{/if}}
     </div>
     {{else}}
     <div class="card-content center">
-        <span class="value">{{tokenName}}'s {{weaponName}} OK</span>
+        <span class="value">{{tokenName}}'s {{weaponName}} is intact.</span>
     </div>
     {{/if}}
 </div>
