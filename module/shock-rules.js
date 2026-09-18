@@ -1,5 +1,10 @@
+import { modifiedTarget } from "./dice-rules.js";
+
+const SECONDS_PER_HOUR = 60 * 60;
+
 export const SHOCK_INJURY_HEAL_RATE = 5;
 export const SHOCK_OUT_OF_COMBAT_RECOVERY_FORMULA = "2d6";
+export const SHOCK_RECOVERY_INTERVAL_SECONDS = 4 * SECONDS_PER_HOUR;
 
 export const SHOCK_STATES = Object.freeze({
   UNCONSCIOUS: "unconscious",
@@ -12,6 +17,12 @@ export const SHOCK_PHASES = Object.freeze({
   RECOVERY: "recovery",
   FOLLOW_UP: "follow-up"
 });
+
+function finiteOptionalNumber(value) {
+  if (value === undefined || value === null || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
 
 export function shockDiceCount(universalPenalty) {
   const value = Number(universalPenalty);
@@ -35,6 +46,81 @@ export function shockRecoveryAvailableAt(worldTime, durationMinutes) {
   const now = Number.isFinite(numericWorldTime) ? numericWorldTime : 0;
   const minutes = Math.max(0, Number(durationMinutes) || 0);
   return now + (minutes * 60);
+}
+
+export function shockRecoveryBaseTarget(healRate, endurance) {
+  const hr = Math.max(0, Math.min(6, Math.trunc(Number(healRate) || 0)));
+  const end = Math.max(0, Number(endurance) || 0);
+  return hr * end;
+}
+
+export function shockRecoveryPhysicianBonus(physicianEML) {
+  return Math.floor(Math.max(0, Number(physicianEML) || 0) / 2);
+}
+
+export function shockRecoveryTarget({ healRate, endurance, physicianEML = 0 }) {
+  const baseTarget = shockRecoveryBaseTarget(healRate, endurance);
+  const physicianBonus = shockRecoveryPhysicianBonus(physicianEML);
+  const resolved = modifiedTarget(baseTarget, physicianBonus);
+  return {
+    baseTarget,
+    physicianBonus,
+    target: resolved.target,
+    isCapped: resolved.isCapped
+  };
+}
+
+export function shockRecoveryResultCode(result) {
+  const success = Boolean(result?.isSuccess);
+  const critical = Boolean(result?.isCritical);
+  if (success) return critical ? "CS" : "MS";
+  return critical ? "CF" : "MF";
+}
+
+export function shockRecoveryHealRateDelta(resultCode) {
+  switch (String(resultCode ?? "").toUpperCase()) {
+    case "CF": return -2;
+    case "MF": return -1;
+    case "MS": return 1;
+    case "CS": return 2;
+    default:
+      throw new Error(`Unknown Shock Recovery result: ${resultCode}`);
+  }
+}
+
+export function resolveShockRecovery({ healRate, resultCode }) {
+  const previousHealRate = Math.max(0, Math.min(6, Math.trunc(Number(healRate) || 0)));
+  const healRateDelta = shockRecoveryHealRateDelta(resultCode);
+  const nextHealRate = Math.max(0, Math.min(6, previousHealRate + healRateDelta));
+  return {
+    previousHealRate,
+    resultCode: String(resultCode ?? "").toUpperCase(),
+    healRateDelta,
+    healRate: nextHealRate,
+    recovered: nextHealRate >= 6,
+    dead: nextHealRate <= 0
+  };
+}
+
+export function shockInjuryRecoveryEligibility({
+  availableAt,
+  createdAt,
+  worldTime
+}) {
+  const numericWorldTime = Number(worldTime);
+  const now = Number.isFinite(numericWorldTime) ? numericWorldTime : 0;
+  const storedAvailableAt = finiteOptionalNumber(availableAt);
+  const storedCreatedAt = finiteOptionalNumber(createdAt);
+  const legacy = storedAvailableAt == null;
+  const nextAvailableAt = storedAvailableAt
+    ?? (storedCreatedAt != null ? storedCreatedAt + SHOCK_RECOVERY_INTERVAL_SECONDS : now);
+
+  return {
+    eligible: now >= nextAvailableAt,
+    availableAt: nextAvailableAt,
+    remainingSeconds: Math.max(0, nextAvailableAt - now),
+    legacy
+  };
 }
 
 export function resolveShockOutcome(phase, isSuccess) {

@@ -3,16 +3,24 @@ import {
   SHOCK_INJURY_HEAL_RATE,
   SHOCK_OUT_OF_COMBAT_RECOVERY_FORMULA,
   SHOCK_PHASES,
+  SHOCK_RECOVERY_INTERVAL_SECONDS,
   SHOCK_STATES,
   resolveShockOutcome,
+  resolveShockRecovery,
   shockDiceCount,
+  shockInjuryRecoveryEligibility,
   shockPhaseForState,
-  shockRecoveryAvailableAt
+  shockRecoveryAvailableAt,
+  shockRecoveryHealRateDelta,
+  shockRecoveryPhysicianBonus,
+  shockRecoveryResultCode,
+  shockRecoveryTarget
 } from "../module/shock-rules.js";
 import { ShockService } from "../module/shock-service.js";
 
 assert.equal(SHOCK_INJURY_HEAL_RATE, 5);
 assert.equal(SHOCK_OUT_OF_COMBAT_RECOVERY_FORMULA, "2d6");
+assert.equal(SHOCK_RECOVERY_INTERVAL_SECONDS, 4 * 60 * 60);
 
 assert.equal(shockDiceCount(3), 3);
 assert.equal(shockDiceCount(2.9), 2);
@@ -56,6 +64,93 @@ assert.deepEqual(resolveShockOutcome(SHOCK_PHASES.FOLLOW_UP, false), {
 });
 assert.throws(() => resolveShockOutcome("other", true), /Unknown Shock Roll phase/);
 
+assert.equal(shockRecoveryPhysicianBonus(71), 35);
+assert.deepEqual(shockRecoveryTarget({
+  healRate: 5,
+  endurance: 12,
+  physicianEML: 60
+}), {
+  baseTarget: 60,
+  physicianBonus: 30,
+  target: 90,
+  isCapped: false
+});
+assert.deepEqual(shockRecoveryTarget({
+  healRate: 5,
+  endurance: 12,
+  physicianEML: 80
+}), {
+  baseTarget: 60,
+  physicianBonus: 40,
+  target: 95,
+  isCapped: true
+});
+
+assert.equal(shockRecoveryResultCode({ isSuccess: true, isCritical: true }), "CS");
+assert.equal(shockRecoveryResultCode({ isSuccess: true, isCritical: false }), "MS");
+assert.equal(shockRecoveryResultCode({ isSuccess: false, isCritical: false }), "MF");
+assert.equal(shockRecoveryResultCode({ isSuccess: false, isCritical: true }), "CF");
+assert.equal(shockRecoveryHealRateDelta("CF"), -2);
+assert.equal(shockRecoveryHealRateDelta("MF"), -1);
+assert.equal(shockRecoveryHealRateDelta("MS"), 1);
+assert.equal(shockRecoveryHealRateDelta("CS"), 2);
+
+assert.deepEqual(resolveShockRecovery({ healRate: 5, resultCode: "MF" }), {
+  previousHealRate: 5,
+  resultCode: "MF",
+  healRateDelta: -1,
+  healRate: 4,
+  recovered: false,
+  dead: false
+});
+assert.deepEqual(resolveShockRecovery({ healRate: 5, resultCode: "MS" }), {
+  previousHealRate: 5,
+  resultCode: "MS",
+  healRateDelta: 1,
+  healRate: 6,
+  recovered: true,
+  dead: false
+});
+assert.deepEqual(resolveShockRecovery({ healRate: 1, resultCode: "CF" }), {
+  previousHealRate: 1,
+  resultCode: "CF",
+  healRateDelta: -2,
+  healRate: 0,
+  recovered: false,
+  dead: true
+});
+
+assert.deepEqual(shockInjuryRecoveryEligibility({
+  availableAt: 20000,
+  createdAt: 1000,
+  worldTime: 19900
+}), {
+  eligible: false,
+  availableAt: 20000,
+  remainingSeconds: 100,
+  legacy: false
+});
+assert.deepEqual(shockInjuryRecoveryEligibility({
+  availableAt: null,
+  createdAt: 1000,
+  worldTime: 15400
+}), {
+  eligible: true,
+  availableAt: 15400,
+  remainingSeconds: 0,
+  legacy: true
+});
+assert.deepEqual(shockInjuryRecoveryEligibility({
+  availableAt: null,
+  createdAt: null,
+  worldTime: -500
+}), {
+  eligible: true,
+  availableAt: -500,
+  remainingSeconds: 0,
+  legacy: true
+});
+
 function mockShockActor(initialFlags = {}) {
   const flags = new Map(Object.entries(initialFlags));
   return {
@@ -84,7 +179,11 @@ function mockShockActor(initialFlags = {}) {
 }
 
 globalThis.CONFIG = { statusEffects: [] };
-globalThis.game = { i18n: { localize: value => value } };
+globalThis.game = {
+  i18n: { localize: value => value },
+  time: { worldTime: 0 },
+  combats: []
+};
 globalThis.CONST = { ACTIVE_EFFECT_SHOW_ICON: { ALWAYS: 2 } };
 
 const recoveryActor = mockShockActor();

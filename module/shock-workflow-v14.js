@@ -7,10 +7,13 @@ import {
   resolveShockOutcome,
   shockDiceCount,
   shockPhaseForState,
-  shockRecoveryAvailableAt
+  shockRecoveryAvailableAt,
+  shockRecoveryResultCode,
+  shockRecoveryTarget
 } from "./shock-rules.js";
 import { ShockService } from "./shock-service.js";
 
+const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
 
 function currentMessageMode() {
@@ -55,6 +58,15 @@ function phaseLabel(phase) {
     default:
       return "Shock Roll";
   }
+}
+
+function formatRemaining(seconds) {
+  const totalMinutes = Math.max(0, Math.ceil((Number(seconds) || 0) / 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours && minutes) return `${hours}h ${minutes}m`;
+  if (hours) return `${hours}h`;
+  return `${minutes}m`;
 }
 
 async function postConsequence(actor, data) {
@@ -138,6 +150,35 @@ async function performShockTest(actor, phase, noDialog, diceCount = null) {
     callOnHooks("hm3.onShockRoll", actor, result, rollData);
   }
   return result;
+}
+
+async function promptShockRecoveryOptions(actor, injury) {
+  const healRate = Number(injury.system?.healRate) || 0;
+  const endurance = Number(actor.system?.endurance) || 0;
+  const baseTarget = healRate * endurance;
+  const data = await DialogV2.input({
+    window: { title: `Shock Recovery — ${actor.name}` },
+    content: `
+      <div class="hm3 shock-recovery-dialog">
+        <p><strong>Shock:</strong> H${healRate}</p>
+        <p><strong>Base Target:</strong> H${healRate} × Endurance ${endurance} = ${baseTarget}</p>
+        <div class="form-group">
+          <label>Attending Physician EML</label>
+          <div class="form-fields">
+            <input type="number" name="physicianEML" value="0" min="0" step="1">
+          </div>
+        </div>
+        <p class="notes">Half the attending Physician's EML is added to the target. Enter 0 if no Physician is attending.</p>
+      </div>`,
+    ok: { label: "Roll Shock Recovery" },
+    rejectClose: false
+  });
+  if (!data) return null;
+
+  const value = Number(data.physicianEML);
+  return {
+    physicianEML: Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0
+  };
 }
 
 export async function scheduleOutOfCombatShockRecovery(actor) {
@@ -237,7 +278,8 @@ async function resolveFollowUp(actor, result) {
     await postConsequence(actor, {
       title: "Shock",
       result: "Character Enters Shock",
-      detail: `${injury?.name ?? "Shock"} injury added at H5 with Injury Level 0. Recovery is tested every four hours.`
+      detail: `${injury?.name ?? "Shock"} injury added at H5 with Injury Level 0. The first Shock Recovery roll is due in four hours.`,
+      clearAction: "Clear Shock"
     });
   } else {
     await ShockService.clearTransientShockState(actor);
@@ -266,6 +308,105 @@ export async function completeOutOfCombatShockRecovery(actor, noDialog = false) 
   return followUp;
 }
 
+export async function shockInjuryRecoveryRoll(myActor = null) {
+  if (!game.settings.get("hm3", "automateShockEffects")) {
+    ui.notifications.warn("Automated Shock Effects is disabled.");
+    return null;
+  }
+
+  const actor = resolveActor(myActor);
+  if (!actor) return null;
+  if (ShockService.workflowState(actor) !== SHOCK_STATES.SHOCK) {
+    ui.notifications.warn(`${actor.name} is not currently in Shock.`);
+    return null;
+  }
+
+  const prepared = await ShockService.prepareShockRecovery(actor, game.time?.worldTime);
+  if (!prepared?.injury) {
+    ui.notifications.warn(`${actor.name} has no Shock injury to recover from.`);
+    return null;
+  }
+  if (!prepared.eligible) {
+    ui.notifications.warn(
+      `${actor.name}'s next Shock Recovery roll is due in ${formatRemaining(prepared.remainingSeconds)}.`
+    );
+    return null;
+  }
+
+  const options = await promptShockRecoveryOptions(actor, prepared.injury);
+  if (!options) return null;
+
+  const endurance = Number(actor.system?.endurance) || 0;
+  const target = shockRecoveryTarget({
+    healRate: prepared.healRate,
+    endurance,
+    physicianEML: options.physicianEML
+  });
+  const rollData = {
+    type: "shock-recovery",
+    label: "Shock Recovery Roll",
+    target: target.baseTarget,
+    modifier: target.physicianBonus,
+    speaker: speakerForActor(actor),
+    fastforward: true,
+    notesData: {
+      healRate: prepared.healRate,
+      endurance,
+      physicianEML: options.physicianEML,
+      physicianBonus: target.physicianBonus
+    },
+    notes: ""
+  };
+  if (actor.isToken) rollData.token = actor.token.id;
+  else rollData.actor = actor.id;
+
+  if (!Hooks.call("hm3.preShockRecoveryRoll", rollData, actor, prepared.injury)) return null;
+
+  const result = await DiceHM3.d100StdRoll(rollData);
+  if (!result) return null;
+
+  actor.runCustomMacro(result);
+  callOnHooks("hm3.onShockRecoveryRoll", actor, result, rollData, prepared.injury);
+
+  const resultCode = shockRecoveryResultCode(result);
+  const resolution = await ShockService.applyShockInjuryRecovery(
+    actor,
+    resultCode,
+    game.time?.worldTime
+  );
+
+  if (!resolution.applied) {
+    ui.notifications.warn("The Shock Recovery result could not be applied because the recovery state changed.");
+    return result;
+  }
+
+  if (resolution.recovered) {
+    await postConsequence(actor, {
+      title: "Shock Recovery",
+      result: `${resultCode}: H${resolution.previousHealRate} → H6`,
+      detail: "Shock abates at H6. The Shock injury and Shocked status have been removed."
+    });
+  } else if (resolution.dead) {
+    await postConsequence(actor, {
+      title: "Shock Recovery",
+      result: `${resultCode}: H${resolution.previousHealRate} → H0`,
+      detail: "The patient has died from Shock at H0."
+    });
+  } else {
+    await postConsequence(actor, {
+      title: "Shock Recovery",
+      result: `${resultCode}: H${resolution.previousHealRate} → H${resolution.healRate}`,
+      detail: "Shock persists. The next Shock Recovery roll is due in four hours.",
+      clearAction: "Clear Shock"
+    });
+  }
+
+  return {
+    ...result,
+    shockRecovery: resolution
+  };
+}
+
 export async function shockRoll(noDialog = false, myActor = null) {
   if (!game.settings.get("hm3", "automateShockEffects")) {
     return legacyShockRoll(noDialog, myActor);
@@ -276,7 +417,9 @@ export async function shockRoll(noDialog = false, myActor = null) {
 
   const state = ShockService.workflowState(actor);
   if (state === SHOCK_STATES.SHOCK) {
-    ui.notifications.warn(`${actor.name} is already in Shock. Recovery is tested every four hours.`);
+    ui.notifications.warn(
+      `${actor.name} is already in Shock. Use the four-hour Shock Recovery roll instead.`
+    );
     return null;
   }
 

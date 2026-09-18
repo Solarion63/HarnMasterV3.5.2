@@ -1,4 +1,11 @@
-import { SHOCK_INJURY_HEAL_RATE, SHOCK_STATES, shockDiceCount } from "./shock-rules.js";
+import {
+  SHOCK_INJURY_HEAL_RATE,
+  SHOCK_RECOVERY_INTERVAL_SECONDS,
+  SHOCK_STATES,
+  resolveShockRecovery,
+  shockDiceCount,
+  shockInjuryRecoveryEligibility
+} from "./shock-rules.js";
 
 const STATE_FLAG = "shockState";
 const SHOCK_ITEM_FLAG = "isShock";
@@ -6,6 +13,10 @@ const MANAGED_STATUS_FLAG = "shockManagedStatus";
 const RECOVERY_AVAILABLE_FLAG = "shockRecoveryAvailableAt";
 const RECOVERY_REMINDER_FLAG = "shockRecoveryReminderFor";
 const RECOVERY_DICE_FLAG = "shockRecoveryDice";
+const SHOCK_CREATED_AT_FLAG = "shockCreatedAt";
+const SHOCK_INJURY_RECOVERY_AVAILABLE_FLAG = "shockInjuryRecoveryAvailableAt";
+const SHOCK_INJURY_RECOVERY_REMINDER_FLAG = "shockInjuryRecoveryReminderFor";
+const SHOCK_INJURY_LAST_ROLL_FLAG = "shockInjuryRecoveryLastRolledAt";
 
 const STATUS_DEFINITIONS = Object.freeze({
   unconscious: {
@@ -19,11 +30,24 @@ const STATUS_DEFINITIONS = Object.freeze({
   shocked: {
     name: "Shocked",
     img: "icons/svg/daze.svg"
+  },
+  dead: {
+    name: "Dead",
+    img: "icons/svg/skull.svg"
   }
 });
 
 function normalized(value) {
   return String(value ?? "").trim().toLowerCase();
+}
+
+function finiteWorldTime(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function flagValue(document, key) {
+  return document?.getFlag?.("hm3", key) ?? document?.flags?.hm3?.[key] ?? null;
 }
 
 function configuredStatus(statusName) {
@@ -206,13 +230,27 @@ export class ShockService {
     return this.setRecoveryDiceCount(actor, fallbackDiceCount);
   }
 
+  static isShockInjury(item) {
+    if (!item || item.type !== "injury") return false;
+    return Boolean(flagValue(item, SHOCK_ITEM_FLAG))
+      || (normalized(item.name) === "shock" && Number(item.system?.injuryLevel) === 0);
+  }
+
   static shockInjury(actor) {
     if (!actor) return null;
-    return actor.items.find(item =>
-      item.type === "injury"
-      && (Boolean(item.flags?.hm3?.[SHOCK_ITEM_FLAG])
-        || (normalized(item.name) === "shock" && Number(item.system?.injuryLevel) === 0))
-    ) ?? null;
+    return actor.items.find(item => this.isShockInjury(item)) ?? null;
+  }
+
+  static isActiveShock(actor) {
+    const shockInjury = this.shockInjury(actor);
+    const shockHealRate = Number(shockInjury?.system?.healRate);
+    return Number.isFinite(shockHealRate)
+      && shockHealRate > 0
+      && shockHealRate < 6;
+  }
+
+  static isManagedShockStatus(effect) {
+    return managedStatusMatches(effect, "shocked");
   }
 
   static workflowState(actor) {
@@ -221,18 +259,28 @@ export class ShockService {
       && !actor?.effects?.some(effect => statusMatches(effect, "unconscious"))) {
       return null;
     }
-    return state ?? (this.shockInjury(actor) ? SHOCK_STATES.SHOCK : null);
+
+    const activeShock = this.isActiveShock(actor);
+    if (state === SHOCK_STATES.SHOCK) return activeShock ? state : null;
+    if (state) return state;
+    return activeShock ? SHOCK_STATES.SHOCK : null;
   }
 
   static async ensureShockInjury(actor) {
     let injury = this.shockInjury(actor);
+    const now = finiteWorldTime(game.time?.worldTime);
+
     if (injury) {
       const update = {};
-      if (Number(injury.system?.healRate) !== SHOCK_INJURY_HEAL_RATE) {
+      const healRate = Number(injury.system?.healRate);
+      if (!Number.isFinite(healRate) || healRate < 0 || healRate > 6) {
         update["system.healRate"] = SHOCK_INJURY_HEAL_RATE;
       }
-      if (!injury.flags?.hm3?.[SHOCK_ITEM_FLAG]) {
+      if (!flagValue(injury, SHOCK_ITEM_FLAG)) {
         update[`flags.hm3.${SHOCK_ITEM_FLAG}`] = true;
+      }
+      if (flagValue(injury, SHOCK_CREATED_AT_FLAG) == null) {
+        update[`flags.hm3.${SHOCK_CREATED_AT_FLAG}`] = now;
       }
       if (Object.keys(update).length) await injury.update(update);
       return injury;
@@ -247,18 +295,147 @@ export class ShockService {
         injuryLevel: 0,
         healRate: SHOCK_INJURY_HEAL_RATE,
         isBleeder: false,
-        notes: "Shock injury (H5). Recovery is tested every four hours."
+        notes: "Shock injury. Test Shock Recovery once every four hours; Shock abates at H6 and is fatal at H0."
       },
       flags: {
         hm3: {
           [SHOCK_ITEM_FLAG]: true,
-          shockCreatedAt: Number(game.time?.worldTime) || 0
+          [SHOCK_CREATED_AT_FLAG]: now,
+          [SHOCK_INJURY_RECOVERY_AVAILABLE_FLAG]: now + SHOCK_RECOVERY_INTERVAL_SECONDS
         }
       }
     }]);
 
     injury = created[0] ?? null;
     return injury;
+  }
+
+  static shockInjuryRecoveryEligibility(actor, worldTime = game.time?.worldTime) {
+    const injury = this.shockInjury(actor);
+    if (!injury) {
+      return {
+        eligible: false,
+        availableAt: null,
+        remainingSeconds: 0,
+        legacy: false,
+        injury: null
+      };
+    }
+
+    const eligibility = shockInjuryRecoveryEligibility({
+      availableAt: flagValue(injury, SHOCK_INJURY_RECOVERY_AVAILABLE_FLAG),
+      createdAt: flagValue(injury, SHOCK_CREATED_AT_FLAG),
+      worldTime
+    });
+    return { ...eligibility, injury };
+  }
+
+  static async prepareShockRecovery(actor, worldTime = game.time?.worldTime) {
+    const injury = this.shockInjury(actor);
+    if (!injury) return null;
+
+    const prepared = await this.ensureShockInjury(actor);
+    const eligibility = this.shockInjuryRecoveryEligibility(actor, worldTime);
+    if (eligibility.legacy) {
+      await prepared.setFlag("hm3", SHOCK_INJURY_RECOVERY_AVAILABLE_FLAG, eligibility.availableAt);
+    }
+
+    const healRate = Number(prepared.system?.healRate);
+    if (Number.isFinite(healRate) && healRate > 0 && healRate < 6) {
+      await ensureStatus(actor, "shocked");
+      if (this.state(actor) !== SHOCK_STATES.SHOCK) {
+        await this.setState(actor, SHOCK_STATES.SHOCK);
+      }
+    }
+
+    return {
+      ...eligibility,
+      injury: prepared,
+      healRate: Number(prepared.system?.healRate) || 0
+    };
+  }
+
+  static shockInjuryRecoveryReminderFor(actor) {
+    return flagValue(this.shockInjury(actor), SHOCK_INJURY_RECOVERY_REMINDER_FLAG);
+  }
+
+  static async markShockInjuryRecoveryReminder(actor, key) {
+    const injury = this.shockInjury(actor);
+    if (!injury) return false;
+    await injury.setFlag("hm3", SHOCK_INJURY_RECOVERY_REMINDER_FLAG, String(key));
+    return true;
+  }
+
+  static async applyShockInjuryRecovery(
+    actor,
+    resultCode,
+    worldTime = game.time?.worldTime
+  ) {
+    const prepared = await this.prepareShockRecovery(actor, worldTime);
+    if (!prepared?.injury) {
+      return { applied: false, reason: "no-shock-injury" };
+    }
+    if (!prepared.eligible) {
+      return {
+        applied: false,
+        reason: "cooldown",
+        remainingSeconds: prepared.remainingSeconds,
+        availableAt: prepared.availableAt
+      };
+    }
+
+    const now = finiteWorldTime(worldTime);
+    const resolution = resolveShockRecovery({
+      healRate: prepared.injury.system?.healRate,
+      resultCode
+    });
+
+    if (resolution.recovered) {
+      await actor.deleteEmbeddedDocuments("Item", [prepared.injury.id]);
+      await removeManagedStatus(actor, "shocked");
+      if (this.state(actor) === SHOCK_STATES.SHOCK) await this.setState(actor, null);
+      return {
+        applied: true,
+        reason: "recovered",
+        availableAt: null,
+        ...resolution
+      };
+    }
+
+    if (resolution.dead) {
+      await prepared.injury.update({
+        "system.healRate": 0,
+        [`flags.hm3.${SHOCK_INJURY_LAST_ROLL_FLAG}`]: now
+      });
+      await prepared.injury.unsetFlag("hm3", SHOCK_INJURY_RECOVERY_AVAILABLE_FLAG);
+      await prepared.injury.unsetFlag("hm3", SHOCK_INJURY_RECOVERY_REMINDER_FLAG);
+      await removeManagedStatus(actor, "shocked");
+      await ensureStatus(actor, "dead");
+      if (this.state(actor) === SHOCK_STATES.SHOCK) await this.setState(actor, null);
+      return {
+        applied: true,
+        reason: "dead",
+        availableAt: null,
+        ...resolution
+      };
+    }
+
+    const availableAt = now + SHOCK_RECOVERY_INTERVAL_SECONDS;
+    await prepared.injury.update({
+      "system.healRate": resolution.healRate,
+      [`flags.hm3.${SHOCK_INJURY_LAST_ROLL_FLAG}`]: now,
+      [`flags.hm3.${SHOCK_INJURY_RECOVERY_AVAILABLE_FLAG}`]: availableAt
+    });
+    await prepared.injury.unsetFlag("hm3", SHOCK_INJURY_RECOVERY_REMINDER_FLAG);
+    await ensureStatus(actor, "shocked");
+    await this.setState(actor, SHOCK_STATES.SHOCK);
+
+    return {
+      applied: true,
+      reason: "continues",
+      availableAt,
+      ...resolution
+    };
   }
 
   static async enterUnconscious(actor, recoveryDiceCount = null) {
@@ -281,9 +458,34 @@ export class ShockService {
     await removeManagedStatus(actor, "unconscious");
     await clearRecoveryStateFlags(actor);
     const injury = await this.ensureShockInjury(actor);
+    const now = finiteWorldTime(game.time?.worldTime);
+
+    await injury.update({
+      "system.healRate": SHOCK_INJURY_HEAL_RATE,
+      [`flags.hm3.${SHOCK_ITEM_FLAG}`]: true,
+      [`flags.hm3.${SHOCK_CREATED_AT_FLAG}`]: now,
+      [`flags.hm3.${SHOCK_INJURY_RECOVERY_AVAILABLE_FLAG}`]:
+        now + SHOCK_RECOVERY_INTERVAL_SECONDS
+    });
+    await injury.unsetFlag("hm3", SHOCK_INJURY_RECOVERY_REMINDER_FLAG);
     await ensureStatus(actor, "shocked");
     await this.setState(actor, SHOCK_STATES.SHOCK);
     return injury;
+  }
+
+  static async clearShock(actor, { removeInjury = true } = {}) {
+    if (!actor) return false;
+    const injury = this.shockInjury(actor);
+    const hadManagedStatus = actor.effects.some(effect => managedStatusMatches(effect, "shocked"));
+    const hadState = this.state(actor) === SHOCK_STATES.SHOCK;
+
+    if (removeInjury && injury) {
+      await actor.deleteEmbeddedDocuments("Item", [injury.id]);
+    }
+    await removeManagedStatus(actor, "shocked");
+    if (hadState) await this.setState(actor, null);
+
+    return Boolean(injury || hadManagedStatus || hadState);
   }
 
   static async clearTransientShockState(actor) {
@@ -296,5 +498,17 @@ export class ShockService {
     if (this.workflowState(actor) !== SHOCK_STATES.UNCONSCIOUS) return false;
     await this.clearTransientShockState(actor);
     return true;
+  }
+
+  static async clearAutomatedShockState(actor) {
+    const state = this.workflowState(actor);
+    if (state === SHOCK_STATES.SHOCK || this.shockInjury(actor)) {
+      return this.clearShock(actor);
+    }
+    if (state === SHOCK_STATES.UNCONSCIOUS || state === SHOCK_STATES.FOLLOW_UP) {
+      await this.clearTransientShockState(actor);
+      return true;
+    }
+    return false;
   }
 }
