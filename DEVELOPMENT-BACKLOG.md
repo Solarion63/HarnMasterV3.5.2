@@ -120,6 +120,39 @@ Planned scope:
 
 Introduce formal Foundry DataModel classes only after the v14 user-interface and legacy document compatibility work is stable. This remains intentionally separate from the current migration to reduce regression risk.
 
+## Supernatural Conflict and Rules Automation
+
+### Mental Conflict and Shadow Conflict
+
+**Status:** Deferred rules-completion feature; source-rules and code audit required before implementation.
+
+**Rule references:** HârnMaster Rules v3.5.2, Mental Conflict (page 59 / Skills); HârnLore Bestiary, Morvrin 3–6 (Encounters with the Shadow; Amorvrin; Gulmorvrin; Dalkeshi Gulmora); HârnMaster Religion (Morvrin Field Strength, Bukrai Blades). Reconcile edition and terminology differences before coding.
+
+**Gap assessment:** An earlier uploaded HM3 ZIP defined Mental Conflict as a Communication skill (AUR/WIL/WIL), but lacked a full opposed conflict workflow and Shadow Conflict implementation. Confirm the live branch's exact current state during implementation planning.
+
+**Architecture:** Build a shared opposed Mental Conflict resolution service with separate, extensible rules for ordinary Mental Conflict and Shadow Conflict. Reuse the existing skill-roll, opposed-result, fatigue/Universal Penalty, Shock, effect, permission/socket, and chat architecture. Distinguish physical bodies, native spirits, and possessing entities without automatically changing Foundry actor ownership.
+
+**Mental Conflict — planned scope:**
+- [ ] Audit page-59/Skills rules, EML adjustments, opposed rolls, results matrix, draws, continuation, and termination.
+- [ ] Implement participant selection, opposed d100 outcome comparison (critical/marginal success/failure), clear results presentation, and GM-only disclosures when appropriate.
+- [ ] Apply rule-accurate Fatigue, Universal Penalty and Mental Shock, including WIL/EGO interactions where applicable, without conflating physical and Mental Shock.
+- [ ] Support possession, spirit dissolution, and artifact-control resolutions; require GM confirmation before irreversible transformations.
+- [ ] Write deterministic unit tests and Foundry v14 runtime acceptance scenarios for roll combinations, modifiers, ties, repeat rounds, permission authority, and cancellation.
+
+**Shadow Conflict — specialized rules:**
+- [ ] Add Shadow Strength/SHA and Shadow Conflict data with safe actor migration and existing-save compatibility. Preserve AUR and SHA as distinct concepts.
+- [ ] Derive Shadow Conflict ML as Shadow Strength × 10, with effective cap 95, including applicable Shadow-enhancing artifact effects.
+- [ ] **Gulmorvrin:** AUR is replaced by SHA; INT and WIL are zero; Shadow Conflict replaces Mental Conflict; initiating Shadow Conflict requires physical touch (no projected Shadow beyond the body).
+- [ ] **Amorvrin:** retain Mental Conflict at two-thirds former value alongside Shadow Conflict; ordinary Mental Conflict does *not* trigger an Encounter with the Shadow. Projected Shadow range derives from Shadow Strength; contact with the field initiates Shadow Conflict.
+- [ ] **Encounter outcomes:** mortal wins => immunity/protection inside the Shadow for WIL minutes; draw => new conflict, with no Shadow Fatigue; Shadow wins => possession and choice between Amorvrus and Gulmorvrus, with possible Divine Intervention.
+- [ ] Shadow does not accrue Fatigue; do not incorrectly exempt ordinary living targets.
+- [ ] Integrate physical touch/scene-distance eligibility and projected Shadow areas with GM manual fallback when scene automation is inappropriate.
+- [ ] Support Bukrai Blades and other Shadow-producing artifacts that modify strength, radius, and conflict capability; reconcile Bestiary Shadow Strength with Religion Morvrin Field Strength terminology.
+- [ ] Guard transformation, voluntary Shadow acceptance, and other permanent consequences behind explicit GM decisions; cancellations must not mutate world state.
+- [ ] Test Gulmorvrin, Amorvrin, Dalkeshi Gulmora, living victims, artifact-augmented strengths, draws, immunity to fatigue, contact/range, transformation, and divine-intervention handoff.
+
+**Scope and sequencing:** Complete source audit and design first, then implement ordinary Mental Conflict engine, then Shadow Conflict specialization. Full undead lifecycle (resting places, reincarnation, Bukrai Point upkeep, sacrifices, injury exceptions) is a future feature unless a specific conflict outcome requires it. Document design, schemas, migration, rule interpretations, acceptance tests, and V14 validation before merging implementation.
+
 ## Completed During RC4 Development
 
 The following backlog items have been completed and removed from active work:
