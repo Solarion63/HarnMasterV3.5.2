@@ -48,5 +48,8 @@ jobs:
         shell: bash
         run: git diff --exit-code -- css
 
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
+      - name: Test bounded security advisory exception
+        run: node scripts/test-audit-build-dependencies.mjs
+
+      - name: Audit dependencies (only GHSA-vfj7-8cjw-p6xm excepted through 2026-11-30)
+        run: node scripts/audit-build-dependencies.mjs

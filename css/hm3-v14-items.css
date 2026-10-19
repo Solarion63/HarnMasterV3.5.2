@@ -1,0 +1,182 @@
+/* Foundry VTT v14 Item and gear sheet refinements. */
+
+.application.hm3.sheet.item .hm3-image-picker {
+  cursor: pointer;
+  transition: box-shadow 120ms ease, filter 120ms ease;
+}
+
+.application.hm3.sheet.item .hm3-image-picker:hover,
+.application.hm3.sheet.item .hm3-image-picker:focus-visible {
+  filter: brightness(1.06);
+  outline: none;
+  box-shadow: 0 0 8px rgba(68, 25, 26, 0.55);
+}
+
+.application.hm3.sheet.item .sheet-body > .tab.properties {
+  padding: 4px 6px 10px 2px;
+}
+
+.application.hm3.sheet.item .sheet-body > .tab.properties > .grid:first-child {
+  margin-top: 4px;
+}
+
+.application.hm3.sheet.item .grid-fixed-row {
+  grid-template-rows: none;
+  grid-auto-rows: minmax(44px, auto);
+  align-items: end;
+}
+
+.application.hm3.sheet.item .grid-fixed-row > div:empty {
+  display: none;
+}
+
+.application.hm3.sheet.item .grid-fixed-row.grid-3col {
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+}
+
+.application.hm3.sheet.item .resource {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.application.hm3.sheet.item .resource > input,
+.application.hm3.sheet.item .resource > select {
+  flex: 0 0 26px;
+  min-height: 26px;
+}
+
+.application.hm3.sheet.item .resource.artifact,
+.application.hm3.sheet.item fieldset .resource:has(input[type="checkbox"]) {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.application.hm3.sheet.item .resource.artifact input[type="checkbox"],
+.application.hm3.sheet.item fieldset .resource input[type="checkbox"] {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0 5px 0 0;
+}
+
+.application.hm3.sheet.item .resource.artifact .resource-label,
+.application.hm3.sheet.item fieldset .resource:has(input[type="checkbox"]) .resource-label {
+  margin: 0;
+}
+
+.application.hm3.sheet.item #weapongear-source,
+.application.hm3.sheet.item #weapongear-note,
+.application.hm3.sheet.item #missilegear-source,
+.application.hm3.sheet.item #missilegear-note,
+.application.hm3.sheet.item #armorgear-source,
+.application.hm3.sheet.item #armorgear-note,
+.application.hm3.sheet.item #miscgear-source,
+.application.hm3.sheet.item #miscgear-note,
+.application.hm3.sheet.item #containergear-source,
+.application.hm3.sheet.item #containergear-note {
+  margin: 7px 0 0;
+}
+
+.application.hm3.sheet.item fieldset {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.application.hm3.sheet.item .tab.description {
+  padding: 4px 6px 8px;
+  overflow: auto;
+}
+
+.application.hm3.sheet.item .hm3-item-description-view {
+  min-height: 100%;
+}
+
+.application.hm3.sheet.item .hm3-item-description-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 24px;
+  margin: 0 0 4px;
+}
+
+.application.hm3.sheet.item .hm3-item-description-controls-view {
+  justify-content: flex-start;
+}
+
+.application.hm3.sheet.item .hm3-item-description-icon-button {
+  flex: 0 0 24px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  line-height: 20px;
+}
+
+.application.hm3.sheet.item .hm3-item-description-icon-button i {
+  margin: 0;
+}
+
+.application.hm3.sheet.item .hm3-item-description-content {
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 320px;
+  min-height: 320px;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror .menu-container {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  margin-bottom: 4px;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror .editor-menu {
+  box-sizing: border-box;
+  width: 100%;
+  padding-right: 42px;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror .hm3-item-description-toolbar-cancel {
+  position: absolute;
+  top: calc(50% + 8px);
+  right: 0;
+  transform: translateY(-50%);
+  width: 38px;
+  min-width: 38px;
+  height: 26px;
+  min-height: 26px;
+  margin: 0;
+  padding: 0;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror .editor-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+}
+
+.application.hm3.sheet.item .tab.description > prose-mirror .ProseMirror,
+.application.hm3.sheet.item .tab.description > prose-mirror [contenteditable="true"] {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow-y: auto;
+  padding-top: 2px;
+}
+
+@media (max-width: 520px) {
+  .application.hm3.sheet.item .grid-fixed-row.grid-3col {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}

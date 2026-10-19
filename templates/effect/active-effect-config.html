@@ -2,7 +2,7 @@
 
     <!-- Effect Header -->
     <header class="sheet-header">
-        <img class="effect-icon" src="{{ data.icon }}" data-edit="icon">
+        <img class="effect-icon" src="{{ data.img }}" data-edit="img">
         <h1 class="effect-title">
             <input name="name" type="text" value="{{data.name}}" placeholder="{{ localize 'Name' }}"/>
         </h1>
@@ -57,43 +57,50 @@
     <!-- Duration Tab -->
     <section class="tab" data-tab="duration">
         <div class="form-group">
-            <label>{{ localize "EFFECT.DurationSecs" }}</label>
+            <label>Duration</label>
             <div class="form-fields">
-                <input type="number" name="duration.seconds" value="{{ data.duration.seconds }}"/>
+                <input type="number" min="0" step="1" name="duration.value" value="{{ data.duration.value }}" placeholder="Indefinite"/>
+                <select name="duration.units">
+                    <option value="rounds" {{#if (eq data.duration.units "rounds")}}selected{{/if}}>Rounds</option>
+                    <option value="seconds" {{#if (eq data.duration.units "seconds")}}selected{{/if}}>Seconds</option>
+                    <option value="minutes" {{#if (eq data.duration.units "minutes")}}selected{{/if}}>Minutes</option>
+                    <option value="hours" {{#if (eq data.duration.units "hours")}}selected{{/if}}>Hours</option>
+                    <option value="days" {{#if (eq data.duration.units "days")}}selected{{/if}}>Days</option>
+                </select>
             </div>
-        </div>
-        <div class="form-group">
-            <label>{{ localize "EFFECT.StartTime" }}</label>
-            <div class="form-fields">
-                <input type="number" name="duration.startTime" value="{{ data.duration.startTime }}"/>
-            </div>
-        </div>
-        <hr/>
-        <div class="form-group">
-            <label>{{ localize "EFFECT.DurationTurns" }}</label>
-            <div class="form-fields">
-                <label>{{ localize "COMBAT.Rounds" }}</label>
-                <input type="number" name="duration.rounds" value="{{ data.duration.rounds }}"/>
-                <label>{{ localize "COMBAT.Turns" }}</label>
-                <input type="number" name="duration.turns" value="{{ data.duration.turns }}"/>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>{{ localize "EFFECT.Combat" }}</label>
-            <div class="form-fields">
-                <input type="text" name="duration.combat" value="{{ data.duration.combat }}" disabled/>
-            </div>
+            <p class="hint">Combat effects should normally use Rounds. Leave the duration blank for an indefinite effect.</p>
         </div>
 
         <div class="form-group">
-            <label>{{ localize "EFFECT.StartTurns" }}</label>
+            <label>Remaining</label>
             <div class="form-fields">
-                <label>{{ localize "COMBAT.Round" }}</label>
-                <input type="number" name="duration.startRound" value="{{ data.duration.startRound }}"/>
-                <label>{{ localize "COMBAT.Turn" }}</label>
-                <input type="number" name="duration.startTurn" value="{{ data.duration.startTurn }}"/>
+                <span>{{ data.duration.label }}</span>
             </div>
         </div>
+
+        <hr/>
+
+        <div class="form-group">
+            <label>Start Time</label>
+            <div class="form-fields">
+                <input type="number" name="start.time" value="{{ data.start.time }}" readonly/>
+            </div>
+        </div>
+
+        {{#if data.start.combat}}
+        <div class="form-group">
+            <label>Start Combat</label>
+            <div class="form-fields">
+                <input type="text" name="start.combat" value="{{ data.start.combat }}" readonly/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Start Round</label>
+            <div class="form-fields">
+                <input type="number" name="start.round" value="{{ data.start.round }}" readonly/>
+            </div>
+        </div>
+        {{/if}}
     </section>
 
     <!-- Effects Tab -->
@@ -111,7 +118,6 @@
             <li class="effect-change flexrow" data-index="{{i}}">
                 <div class="key">
                     <select name="changes.{{i}}.key" data-dtype="String">
-                        {{log ..}}
                         {{selectOptions ../keyChoices selected=change.key}}
                     </select>
                 </div>
