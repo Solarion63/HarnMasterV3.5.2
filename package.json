@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "CSS compiler for the HarnMaster 3 system",
   "scripts": {
-    "build": "gulp",
-    "compile": "gulp css",
-    "watch": "gulp",
-    "gulp": "gulp"
+    "build": "gulp --gulpfile gulpfile.mjs css",
+    "compile": "gulp --gulpfile gulpfile.mjs css",
+    "watch": "gulp --gulpfile gulpfile.mjs watch",
+    "gulp": "gulp --gulpfile gulpfile.mjs"
   },
   "browserslist": [
     "last 3 versions"
@@ -14,10 +14,10 @@
   "author": "Tom Rodriguez",
   "license": "MIT",
   "private": true,
-  "dependencies": {
-    "gulp": "^4.0.2",
-    "gulp-autoprefixer": "^7.0.1",
-    "gulp-sass": "^4.1.0",
-    "gulp-sourcemaps": "^2.6.5"
+  "devDependencies": {
+    "gulp": "^5.0.1",
+    "gulp-autoprefixer": "^10.0.0",
+    "gulp-sass": "^6.0.1",
+    "sass": "^1.104.0"
   }
 }

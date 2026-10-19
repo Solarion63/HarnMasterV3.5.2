@@ -276,14 +276,14 @@ section.highlight {
   visibility: visible;
 }
 
-.sheet nav.sheet-tabs {
+.hm3 nav.sheet-tabs {
   height: 32px;
   flex: 0 0 32px;
   margin: 4px 0;
   line-height: 32px;
   border: none;
 }
-.sheet nav.sheet-tabs .item {
+.hm3 nav.sheet-tabs .item {
   padding: 0;
 }
 
