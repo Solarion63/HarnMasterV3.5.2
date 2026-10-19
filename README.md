@@ -133,7 +133,7 @@ The original project's README advertised **Dice So Nice** compatibility. This fo
 
 The old manual Bash packaging script has been retired from this README. The repository now uses modern Gulp/Dart Sass tooling for CSS, committed LevelDB compendiums, and GitHub Actions packaging. The RC publishing process verifies the accepted source SHA, package workflow run ID and artifact SHA-256 digest.
 
-The [original upstream walkthrough](https://toastygm.github.io/HarnMaster-3-FoundryVTT/) and [historical upstream wiki walkthrough](https://github.com/toastygm/HarnMaster-3-FoundryVTT/wiki/FoundryVTT-HarnMaster-Walkthrough) may be useful for learning the underlying game-system conventions, **but are not maintained documentation for this V14 fork**. The old upstream Modules wiki index has not been independently verified for this fork; add-ons should be checked individually.
+The [local historical screenshot walkthrough](docs/WALKTHROUGH.md) restores the original pictures using files in this repository. The [original upstream walkthrough](https://toastygm.github.io/HarnMaster-3-FoundryVTT/) and [historical upstream wiki walkthrough](https://github.com/toastygm/HarnMaster-3-FoundryVTT/wiki/FoundryVTT-HarnMaster-Walkthrough) remain historical references and **are not maintained documentation for this V14 fork**. The old upstream Modules wiki index has not been independently verified for this fork; add-ons should be checked individually.
 
 ## Credits, intellectual property and licenses
 
