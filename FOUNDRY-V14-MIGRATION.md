@@ -2,11 +2,7 @@
 
 ## Status
 
-The `feature/foundry-v14-master` branch targets Foundry VTT **14.365** and has published release candidate **2.0.0-rc.1** for evaluation.
-
-Current development version: **2.0.0-rc.1**
-
-The validated release candidate is published as GitHub prerelease tag `v2.0.0-rc.1`. Continue evaluation before promoting the migration to the final 2.0.0 release.
+**Current status (October 2026):** Foundry V14 `2.0.0-rc.3` is now the primary `master` baseline, promoted via PR #28 and accepted in live campaign testing. Foundry V13 history is retained in `archive/foundry-v13-master-before-v14-promotion`. This file contains **historical migration-phase checklists**, including RC1-era release notes and former branch names; those are not instructions for the current release workflow. For current behavior and build instructions see `README.md`, `BUILDING.md`, `CHANGELOG.md`, and `docs/DEVELOPMENT-STATUS.md`.
 
 ## Migration Principles
 
