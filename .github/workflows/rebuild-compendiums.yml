@@ -11,20 +11,22 @@ on:
       - "packs/esoteric/_source/**"
       - "packs/system-help/_source/**"
       - "scripts/prepare-system-help.mjs"
+      - "scripts/verify-compendium-rebuild.mjs"
+      - "scripts/test-verify-compendium-rebuild.mjs"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   rebuild:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out migration branch
+      - name: Check out exact proposed source commit
         uses: actions/checkout@v4
         with:
-          ref: feature/foundry-v14-master
-          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -56,6 +58,17 @@ jobs:
         shell: bash
         run: |
           node scripts/prepare-system-help.mjs packs/system-help/_source .tmp/system-help-v14
+
+      - name: Test compendium digest comparison
+        run: node scripts/test-verify-compendium-rebuild.mjs
+
+      - name: Snapshot committed LevelDB records
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/hm3-committed-packs"
+          for pack in character possessions esoteric system-help; do
+            cp -a "packs/$pack" "$RUNNER_TEMP/hm3-committed-packs/$pack"
+          done
 
       - name: Rebuild all compendium packs
         shell: bash
@@ -158,24 +171,12 @@ jobs:
             rm -f "packs/${pack}/LOG" "packs/${pack}/LOG.old"
           done
 
-      - name: Commit rebuilt pack databases
+      - name: Verify committed compendium content matches rebuild
         shell: bash
-        run: |
-          git add -f packs/character packs/possessions packs/esoteric packs/system-help
-          if git diff --cached --quiet; then
-            echo "Compendium databases are already current."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "build: compile all Foundry v14 compendiums"
-
-          git pull --rebase origin feature/foundry-v14-master
-          git push origin HEAD:feature/foundry-v14-master
+        run: node scripts/verify-compendium-rebuild.mjs "$RUNNER_TEMP/hm3-committed-packs" packs
 
   package:
     needs: rebuild
     uses: ./.github/workflows/package-release.yml
     with:
-      ref: feature/foundry-v14-master
+      ref: ${{ github.event.pull_request.head.sha }}
