@@ -13,6 +13,6 @@ permissions:
 
 jobs:
   package:
-    uses: Solarion63/HarnMasterV3.5.2/.github/workflows/package-release.yml@master
+    uses: Solarion63/HarnMasterV3.5.2/.github/workflows/package-release.yml@feature/foundry-v14-master
     with:
       ref: ${{ inputs.ref }}
