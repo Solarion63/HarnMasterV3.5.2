@@ -3,6 +3,7 @@ name: Package Release Candidate
 on:
   push:
     branches:
+      - master
       - feature/foundry-v14-master
     paths:
       - ".github/workflows/package-release.yml"
