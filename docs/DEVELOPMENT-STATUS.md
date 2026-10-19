@@ -1,10 +1,10 @@
 # Development Status
 
-- **Version:** `2.0.0-rc.3` (Foundry V14), now the default `master` baseline.
-- **Last major phase:** PR #27 integrated the modern CSS/RC build infrastructure, followed by PR #28 promoting the verified V14 system to `master` at `65ac1173b5f18868a898cc7fbb71ac5baef7d381`. Historical migration PR #1 was closed as superseded.
-- **Active phase:** Post-V14 migration CI maintenance: RC artifact cleanup PR #31 merged and first manual dry run passed; compendium rebuild validation branch-target correction in progress.
-- **Validation:** PR #28 passed Validate System #988, Validate Build Toolchain #17, Rebuild Compendiums #346 and RC package workflow; `hm3-2.0.0-rc.3` artifact confirmed. Extensive existing RC3 live-game acceptance remains applicable to unchanged runtime code.
-- **V13 archive:** `archive/foundry-v13-master-before-v14-promotion` at `d976e5afd159476668f001a2929ffe720fc6353c`. Do not delete this history or assume V13 worlds can migrate without existing versioned logic.
-- **Security:** A narrowly bounded exception for build-only `braces` advisory `GHSA-vfj7-8cjw-p6xm` expires after November 30, 2026; regression tests must block other high/critical findings.
-- **Key docs and authorities:** `system.json`, `FOUNDRY-V14-MIGRATION.md`, `DEVELOPMENT-BACKLOG.md`, `BUILDING.md`, `module/`, `.github/workflows/validate.yml`, `.github/workflows/package-release.yml`, `.github/workflows/dispatch-package-rc.yml`. `master` is authoritative; reconcile outdated historical docs before new phases.
-- **Next action:** Verify and merge compendium rebuild PR; ensure future pack-source changes include compiled data and are validated on exact PR head. Review braces exception before 2026-11-30.
+- **Version / authoritative branch:** `2.0.0-rc.3` for Foundry V14 on `master`.
+- **Last completed major phase:** Foundry V14 promotion via PR #28 (V13 archived), then CI maintenance PR #31 (RC artifact retention/cleanup) and PR #33 (PR-head compendium rebuild validation). Latest confirmed `master`: `2b3a89d306aa3d1f7c5d4a8537287285c566fe34`.
+- **Active phase:** No implementation PR. Storage cleanup is operational; its first manual dry-run completed successfully (run #3, Actions run `39269911567`): 12 examined, 12 protected, 0 eligible, 0 deleted. Actual deletion behavior remains untested until an eligible artifact exists.
+- **Validation:** PR #31 Validate System #993 passed; cleanup dry-run passed. PR #33 Validate System #996 and Rebuild Compendiums #349 passed, including exact-PR-head RC packaging. Existing RC3 live-game acceptance applies to unchanged runtime code.
+- **State authorities / documentation:** `system.json`, `module/`, `FOUNDRY-V14-MIGRATION.md`, `DEVELOPMENT-BACKLOG.md`, `BUILDING.md`, `docs/ACTIONS-ARTIFACT-RETENTION.md`, `docs/COMPENDIUM-BUILD-WORKFLOW.md`. RC publisher requires tested source SHA, workflow run ID and artifact digest; protected-branch compendiums are validated, not auto-written.
+- **V13 archive:** `archive/foundry-v13-master-before-v14-promotion` at `d976e5afd159476668f001a2929ffe720fc6353c`.
+- **Security:** Temporary narrowly scoped build-only `braces` exception for `GHSA-vfj7-8cjw-p6xm` expires after **2026-11-30**; unrelated high/critical findings remain blocking.
+- **Next:** When superseded automatic RC artifacts become eligible, inspect cleanup dry-run and execute-mode logs to establish destructive-operation acceptance. Reassess the `braces` advisory before exception expiry. Tackle any new gameplay backlog item only after auditing current code.
