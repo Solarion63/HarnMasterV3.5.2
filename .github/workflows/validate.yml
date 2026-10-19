@@ -1,0 +1,159 @@
+name: Validate System
+
+on:
+  push:
+    branches:
+      - master
+      - "feature/**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate JSON files
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$file"
+          done < <(find . -type f -name '*.json' -not -path './node_modules/*' -print0)
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find module -type f -name '*.js' -print0)
+
+      - name: Run Condition endurance regression tests
+        run: node scripts/test-condition-endurance.mjs
+
+      - name: Run Skill opening mastery regression tests
+        run: node scripts/test-skill-opening.mjs
+
+      - name: Run Blood Regeneration regression tests
+        run: node scripts/test-blood-regeneration.mjs
+
+      - name: Run Shock rules regression tests
+        run: node scripts/test-shock-rules.mjs
+
+      - name: Run ActorDelta migration regression tests
+        run: node scripts/test-migration-operators.mjs
+
+      - name: Verify required system files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f system.json
+          test ! -f template.json
+          test -f module/config.js
+          test -f module/config-v14-overrides.js
+          test -f module/document-defaults-v14.js
+          test -f module/migration-rules.js
+          test -f module/hm3.js
+          test -f module/blood-regeneration-v14.js
+          test -f templates/chat/blood-regeneration-card.html
+          test -f module/shock-rules.js
+          test -f module/shock-service.js
+          test -f module/shock-workflow-v14.js
+          test -f module/shock-api-v14.js
+          test -f module/shock-turn-v14.js
+          test -f module/shock-out-of-combat-v14.js
+          test -f templates/chat/shock-consequence-card.html
+          test -f templates/chat/shock-recovery-reminder-card.html
+          test -f templates/chat/shock-out-of-combat-reminder-card.html
+          test -d templates
+          test -d packs
+          node <<'NODE'
+          const fs = require("fs");
+          const manifest = JSON.parse(fs.readFileSync("system.json", "utf8"));
+          const expectedActors = ["character", "container", "creature"];
+          const expectedItems = [
+            "armorgear", "armorlocation", "containergear", "injury", "invocation", "miscgear",
+            "missilegear", "psionic", "skill", "spell", "trait", "weapongear"
+          ];
+          const actualActors = Object.keys(manifest.documentTypes?.Actor ?? {}).sort();
+          const actualItems = Object.keys(manifest.documentTypes?.Item ?? {}).sort();
+          if (JSON.stringify(actualActors) !== JSON.stringify(expectedActors)) {
+            throw new Error(`Unexpected Actor documentTypes: ${actualActors.join(", ")}`);
+          }
+          if (JSON.stringify(actualItems) !== JSON.stringify(expectedItems)) {
+            throw new Error(`Unexpected Item documentTypes: ${actualItems.join(", ")}`);
+          }
+          for (const modulePath of [
+            "module/config-v14-overrides.js",
+            "module/document-defaults-v14.js",
+            "module/blood-regeneration-v14.js",
+            "module/shock-api-v14.js",
+            "module/shock-turn-v14.js",
+            "module/shock-out-of-combat-v14.js"
+          ]) {
+            if (!manifest.esmodules?.includes(modulePath)) {
+              throw new Error(`${modulePath} is not loaded by system.json`);
+            }
+          }
+          const hm3Index = manifest.esmodules.indexOf("module/hm3.js");
+          const shockApiIndex = manifest.esmodules.indexOf("module/shock-api-v14.js");
+          const shockTurnIndex = manifest.esmodules.indexOf("module/shock-turn-v14.js");
+          const shockOutIndex = manifest.esmodules.indexOf("module/shock-out-of-combat-v14.js");
+          if (shockApiIndex <= hm3Index || shockTurnIndex <= shockApiIndex || shockOutIndex <= shockTurnIndex) {
+            throw new Error("Shock API/turn/out-of-combat modules have an invalid load order");
+          }
+
+          const config = fs.readFileSync("module/config.js", "utf8");
+          for (const marker of [
+            "HM3.injuryLevels =",
+            "HM3.activeEffectKey =",
+            "HM3.meleeCombatTable =",
+            "HM3.missileCombatTable =",
+            "HM3.actorLabels =",
+            "HM3.itemLabels ="
+          ]) {
+            if (!config.includes(marker)) throw new Error(`module/config.js is missing required section: ${marker}`);
+          }
+
+          const combatConsequences = fs.readFileSync("module/combat-consequences-v14.js", "utf8");
+          if (!combatConsequences.includes('from "./shock-workflow-v14.js"')
+            || !combatConsequences.includes('data-action="shock-recovery"')
+            || !combatConsequences.includes('data-action="shock-out-of-combat-recover"')
+            || !combatConsequences.includes('data-action="shock-injury-recovery"')
+            || !combatConsequences.includes('data-action="shock-clear"')) {
+            throw new Error("Shock consequence/reminder actions are not fully wired");
+          }
+
+          const actorCombat = fs.readFileSync("module/actor/actor-combat-v2.js", "utf8");
+          if (!actorCombat.includes('from "../shock-workflow-v14.js"')) {
+            throw new Error("Actor-sheet Shock rolls are not routed through shock-workflow-v14.js");
+          }
+
+          const shockTurn = fs.readFileSync("module/shock-turn-v14.js", "utf8");
+          if (!shockTurn.includes('Hooks.on("updateCombat"')
+            || !shockTurn.includes("playerOwners(actor)")
+            || !shockTurn.includes("shockRoll(true, actor)")) {
+            throw new Error("turn-based Shock recovery automation is incomplete");
+          }
+
+          const shockOut = fs.readFileSync("module/shock-out-of-combat-v14.js", "utf8");
+          if (!shockOut.includes('Hooks.on("updateWorldTime"')
+            || !shockOut.includes('Hooks.on("deleteCombat"')
+            || !shockOut.includes("completeOutOfCombatShockRecovery(actor, true)")
+            || !shockOut.includes("ShockService.prepareShockRecovery(actor, worldTime)")
+            || !shockOut.includes("ShockService.isShockCleanupInProgress(actor)")
+            || !shockOut.includes('Hooks.on("deleteItem"')) {
+            throw new Error("out-of-combat Shock recovery automation is incomplete");
+          }
+          NODE

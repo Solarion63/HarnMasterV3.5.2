@@ -1,5 +1,7 @@
 import { HM3 } from './config.js';
 
+const { ActiveEffectConfig } = foundry.applications.sheets;
+
 /**
  * A form designed for creating and editing an Active Effect on an Actor or Item.
  * @implements {FormApplication}

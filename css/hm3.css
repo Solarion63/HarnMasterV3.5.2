@@ -294,7 +294,7 @@ section.highlight {
   visibility: visible;
 }
 
-.sheet nav.sheet-tabs {
+.hm3 nav.sheet-tabs {
   height: 32px;
   -webkit-box-flex: 0;
   -ms-flex: 0 0 32px;
@@ -303,7 +303,7 @@ section.highlight {
   line-height: 32px;
   border: none;
 }
-.sheet nav.sheet-tabs .item {
+.hm3 nav.sheet-tabs .item {
   padding: 0;
 }
 
