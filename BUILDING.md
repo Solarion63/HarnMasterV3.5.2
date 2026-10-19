@@ -50,7 +50,7 @@ This performs an initial build and then recompiles when files under `scss/` chan
 1. installs dependencies with `npm ci`;
 2. compiles the SCSS sources;
 3. verifies the generated `css/` output exactly matches the committed files; and
-4. runs `npm audit --audit-level=high`.
+4. runs a security audit with a narrowly bounded, expiring exception for the known build-only `braces` advisory (see `scripts/audit-build-dependencies.mjs` and `DEVELOPMENT-BACKLOG.md`). New high/critical advisories remain blocking.
 
 If CI reports that generated CSS is stale, run `npm run build` locally and commit the resulting `css/` changes.
 

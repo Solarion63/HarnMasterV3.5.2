@@ -1,53 +1,37 @@
-# HarnMaster-3-FoundryVTT
+# HarnMaster 3 for Foundry VTT
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/toastygm/HarnMaster-3-FoundryVTT)  
-![GitHub issues](https://img.shields.io/github/issues-raw/toastygm/HarnMaster-3-FoundryVTT) 
-![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2Fhm3)
-[![GitHub downloads (latest)](https://img.shields.io/badge/dynamic/json?label=Downloads@latest&query=assets[?(@.name.includes('zip'))].download_count&url=https://api.github.com/repos/toastygm/HarnMaster-3-FoundryVTT/releases/latest&color=green)](https://github.com/toastygm/HarnMaster-3-FoundryVTT/releases/latest)
+[![Latest prerelease](https://img.shields.io/github/v/release/Solarion63/HarnMasterV3.5.2?include_prereleases&label=RC%20release)](https://github.com/Solarion63/HarnMasterV3.5.2/releases)
+[![Issues](https://img.shields.io/github/issues/Solarion63/HarnMasterV3.5.2)](https://github.com/Solarion63/HarnMasterV3.5.2/issues)
 
-This is a game system definition of the H&acirc;rnMaster 3 RPG for [Foundry Virtual Tabletop](http://foundryvtt.com/).
+An **unofficial HârnMaster 3 game system** for [Foundry Virtual Tabletop](https://foundryvtt.com/). This repository maintains a Foundry **V14** version of the [original HarnMaster 3 Foundry system](https://github.com/toastygm/HarnMaster-3-FoundryVTT).
 
-# Pages Site
-If you are looking for the offical documentation, please see the [HarnMaster 3 FoundryVTT System Site](https://toastygm.github.io/HarnMaster-3-FoundryVTT/).
+**Current manifest:** `2.0.0-rc.3`. The checked-in `system.json` specifies **Foundry V14 minimum**, verified against **14.365**. This is a **release candidate**, not a declaration that every HârnMaster rule is automated or every optional third-party module has been tested.
 
-### H&acirc;rnMaster Copyright Notice
+## Install and update
 
-This is an unofficial H&acirc;rnFanon work. It is a derivative work from material created by N. Robin Crossby and is released for free distribution and personal use without the permission or endorsement of N. Robin Crossby or his estate.
+Use Foundry's **Install System** dialog and the prerelease manifest URL:
 
-H&acirc;rn, H&acirc;rnMaster, and H&acirc;rnWorld are all &copy; 1987-2020 N. Robin Crossby and Columbia Games Inc. Their works are available for sale on the [Columbia Games Ltd website](http://columbiagames.com/harn/).
+```text
+https://github.com/Solarion63/HarnMasterV3.5.2/releases/download/hm3-prerelease-channel/system.json
+```
 
-# Features
+The current [versioned release candidates](https://github.com/Solarion63/HarnMasterV3.5.2/releases) contain downloadable system packages. Install or update a V14 world only after making a backup of your Foundry world data; migrations can change stored documents. Earlier Foundry V13 development is preserved on `archive/foundry-v13-master-before-v14-promotion`.
 
-The following features are included in this system.
+Report issues to [this repository's issue tracker](https://github.com/Solarion63/HarnMasterV3.5.2/issues), including your Foundry version, system version, steps to reproduce, and relevant console messages.
 
-* Characters, Creatures, and Containers sheets
-* Tracking of all abilities and functional characteristics
-* Separate tracking of Description (publicly apparent information) and Biography (private information and backstory)
-* Tracking of all skills, convocations, religion(s), spells, ritual invocations, psionics, etc.
-* Support for "limited" permission on characters (so only basic readily-apparent information is viewable)
-* Injury tracking and Fatigue tracking
-* Automatic calculation of EML based on UP and PP
-* Automatic dice rolls (skills, spells, ritual invocations, healing, shock, fumble, stumble, attack/defend, weapon damage, and injury)
-* Compatible with "Dice So Nice" module.
-* Automated combat system to make running combats much easier
-* Effects allowing use of "buffs" and "debuffs" (such as Outnumbered, melee attack modifiers, UP/PP modifiers, etc) for either indefinite or a specified duration, that can be enabled/disabled as desired
-* Flexible macro support for extending with your own custom capabilities
+## What the system supports
 
-# Recommended Modules
+- **Actor sheets:** Character, Creature and Container types using Foundry V14 application sheets; permission-aware viewing and editing.
+- **Skills and esoterics:** Skill mastery and effective mastery, spells, ritual invocations, psionic talents, religions and piety tracking.
+- **Combat and injuries:** Melee and missile attacks and defenses, damage and injury rolls, combat outcomes, equipped armor coverage, penalties, Active Effects, and related chat cards.
+- **Rule automation:** Foundry-based Shock consequences and recovery; optional Bloodloss and related regeneration behavior; context-sensitive Physician diagnosis and wound treatment. Availability and automatic application depend on the relevant world settings, selected Actors, injury state, ownership and GM authorization.
+- **Derived values:** Load, encumbrance, combat skill values, penalties and Endurance. A **Condition** skill with a positive ML affects derived Endurance; an uninitialized Condition skill does not replace the ability-based Endurance calculation.
+- **Macros:** Hotbar Item macros and `game.hm3.macros` functions for supported rolls and combat operations; Foundry may require script-macro permissions.
+- **Compendiums:** Four installed packs — Character, Possessions, Esoterics and System Help.
 
-There are a number of modules that extend the H&acirc;rnMaster system by providing new functionality or ready-made content for you to use in your campaign.  See the [Modules](https://github.com/toastygm/HarnMaster-3-FoundryVTT/wiki/Modules) page for more information.
+Not all HârnMaster procedures are automated. See [the development backlog](DEVELOPMENT-BACKLOG.md) for known omissions and planned behavior. This repository does not replace the commercially published HârnMaster rulebooks.
 
-# System Walkthrough
-
-See the [Walkthrough](https://github.com/toastygm/HarnMaster-3-FoundryVTT/wiki/FoundryVTT-HarnMaster-Walkthrough) page for a detailed review of the system (with screenshots).
-
-# Usage
-
-Although most parts of this system should be self-explanatory to those familiar with H&acirc;rnMaster 3, there are some peculiarities that will be described here.
-
-## Missing Components of H&acirc;rnMaster Rules
-
-This system requires the user to have a copy of the H&acirc;rnMaster rules in order to play effectively. Skill descriptions and rules descriptions have been intentionally left out.  This system is not intended to be used as a character generator; for that you will need a copy of the H&acirc;rnMaster rules.
+## Character creation and use
 
 ## Actors Supported
 
@@ -75,9 +59,9 @@ Note that when creating a character, you will be prompted whether to install sta
 
 ## Supported Capabilities
 
-The following capabilities are supported in both characters and creatures:
+The following capabilities are available where supported by the Actor, Item, settings and selected workflow:
 
-* Automatic Dice Rolls (click on the dice icon next to the item). Holding SHIFT, ALT, or CTRL keys while clicking the icon will use defaults and bypass the dialog (except for damage rolls which always require the dialog).  All of these are available as macros as well.
+* Automatic Dice Rolls (click on the dice icon next to the item). Holding SHIFT, ALT, or CTRL while clicking may use defaults when the particular workflow allows it; dialogs still appear when required information or explicit confirmation is needed. Script macros and hotbar item macros are supported, subject to Foundry permissions.
   * Skill check rolls
   * Spell success rolls (character only)
   * Ritual Invocation success rolls (character only)
@@ -114,11 +98,11 @@ The Description represents readily-apparent information about your character; th
 
 Your Biography represents your personal characteristics and backstory; those things that are not apparent to others unless you choose to share it. This may contain personal motivations as well as personal characteristics. Your biography will only be available to those will full access to your character, not to those with only limited access.
 
-### Diety and Piety
+### Deity and Piety
 
-The assumption is that a character may have one or more religions, and a piety associated with each one.  If a character is initiated into a religion, they are assumed to have a base ML in the religion (presumably opening at SBx1) representing basic understanding of the rituals and requirements of the religion.
+A character may have one or more religions, and a piety associated with each one.  If a character is initiated into a religion, they are assumed to have a base ML in the religion (presumably opening at SBx1) representing basic understanding of the rituals and requirements of the religion.
 
-Piety is therefore assocated with the religion/diety, and is indicated as part of the ritual skill for that diety.  If you choose to not require characters to have any Ritual skill to get piety, you may simply leave the SB/ML at 0.
+Piety is therefore assocated with the religion/deity, and is indicated as part of the ritual skill for that diety.  If you choose to not require characters to have any Ritual skill to get piety, you may simply leave the SB/ML at 0.
 
 ### Weapon Associated Skill
 
@@ -132,167 +116,29 @@ Hit locations play a big part in the H&acirc;rnMaster combat system.  In order t
 
 There are separate probability weights for High, Mid, and Low aiming points.  For humanoid characters, if you chose to have the armor locations pre-loaded, these will already be setup to default values.  For creatures, no armor locations are available so you will need to enter your own armor locations and the probability weights for those.
 
-# Building
 
-If you wish to fork this code and build your own version, that is completely fine.  You will ultimately need to package the system into two files: a ZIP and a MANIFEST.  The following BASH script is an example of how to do this:
+## Optional settings and compatibility
 
-```
-#!/bin/sh
+The system exposes configurable options for Shock effects, Bloodloss, Physician automation, weapon damage, missile quantity tracking, other injury consequences and combat sounds. Options can change how and whether actions are applied. Player-to-player Physician updates use the system's native GM-authoritative socket when a GM is active.
 
-VERSION=$(jq --raw-output .version $HOME/dev/github/HarnMaster-3-FoundryVTT/system.json)
-BUILDDIR=$(mktemp -d -t hmk-$VERSION-XXXXXX)
-RELEASEDIR=$HOME/Games/fvtt/releases/hm3/$VERSION
-HM3FILE=hm3-$VERSION
-echo "Begin packaging HarnMaster 3 $VERSION"
-# If any prior version of the release exists, remove it
-rm -rf $RELEASEDIR
+The original project's README advertised **Dice So Nice** compatibility. This fork does not currently claim a separately verified module-version compatibility matrix: test an optional module against your exact Foundry and HM3 versions before relying on it.
 
-# Create the release directory
-mkdir -p $RELEASEDIR
+## Documentation and development
 
-# Copy all releaseable parts of the system
-rsync -avz -f "- _source" -f "- scss" -f "- package.json" -f "- package-lock.json" -f "- lib" -f "- packs" -f "- .git" -f "- nogit" -f "- .DS_Store" -f "- .gitignore" -f "- .vscode/*" -f "- *.code-workspace" HarnMaster-3-FoundryVTT/* $BUILDDIR
+- [Build CSS and developer setup](BUILDING.md)
+- [Compendium source and build verification](docs/COMPENDIUM-BUILD-WORKFLOW.md)
+- [Release-candidate artifact retention and cleanup](docs/ACTIONS-ARTIFACT-RETENTION.md)
+- [Changelog](CHANGELOG.md) and [V14 migration history](FOUNDRY-V14-MIGRATION.md)
+- [Development backlog](DEVELOPMENT-BACKLOG.md) and [development checkpoint](docs/DEVELOPMENT-STATUS.md)
 
-# Build the packs from source files
-for i in $(jq -r '.packs[] | [.name, .type] | @csv' HarnMaster-3-FoundryVTT/system.json | sed 's/"//g'); do
-    SPEC=(${i//,/ })
-    PACK=${SPEC[0]}
-    TYPE=${SPEC[1]}
-    mkdir -p $BUILDDIR/packs/$PACK
-    fvtt package pack -n $PACK -v --type System --id hm3 -t $TYPE --in $HOME/github/HarnMaster-3-FoundryVTT/packs/$PACK/_source --out $BUILDDIR/packs/
-done
+The old manual Bash packaging script has been retired from this README. The repository now uses modern Gulp/Dart Sass tooling for CSS, committed LevelDB compendiums, and GitHub Actions packaging. The RC publishing process verifies the accepted source SHA, package workflow run ID and artifact SHA-256 digest.
 
-# Create release zip file in release directory
-(cd $BUILDDIR; zip -r $RELEASEDIR/$HM3FILE.zip * -x "*/.DS_Store")
+The [original upstream walkthrough](https://toastygm.github.io/HarnMaster-3-FoundryVTT/) and [historical upstream wiki walkthrough](https://github.com/toastygm/HarnMaster-3-FoundryVTT/wiki/FoundryVTT-HarnMaster-Walkthrough) may be useful for learning the underlying game-system conventions, **but are not maintained documentation for this V14 fork**. The old upstream Modules wiki index has not been independently verified for this fork; add-ons should be checked individually.
 
-# Copy release manifest to release directory
-cp $BUILDDIR/system.json $RELEASEDIR/$HM3FILE.json
+## Credits, intellectual property and licenses
 
-ln $RELEASEDIR/$HM3FILE.zip $RELEASEDIR/system.zip
-ln $RELEASEDIR/$HM3FILE.json $RELEASEDIR/system.json
+The system manifest names **Toasty** and **Valcorin** as authors. The current repository's Foundry V14 migration and maintenance work is maintained under the GitHub account [Solarion63](https://github.com/Solarion63). The commit history also contains author names such as Tom Rodriguez and other contributions; a GitHub username is not automatically proof that two credited identities are the same person. [Original upstream project](https://github.com/toastygm/HarnMaster-3-FoundryVTT).
 
-echo "Finished packaging HarnMaster 3 $VERSION"
-```
+This is an unofficial **HârnFanon** work derived from material created by **N. Robin Crossby**. It is not affiliated with or endorsed by the creators or publishers of Hârn or HârnMaster. Hârn, HârnMaster and HârnWorld are associated with N. Robin Crossby and Columbia Games; obtain the official games and rules from [Columbia Games](https://columbiagames.com/harn/).
 
-This script depends on the `foundryvtt-cli` package in order to run; see https://github.com/foundryvtt/foundryvtt-cli.  This package, in turn, requires Node.js to be installed.
-
-You can then unzip the ZIP file into your `$FOUNDRY_DATA_DIR/systems/hm3` directory (create that directory if it doesn't exist).
-
-# Credits
-
-The following images were taken from [The Noun Project](https://thenounproject.com/) and [Game-Icons](https://game-icons.net/) under the Creative Commons (CC BY 3.0) license:
-
-* Agriculture by Made
-* Anvil by Nico Ilk
-* Arrow by Kitty_Keks
-* Awareness by Max Hancock
-* Axe by Deemak Daksina
-* Circle by Prime Icons
-* Club by Natalia
-* Crossbow by Creaticca Creative Agency
-* Engineering by ProSymbols
-* Fire by Nabilauzwa
-* Fishing by Vectors Point
-* Flail by Simon Henrotte
-* Flameworking by Jasmine Rae Friedrich
-* Harp by Marina Pugacheva
-* Horse Riding by Adrien Coquet
-* Hunting by Gregor Cresnar
-* Ink by Justicon
-* Law by Denis Shumaylov
-* Love by Adrien Coquet
-* Masonry by IconMark
-* Mining by art shop
-* Mummy by Eucalyp
-* Muscle by Kieu Thi Kim Cuong
-* Pegasus by IconMark
-* Pentacle by Kyle Tezak
-* Perfume by Binpodo
-* Polearm by Hamish
-* Round Shield by Hea Poh Lin
-* Scroll by stefano corradetti
-* Shield by Jamison Wieser
-* Ship by jenya
-* Ski by Brad Avison
-* Spear by sam maulidna
-* Stones by Mayur Bhat
-* Swimming by Atif Arshad
-* Sword by Kamal
-* Telepathy by Adrien Coquet
-* Throw by Jakob Vogel
-* Throw by Jakob Vogel
-* Tree by kareemov1000
-* Unicorn by corpus delicti
-* Viking Ship by Ben Davis
-* War Hammer by Kaylen Yul Lee
-* Water by Bhuvan
-* Water mill by Ben Davis
-* Wind by Andi Nur Abdillah
-* acting by Flatart
-* advice by Adrien Coquet
-* alchemy by Matthias Hartmann
-* astrology by abderraouf omara
-* brewery by Made x Made
-* caduceus by Minh Do
-* cattle by Gleb Khorunzhiy
-* ceramics by Made
-* dagger by iconcheese
-* dance by Adrien Coquet
-* divination by Made x Made
-* dodge by Rflor
-* drawing by Nibras@design
-* heraldry by Joel McKinney
-* herb by ProSymbols
-* initiative by Maxim Basinski
-* jewel by pejyt
-* juggler by Orin zuu
-* jump by Adrien Coquet
-* leather by Amy Schwartz
-* longbow by Hamish
-* mathematics by annes curnio
-* mental by Ragesh PP
-* musician by corpus delicti
-* net by Made by Made
-* ninja by Adrien Coquet
-* padlock by thirddesign
-* pot boiling by Weltenraser
-* punch by Phạm Thanh Lộc
-* rune by Miroslava
-* singing by Andrejs Kirma
-* speaking by Azam Ishaq
-* staff by ATOM
-* steering by Edit Pongrácz
-* survival knife by Ben Davis
-* tarot by monkik
-* textiles by ArmOkay
-* timber by jauhari
-* tracking by Adrien Coquet
-* weather by Creative Mania
-* whip by lastspark
-* woodworker by Pham Duy Phuong Hung
-* Coins by Vectors Market
-* sack by Andrejs Kirma
-* Torch by Pixelicatom
-* Candle by Martin
-* boxes by Sarah
-* lance by parkjisun
-* Trident by Yohann
-* Injury by HAMEL KHALED
-* break by ibrandify
-* hit by Guilherme Furtado
-* armor by Postcat Studio
-* Man Fainted by Gan Khoon Lay
-* bullseye by Creative Stall
-* blowgun by Peter Selinger
-* chest by Toli
-
-A number of icons were also produced by:
-
-* delapouite
-* lorc
-* skol
-* willdabeast
-
-Lakise and Runic Fonts are copyright N. Robin Crossby, redistributed under the terms of the [CC BY-NC-SA 3.0 AU](https://creativecommons.org/licenses/by-nc-sa/3.0/au/legalcode) license.
-
-Lankorian Blackhand font is copyright 2020 by Mitch Gore, redistributed under the terms of [CC BY-NC-SA 3.0 AU](https://creativecommons.org/licenses/by-nc-sa/3.0/au/legalcode) license
+Source code is distributed under [GPL-3.0](LICENSE) except as separately indicated. Icons, fonts and other third-party assets have their own attributions and licenses; see [Third-Party Notices](THIRD_PARTY_NOTICES.md) for the **preserved original artist credit list**, font notices, and licensing qualifications. Do not infer that the GPL relicenses third-party assets.
