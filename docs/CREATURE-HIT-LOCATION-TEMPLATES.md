@@ -43,7 +43,7 @@ The values are from **HârnMaster v3.5.2, Bestiary pp. 3–4** and apply uniform
 | Eagle | 3 | 2 | 1 | 2 |
 | Hawk | 1 | 1 | 1 | 1 |
 
-The Bestiary supplies these **natural protection** values, but the reviewed species tables do **not** provide matching per-species High/Mid/Low hit-location distributions. Do not treat the generic non-humanoid weights as official published rules.
+The Bestiary supplies these **natural protection** values, but the reviewed species tables do **not** provide matching per-species High/Mid/Low hit-location distributions. **Non-humanoid hit-location weights are not official Bestiary values**; they are optional, editable system estimates.
 
 ## Probability weights: relative values, not percentages
 
