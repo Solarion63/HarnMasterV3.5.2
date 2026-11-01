@@ -256,3 +256,63 @@
   text-shadow: 0 0 8px red;
   cursor: pointer;
 }
+
+
+/*
+ * Creature armor-location template action.
+ * The legacy location columns have fixed widths. Keep action labels on one
+ * line and reclaim flexible Layers/Notes space rather than overflowing the tab.
+ * Scope to creature sheets so character combat headers remain unchanged.
+ */
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list > .items-header.armorlocation,
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list .armorlocation-list > .armorlocation {
+  display: flex;
+  flex-wrap: nowrap;
+  min-width: 0;
+  align-items: center;
+}
+
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list .armorlocation-name {
+  flex: 0 0 126px;
+  min-width: 0;
+}
+
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list .armorlocation-layers {
+  flex: 1 1 82px;
+  min-width: 45px;
+}
+
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list .armorlocation-notes {
+  flex: 1 1 80px;
+  min-width: 32px;
+}
+
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list > .items-header.armorlocation .item-controls {
+  display: flex;
+  flex: 0 0 140px;
+  flex-wrap: nowrap;
+  gap: 3px;
+  justify-content: flex-end;
+  align-items: center;
+  white-space: nowrap;
+  min-width: 140px;
+}
+
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list > .items-header.armorlocation .item-controls .item-control {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: auto;
+  height: 26px;
+  padding: 0 3px;
+  white-space: nowrap;
+  gap: 3px;
+}
+
+.application.hm3.sheet.actor.creature .tab.combat .armorlocations-list .armorlocation-list > .armorlocation .item-controls {
+  flex: 0 0 64px;
+}
