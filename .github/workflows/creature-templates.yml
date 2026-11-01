@@ -35,3 +35,16 @@ jobs:
           node --experimental-default-type=module --check module/actor/actor-sheet-v2.js
       - name: Run creature location template tests
         run: node --experimental-default-type=module --test tests/creature-location-templates.test.mjs
+      - name: Package Foundry runtime test artifact
+        shell: bash
+        run: |
+          mkdir -p dist
+          git archive --format=zip HEAD > dist/hm3-creature-location-runtime-test.zip
+          unzip -t dist/hm3-creature-location-runtime-test.zip
+      - name: Upload Foundry runtime test artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hm3-creature-location-runtime-test
+          path: dist/hm3-creature-location-runtime-test.zip
+          if-no-files-found: error
+          retention-days: 14
