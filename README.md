@@ -23,7 +23,7 @@ Report issues to [this repository's issue tracker](https://github.com/Solarion63
 
 - **Actor sheets:** Character, Creature and Container types using Foundry V14 application sheets; permission-aware viewing and editing.
 - **Skills and esoterics:** Skill mastery and effective mastery, spells, ritual invocations, psionic talents, religions and piety tracking.
-- **Combat and injuries:** Melee and missile attacks and defenses, damage and injury rolls, combat outcomes, equipped armor coverage, penalties, Active Effects, and related chat cards.
+- **Combat and injuries:** Melee and missile attacks and defenses, damage and injury rolls, combat outcomes, equipped armor coverage, creature anatomy/hit-location templates and Bestiary natural-armor presets, penalties, Active Effects, and related chat cards.
 - **Rule automation:** Foundry-based Shock consequences and recovery; optional Bloodloss and related regeneration behavior; context-sensitive Physician diagnosis and wound treatment. Availability and automatic application depend on the relevant world settings, selected Actors, injury state, ownership and GM authorization.
 - **Derived values:** Load, encumbrance, combat skill values, penalties and Endurance. A **Condition** skill with a positive ML affects derived Endurance; an uninitialized Condition skill does not replace the ability-based Endurance calculation.
 - **Macros:** Hotbar Item macros and `game.hm3.macros` functions for supported rolls and combat operations; Foundry may require script-macro permissions.
@@ -55,7 +55,7 @@ The following actors are supported:
 
 * __Container:__ A token (such as a chest, a wagon, or a shop) that can contain items and can be placed separately on the canvas.
 
-Note that when creating a character, you will be prompted whether to install standard skills and standard humanoid armor locations.  When creating a creature, no armor locations will be preloaded, since each creature will have different armor locations (although a few basic combat skills are preloaded).
+Note that when creating a character, you will be prompted whether to install standard skills and standard humanoid armor locations. New Creature Actors do **not** receive default hit locations automatically, because their anatomies differ. On an editable Creature sheet, open **Combat → Armor Locations → Template** to add missing locations from an anatomy template and optionally apply a natural armor preset. A few basic Creature combat skills are still preloaded when standard initialization is enabled. For details, see [Creature hit-location templates](docs/CREATURE-HIT-LOCATION-TEMPLATES.md).
 
 ## Supported Capabilities
 
@@ -112,10 +112,11 @@ Only combat skills may be chosen as an "Associated Skill" for a weapon.
 
 ### Armor Locations Probability Weight (Prob. Weight)
 
-Hit locations play a big part in the H&acirc;rnMaster combat system.  In order to correctly calculate hit location, each armor location is designated with a Probability Weight.  You can think of this as the percentage chance of that location getting hit.  In that case, the total of all armor location probability weights must add up to 100.
+Random hit locations use **relative probability weights**, not percentage totals. Each `armorlocation` Item has independent weights for High, Mid and Low aiming zones. For the selected zone, a location's chance of being hit is its weight divided by the sum of all locations' weights in that zone; the total does **not** need to equal 100. For example, weights of 2 and 3 yield probabilities of 40% and 60% for those two locations. Ensure that each aiming zone used has at least one positive weight.
 
-There are separate probability weights for High, Mid, and Low aiming points.  For humanoid characters, if you chose to have the armor locations pre-loaded, these will already be setup to default values.  For creatures, no armor locations are available so you will need to enter your own armor locations and the probability weights for those.
+Characters initialized with default humanoid hit locations receive predefined weights. Creature hit locations can be added manually or with the **Template** action on the Creature Combat tab. Non-humanoid anatomy weights are **editable system estimates**, not official Bestiary hit-location distributions. The separately selectable natural armor presets use the published Bestiary B/E/P/F values for named species and apply **only to new locations**. Existing locations are preserved; reapplying a template never resets their values.
 
+See [Creature hit-location templates](docs/CREATURE-HIT-LOCATION-TEMPLATES.md) for steps, available anatomies, preset values, safeguards and rules provenance.
 
 ## Optional settings and compatibility
 
@@ -126,6 +127,7 @@ The original project's README advertised **Dice So Nice** compatibility. This fo
 ## Documentation and development
 
 - [Build CSS and developer setup](BUILDING.md)
+- [Creature hit-location templates — user guide and rules provenance](docs/CREATURE-HIT-LOCATION-TEMPLATES.md)
 - [Compendium source and build verification](docs/COMPENDIUM-BUILD-WORKFLOW.md)
 - [Release-candidate artifact retention and cleanup](docs/ACTIONS-ARTIFACT-RETENTION.md)
 - [Changelog](CHANGELOG.md) and [V14 migration history](FOUNDRY-V14-MIGRATION.md)
