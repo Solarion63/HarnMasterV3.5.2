@@ -2,6 +2,7 @@ import * as utility from "../utility.js";
 import { onManageActiveEffect } from "../effect.js";
 import { bindDocumentImagePicker } from "../document-image-picker-v14.js";
 import { bindSkillControls } from "./actor-skills-v2.js";
+import { CREATURE_ANATOMIES, CREATURE_ARMOR_PRESETS, buildCreatureLocations, missingCreatureLocations } from "./creature-location-templates.js";
 
 const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { HTMLProseMirrorElement } = foundry.applications.elements;
@@ -41,6 +42,8 @@ const ACTOR_FILTERS = [
  * Rules-specific skill, combat, and consequence logic remains isolated in its
  * dedicated modules.
  */
+function actorIsCreature(actor) { return actor?.type === "creature"; }
+
 export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorSheetV2) {
   static DEFAULT_OPTIONS = {
     classes: ["hm3", "sheet", "actor"],
@@ -110,6 +113,14 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
     bindSkillControls(this, root);
     bindDocumentImagePicker(this, root);
     this.#bindInjuryRoll(root);
+    if (actorIsCreature(this.actor) && this.isEditable) {
+      root.querySelector(".creature-location-template")?.addEventListener("click", () => {
+        this.#applyCreatureLocationTemplate().catch(error => {
+          console.error("HM3 | Creature template application failed", error);
+          ui.notifications.error(`Creature template failed: ${error.message}`);
+        });
+      });
+    }
 
     const form = root.querySelector("form");
     if (form && this.isEditable) {
@@ -467,6 +478,60 @@ export class HarnMasterActorSheetV2 extends HandlebarsApplicationMixin(ActorShee
       input.addEventListener("input", event => apply(event.currentTarget.value));
       apply(input.value);
     }
+  }
+
+
+  /**
+   * Apply only absent location Items. Never overwrite an actor's existing
+   * locations, protection values, or injury tables.
+   */
+  async #applyCreatureLocationTemplate() {
+    if (!actorIsCreature(this.actor) || !this.actor.isOwner || !this.isEditable) return;
+    const anatomyOptions = Object.entries(CREATURE_ANATOMIES)
+      .map(([key, template]) => `<option value="${key}">${template.label}</option>`).join("");
+    const armorOptions = Object.entries(CREATURE_ARMOR_PRESETS)
+      .map(([key, preset]) => `<option value="${key}">${preset.label}</option>`).join("");
+    const content = `
+      <div class="form-group">
+        <label for="hm3-creature-anatomy">Anatomy</label>
+        <select id="hm3-creature-anatomy" name="anatomy">${anatomyOptions}</select>
+      </div>
+      <div class="form-group">
+        <label for="hm3-creature-armor">Natural armor (new locations only)</label>
+        <select id="hm3-creature-armor" name="armor">${armorOptions}</select>
+      </div>
+      <p class="hint">Non-humanoid hit probabilities are editable estimates, not official Bestiary
+      location tables. Species armor values come from HârnMaster 3.5.2 Bestiary 3–4.
+      Existing locations and their armor will never be modified.</p>`;
+    return DialogV2.prompt({
+      window: { title: "Add Creature Hit Locations" },
+      content,
+      ok: {
+        label: "Add Missing Locations",
+        callback: async (_event, _button, dialog) => {
+          const root = dialog.element;
+          const anatomy = root?.querySelector('[name="anatomy"]')?.value;
+          const armor = root?.querySelector('[name="armor"]')?.value;
+          const template = CREATURE_ANATOMIES[anatomy];
+          if (!template) throw new Error("Select an anatomy template.");
+          const generated = buildCreatureLocations({
+            anatomy, armor,
+            locationTypes: CONFIG.HM3.injuryLocations,
+            itemDefaults: game.model.Item.armorlocation
+          });
+          const existing = this.actor.items.filter(item => item.type === "armorlocation");
+          const missing = missingCreatureLocations(generated, existing);
+          if (!missing.length) {
+            ui.notifications.info("No missing locations to add. Existing locations were preserved.");
+            return [];
+          }
+          const created = await this.actor.createEmbeddedDocuments("Item", missing);
+          ui.notifications.info(`Added ${created.length} creature hit locations; existing locations preserved.`);
+          return created;
+        }
+      },
+      rejectClose: false
+    });
   }
 
   async #onItemEdit(event) {
