@@ -2,6 +2,20 @@
 
 All notable changes to the HarnMaster 3 Foundry VTT system will be documented in this file.
 
+## Unreleased — Changes on `master` after 2.0.0-rc.3
+
+### Creature Hit-Location Templates (PR #39)
+
+- Added **Template** beside **+ Add** on editable Creature sheets under **Combat → Armor Locations**.
+- Added optional Humanoid (26 locations), Quadruped (9), Avian (8), Serpentine (6), and Custom (manual) anatomy templates.
+- Added HârnMaster v3.5.2 Bestiary natural-armor presets for Black Wolf, White Wolf, Black Bear, Brown Bear, Eagle and Hawk, with an optional zero-protection preset.
+- The published Bestiary species armor values are distinct from the **non-humanoid High/Mid/Low hit-location weights**, which are editable system estimates and are **not** presented as official Bestiary distributions.
+- Template application **adds missing locations only**; existing location Items, customized protection, probabilities, and injury effects remain unchanged. No automatic reset, replacement, migration, or species inference was introduced.
+- Preserved the existing character humanoid initialization and injury calculations, including relative probability weighting rather than a 100-point percentage requirement.
+- Fixed the Creature Combat header layout so **Template** and **+ Add** fit inline without requiring horizontal scrolling.
+- Added automated template tests and CI validation; PR #39's exact implementation head passed Creature Template Tests, Validate System, and Validate Build Toolchain. Foundry V14 GM runtime tests were accepted before merge.
+- Documentation: [Creature hit-location templates](docs/CREATURE-HIT-LOCATION-TEMPLATES.md). This entry documents changes merged to `master`, **not** a new published release candidate.
+
 ## 2.0.0-rc.3 — Release Candidate
 
 ### Physician Diagnosis
