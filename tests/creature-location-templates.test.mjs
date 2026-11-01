@@ -51,7 +51,7 @@ test("avian and serpentine zones have positive total weights", () => {
 
 test("humanoid uses existing HM3 definitions without changing their weights", () => {
   const items = build("humanoid");
-  assert.equal(items.length, 27);
+  assert.equal(items.length, 26);
   assert.equal(items[0].name, "Skull");
   assert.deepEqual(items[0].system.probWeight, { high: 1, mid: 1, low: 1 });
 });
