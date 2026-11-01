@@ -7,6 +7,7 @@ on:
     paths:
       - "module/actor/creature-location-templates.js"
       - "module/actor/actor-sheet-v2.js"
+      - "css/hm3-v14-combat.css"
       - "templates/actor/creature-sheet.html"
       - "tests/creature-location-templates.test.mjs"
       - ".github/workflows/creature-templates.yml"
@@ -14,6 +15,7 @@ on:
     paths:
       - "module/actor/creature-location-templates.js"
       - "module/actor/actor-sheet-v2.js"
+      - "css/hm3-v14-combat.css"
       - "templates/actor/creature-sheet.html"
       - "tests/creature-location-templates.test.mjs"
       - ".github/workflows/creature-templates.yml"
