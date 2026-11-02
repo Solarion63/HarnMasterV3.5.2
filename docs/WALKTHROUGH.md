@@ -1,87 +1,103 @@
-# HarnMaster walkthrough — original screenshots
+# HarnMaster 3 — Character Sheet Walkthrough
 
-This page repairs the original walkthrough's broken screenshots using **existing files in this repository**. The images illustrate the historical HarnMaster interface; they have **not** been updated to represent Foundry V14. Some screens, buttons and dialogs have changed since these images were captured.
+**Documentation home for this repository:** [HarnMaster 3 for Foundry VTT](../README.md) · **Foundry V14 RC3**.
 
-For current V14 functionality, see the [README](../README.md), [changelog](../CHANGELOG.md) and [development backlog](../DEVELOPMENT-BACKLOG.md). For the original explanations, see the [upstream walkthrough](https://github.com/toastygm/HarnMaster-3-FoundryVTT/wiki/FoundryVTT-HarnMaster-Walkthrough), whose image links are not controlled by this repository.
+> **About these pictures:** These 13 screenshots were inherited from the original HarnMaster project. They have been preserved, **not captured from the current V14 interface**. The explanations below describe the historical interface and call out where current workflows require the V14 documentation. Every screenshot links directly to an image stored in **this repository**—not to an upstream wiki or third-party image host.
 
-## Facade and header
+## Clickable fields and dice rolls
 
-Character sheet facade and header (historical screenshot).
+On the original character sheet, clicking many roll controls opened a configuration dialog for modifiers or additional information. Holding **Shift**, **Ctrl**, or **Alt** sometimes allowed a roll to use defaults, but dialogs could still appear when information was required. The V14 system still includes clickable rolls and macro workflows; available fast-forward behavior depends on the particular action.
 
-![Facade and header — historical HarnMaster interface](../images/help/facade-and-header-tab.jpg)
+## Facade tab and character header
 
-## Profile
+The Facade tab provides outwardly observable information and a portrait. The always-visible character header presents summary statistics and penalties, including physical and universal penalties, mobility and the character's Shock-related status. The precise V14 header layout differs from this historical image.
 
-Profile and character details (historical screenshot).
+![Original HarnMaster Facade tab and header](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/facade-and-header-tab.jpg)
 
-![Profile — historical HarnMaster interface](../images/help/profile-tab.jpg)
+## Profile tab
 
-## Skills
+The Profile tab presents abilities and the character's descriptive information. The original UI displayed base ability values alongside effective values affected by penalties, with clickable roll controls.
 
-Skill categories and mastery values (historical screenshot).
+![Original HarnMaster Profile tab](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/profile-tab.jpg)
 
-![Skills — historical HarnMaster interface](../images/help/skills-tab.jpg)
+## Skills tab
 
-## Magic and ritual skills
+Skills are grouped by type. The historical Skills tab lists Skill Base (**SB**), Mastery Level (**ML**) and Effective Mastery Level (**EML**), which reflects applicable penalties. Rolls are invoked from the skill row.
 
-Magic and ritual skills (historical screenshot).
+![Original HarnMaster Skills tab](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/skills-tab.jpg)
 
-![Magic and ritual skills — historical HarnMaster interface](../images/help/skills-magic-ritual.jpg)
+### Magic and ritual skills
 
-## Skill detail
+Magic skills are organized by convocation. Ritual skill entries can be associated with religions/deities, with piety recorded separately for each. See the current [README](../README.md) for V14 functionality and restrictions.
 
-Skill detail editor (historical screenshot).
+![Original Magic and Ritual Skills section](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/skills-magic-ritual.jpg)
 
-![Skill detail — historical HarnMaster interface](../images/help/skills-detail.jpg)
+### Skill detail dialog
 
-## Combat
+The original Skill detail screen allowed direct ML input and a formula for calculating SB. A formula could refer to abilities, a sun sign and a constant modifier. For example, a formula with `@str`, `@dex` and `@agl` combined the relevant ability values. The current parser is authoritative for exact supported formula syntax.
 
-Combat and injury display (historical screenshot).
+![Original Skill Detail dialog](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/skills-detail.jpg)
 
-![Combat — historical HarnMaster interface](../images/help/combat-tab.jpg)
+## Combat tab
 
-## Esoterics
+The original Combat tab collects melee and missile weapons, injuries, armor locations and common roll controls. A general Damage roll is distinct from a weapon-specific Damage roll.
 
-Spells, invocations and psionics (historical screenshot).
+![Original Combat tab](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/combat-tab.jpg)
 
-![Esoterics — historical HarnMaster interface](../images/help/esoterics-tab.jpg)
+### Melee and missile weapons
 
-## Gear
+Weapon rows provide attack, defense and damage actions where appropriate. Bows and similar weapons can have distinct melee and missile entries, with quantities and inventory weight managed according to the represented Item.
 
-Equipment and inventory (historical screenshot).
+### Injuries and armor locations
 
-![Gear — historical HarnMaster interface](../images/help/gear-tab.jpg)
+Injury records affect penalties and Shock-related checks. Armor-location data is used with hit-location probability weights and equipped protective gear. The current V14 system also supports configurable Shock automation and Physician Diagnosis/Treatment workflows; see the [changelog](../CHANGELOG.md) for implemented details rather than treating this screenshot as a current treatment interface.
 
-## Macros
+## Esoterics tab
 
-Macro interface (historical screenshot).
+This tab displays spells, ritual invocations and psionic talents. The system can roll casting and invocation actions and derive applicable EML; V14 behavior is subject to the relevant Item and permissions.
 
-![Macros — historical HarnMaster interface](../images/help/macro-tab.jpg)
+![Original Esoterics tab](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/esoterics-tab.jpg)
 
-## Effects
+## Gear tab
 
-Active effects interface (historical screenshot).
+The historical Gear tab displays carried and equipped items, including armor and other gear. **Carried** and **equipped** are distinct states: an Item stored elsewhere should not count as being worn, and carried load affects encumbrance.
 
-![Effects — historical HarnMaster interface](../images/help/effects-tab.jpg)
+![Original Gear tab](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/gear-tab.jpg)
 
-## Attack and defense chat
+## Macro tab
 
-Attack and defense chat result (historical screenshot).
+The legacy screenshot shows a macro-oriented interface. V14 additionally supports creating hotbar macros from owned Items, with choices for certain weapon or missile actions. Foundry permissions control whether script macros are available.
 
-![Attack and defense chat — historical HarnMaster interface](../images/help/chat-atkdef-rolls.jpg)
+![Original Macro tab](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/macro-tab.jpg)
 
-## Damage and injury chat
+## Effects tab
 
-Damage and injury chat result (historical screenshot).
+Active Effects can change applicable values and may be enabled, disabled or time-limited depending on their configuration. The active V14 implementation uses Foundry's native effect system and V14-compatible sheets.
 
-![Damage and injury chat — historical HarnMaster interface](../images/help/chat-dmginjury-rolls.jpg)
+![Original Effects tab](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/effects-tab.jpg)
+
+## Dice-roll chat cards
+
+### Attack and defense
+
+The original chat cards show attack rolls, defense selections and associated roll results. V14 includes system-managed combat resolution and consequences that extend beyond the historical presentation.
+
+![Original Attack and Defense chat results](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/chat-atkdef-rolls.jpg)
+
+### Damage and injury
+
+Damage results identify the effect of an attack; an Injury roll considers the target's hit-location weights and armor and can create an Injury document. Actual behavior is governed by current system settings and roll workflow.
+
+![Original Damage and Injury chat results](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/chat-dmginjury-rolls.jpg)
 
 ## System settings
 
-System configuration (historical screenshot).
+The original settings screen is included for reference. Current V14 options include settings affecting Shock, Bloodloss, Physician automation and other optional rules; the choices and layout may differ from the screenshot.
 
-![System settings — historical HarnMaster interface](../images/help/hm3-settings.jpg)
+![Original HarnMaster system settings](https://raw.githubusercontent.com/Solarion63/HarnMasterV3.5.2/master/images/help/hm3-settings.jpg)
 
-## Attribution
+## Origins, accuracy and maintenance
 
-The 13 screenshot files were already stored under `images/help/`; none have been recreated or edited for this repair. Original walkthrough credit belongs to the [upstream HarnMaster Foundry project](https://github.com/toastygm/HarnMaster-3-FoundryVTT). See [third-party notices](../THIRD_PARTY_NOTICES.md).
+This document is a **local, maintained replacement for the broken-image reference** in the original [upstream wiki walkthrough](https://github.com/toastygm/HarnMaster-3-FoundryVTT/wiki/FoundryVTT-HarnMaster-Walkthrough). That upstream wiki page was last edited in **2021**, is outside this repository, and cannot be changed by merging PRs here. Its original wording and supplementary pages remain historical sources rather than maintained V14 instructions.
+
+All 13 images already existed in `images/help/`; none were regenerated. Additional software and artwork credits are preserved in [Third-Party Notices](../THIRD_PARTY_NOTICES.md). For verified current features, use the [README](../README.md), [changelog](../CHANGELOG.md), and [development backlog](../DEVELOPMENT-BACKLOG.md).
